@@ -1,0 +1,15 @@
+[package]
+name = "omath"
+version = "3.10.1"
+edition = "2024"
+rust-version = "1.85"
+description = "Rust port of the general-purpose math, projection, collision, pathfinding and ballistics parts of omath"
+license = "Zlib"
+keywords = ["math", "linear-algebra", "collision", "pathfinding", "projection"]
+categories = ["mathematics", "game-development"]
+
+[features]
+lua = ["dep:mlua"]
+
+[dependencies]
+mlua = { version = "0.11", optional = true, features = ["lua55", "vendored"] }
