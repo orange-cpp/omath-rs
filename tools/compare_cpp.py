@@ -36,6 +36,7 @@ def compiler_environment(compiler):
     script = Path(installation) / "Common7/Tools/VsDevCmd.bat"
     # Read the developer environment once; compiler arguments below use a list, never a shell.
     helper = ROOT / "target/cpp-comparison/environment.cmd"
+    helper.parent.mkdir(parents=True, exist_ok=True)
     helper.write_text(f'@echo off\ncall "{script}" -arch=x64 -host_arch=x64 >nul\nif errorlevel 1 exit /b 1\nset\n')
     environment = subprocess.run(["cmd.exe", "/d", "/c", helper.name], cwd=helper.parent,
                                  check=True, capture_output=True, text=True).stdout
@@ -49,8 +50,8 @@ def compiler_environment(compiler):
     return compiler, env
 
 
-def compile_reference(cpp, compiler, env, output):
-    sources = [ROOT / "tests/cpp/reference.cpp"] + [cpp / "source" / name for name in [
+def compile_reference(cpp, compiler, env, output, reference_source=None):
+    sources = [reference_source or ROOT / "tests/cpp/reference.cpp"] + [cpp / "source" / name for name in [
         "pathfinding/navigation_mesh.cpp", "utility/pattern_scan.cpp", "hud/canvas_box.cpp",
         "hud/widget_render.cpp", "hud/entity_overlay.cpp", "hud/screen_overlay.cpp"]]
     msvc = Path(compiler).name.lower() in {"cl", "cl.exe"}

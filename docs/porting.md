@@ -26,8 +26,10 @@ crashes, undefined perpendicular-vector construction and malformed-binary reads.
 are fallible and validate pointer widths and walker layout divisors/shifts. Wide Unreal names decode
 surrogate pairs. Encrypted storage is untyped while obfuscated, and guards cannot outlive the owner.
 
-FOV targeting uses consistent pitch/yaw dimensions and shortest-angle wrapping. The upstream template
-mixes vector dimensions and is not a usable literal implementation to compare against.
+FOV targeting uses consistent pitch/yaw dimensions and shortest-angle wrapping. The C++ template does compile:
+`Vector3` inherits `Vector2`, allowing the implicit base conversion. It measures the current candidate in two
+dimensions and the previous best in three, including camera roll. Rust intentionally changes this behavior;
+the wraparound and roll cases are demonstrated in the [completeness audit](port-audit.md).
 
 ## Retained upstream defects
 
@@ -45,6 +47,10 @@ Changing these requires a compatibility decision and updated consumers. Tests di
 from known upstream behavior.
 
 ## Platform validation
+
+The [completeness audit](port-audit.md) found that the advertised Windows x86 `hooks` configuration does not
+compile. Current successful Windows tests are x64. Module availability and feature declarations do not establish
+support on every advertised architecture.
 
 Local tests run on Windows x64, including live process/module access, synthetic native detours, ImGui
 geometry and Lua HUD errors. DX9/11/12/OpenGL discovery/install/remove were exercised against the local

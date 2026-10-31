@@ -1,5 +1,8 @@
 # Validation and benchmarks
 
+The later [completeness audit](port-audit.md) found gaps outside these fixtures. The passing results below
+describe their tested subset and do not establish full API, behavior or platform equivalence.
+
 C++: MSVC `/O2 /fp:precise`. Rust: Cargo release profile.
 Machine: Windows x64, Intel64 Family 6 Model 183 Stepping 1, GenuineIntel. Toolchain: rustc 1.99.0 (b940084d7 2026-09-28).
 Upstream revision: `d05d9c2e6729b13d77b7aad17cd8a0d139ff010e`. The [raw report](validation/windows-x64.json) records

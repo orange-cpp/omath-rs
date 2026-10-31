@@ -4,6 +4,9 @@ Rust port of [omath](https://github.com/orange-cpp/omath): math, engine conventi
 navigation, ballistics, HUD, process access, Unreal walkers and optional graphics hooks.
 This is an altered version of the original; see [LICENSE](LICENSE) (Zlib).
 
+The [completeness audit](docs/port-audit.md) found remaining API, HUD-parity and Windows x86 build gaps.
+The existing passing tests and C++ comparison cover a subset; this is not yet a fully equivalent port.
+
 ```rust
 use omath::engines::source::{Camera, ViewAngles};
 use omath::projection::{FieldOfView, ViewPort};

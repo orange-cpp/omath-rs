@@ -1,0 +1,1307 @@
+{
+  "rust_revision": "b936e4d1aba372e7d2bbae8ca9d00db9ace77b66",
+  "cpp_revision": "d05d9c2e6729b13d77b7aad17cd8a0d139ff010e",
+  "behavior": {
+    "corner_glow": {
+      "status": "mismatch",
+      "details": "row 1 shapes differ:\nC++ line 75 10 85 10 0 0 1 0.333333313 5\nRust poly 4 75 10 125 10 125 110 75 110 0 1 0 0.5 1"
+    },
+    "dashed_right": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ fillrect 130 110 134 10 0 0 0 0\nRust fillrect 130 10 134 110 0 0 0 0",
+      "cpp_outline": "rect 129 110 134 10 0 0 1 1",
+      "rust_outline": "rect 130 10 134 110 0 0 1 1"
+    },
+    "dashed_left": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ fillrect 66 110 70 10 0 0 0 0\nRust fillrect 66 10 70 110 0 0 0 0",
+      "cpp_outline": "rect 65 110 70 10 0 0 1 1",
+      "rust_outline": "rect 66 10 70 110 0 0 1 1"
+    },
+    "dashed_top": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ fillrect 75 5 125 1 0 0 0 0\nRust fillrect 75 1 125 5 0 0 0 0",
+      "cpp_outline": "rect 75 5 125 1 0 0 1 1",
+      "rust_outline": "rect 75 1 125 5 0 0 1 1",
+      "classification": "coordinate-order normalization; visual impact depends on renderer"
+    },
+    "dashed_bottom": {
+      "status": "match",
+      "rows": 8,
+      "cpp_outline": "rect 75 115 125 119 0 0 1 1",
+      "rust_outline": "rect 75 115 125 119 0 0 1 1"
+    },
+    "gradient_channel": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ shade 127\nRust shade 128",
+      "classification": "C++ conversion formula versus Rust vertex color; not a whole-renderer pixel comparison"
+    },
+    "fov_wrap": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ target 1\nRust target 0",
+      "classification": "intentional correction; C++ template compiles and is callable"
+    },
+    "fov_roll": {
+      "status": "mismatch",
+      "details": "row 1 differs:\nC++ target 1\nRust target 0",
+      "classification": "intentional correction; C++ template compiles and is callable"
+    }
+  },
+  "header_mapping": [
+    {
+      "cpp": "3d_primitives/aabb.hpp",
+      "rust": [
+        "src/primitives/aabb.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust primitive"
+    },
+    {
+      "cpp": "3d_primitives/box.hpp",
+      "rust": [
+        "src/primitives/box_primitive.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust primitive"
+    },
+    {
+      "cpp": "3d_primitives/mesh.hpp",
+      "rust": [
+        "src/primitives/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust primitive"
+    },
+    {
+      "cpp": "3d_primitives/obb.hpp",
+      "rust": [
+        "src/primitives/obb.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust primitive"
+    },
+    {
+      "cpp": "3d_primitives/plane.hpp",
+      "rust": [
+        "src/primitives/plane.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust primitive"
+    },
+    {
+      "cpp": "algorithm/radar.hpp",
+      "rust": [
+        "src/algorithm/radar.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "algorithm/targeting.hpp",
+      "rust": [
+        "src/algorithm/targeting.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/collider_interface.hpp",
+      "rust": [
+        "src/collision/collider_interface.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/epa_algorithm.hpp",
+      "rust": [
+        "src/collision/epa_algorithm.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/gjk_algorithm.hpp",
+      "rust": [
+        "src/collision/gjk_algorithm.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/line_tracer.hpp",
+      "rust": [
+        "src/collision/line_tracer.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/mesh_collider.hpp",
+      "rust": [
+        "src/collision/mesh_collider.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "collision/simplex.hpp",
+      "rust": [
+        "src/collision/simplex.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "containers/encrypted_variable.hpp",
+      "rust": [
+        "src/containers/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "engines/cry_engine/camera.hpp",
+      "rust": [
+        "src/engines/cry/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/constants.hpp",
+      "rust": [
+        "src/engines/cry/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/formulas.hpp",
+      "rust": [
+        "src/engines/cry/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/mesh.hpp",
+      "rust": [
+        "src/engines/cry/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/cry/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/cry/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/cry_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/cry/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/camera.hpp",
+      "rust": [
+        "src/engines/frostbite/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/constants.hpp",
+      "rust": [
+        "src/engines/frostbite/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/formulas.hpp",
+      "rust": [
+        "src/engines/frostbite/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/mesh.hpp",
+      "rust": [
+        "src/engines/frostbite/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/primitives.hpp",
+      "rust": [
+        "src/engines/frostbite/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/frostbite_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/frostbite/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/frostbite/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/frostbite_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/frostbite/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/camera.hpp",
+      "rust": [
+        "src/engines/iw/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/constants.hpp",
+      "rust": [
+        "src/engines/iw/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/formulas.hpp",
+      "rust": [
+        "src/engines/iw/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/mesh.hpp",
+      "rust": [
+        "src/engines/iw/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/primitives.hpp",
+      "rust": [
+        "src/engines/iw/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/iw_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/iw/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/iw/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/iw_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/iw/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/camera.hpp",
+      "rust": [
+        "src/engines/opengl/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/constants.hpp",
+      "rust": [
+        "src/engines/opengl/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/formulas.hpp",
+      "rust": [
+        "src/engines/opengl/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/mesh.hpp",
+      "rust": [
+        "src/engines/opengl/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/primitives.hpp",
+      "rust": [
+        "src/engines/opengl/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/opengl_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/opengl/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/opengl/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/opengl_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/opengl/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/camera.hpp",
+      "rust": [
+        "src/engines/rage/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/constants.hpp",
+      "rust": [
+        "src/engines/rage/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/formulas.hpp",
+      "rust": [
+        "src/engines/rage/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/mesh.hpp",
+      "rust": [
+        "src/engines/rage/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/rage/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/rage/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/rage_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/rage/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/camera.hpp",
+      "rust": [
+        "src/engines/serious/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/collider.hpp",
+      "rust": [
+        "src/engines/serious/collider.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/constants.hpp",
+      "rust": [
+        "src/engines/serious/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/formulas.hpp",
+      "rust": [
+        "src/engines/serious/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/mesh.hpp",
+      "rust": [
+        "src/engines/serious/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/primitives.hpp",
+      "rust": [
+        "src/engines/serious/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/serious_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/serious/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/serious/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/serious_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/serious/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/camera.hpp",
+      "rust": [
+        "src/engines/source/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/collider.hpp",
+      "rust": [
+        "src/engines/source/collider.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/constants.hpp",
+      "rust": [
+        "src/engines/source/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/formulas.hpp",
+      "rust": [
+        "src/engines/source/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/mesh.hpp",
+      "rust": [
+        "src/engines/source/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/primitives.hpp",
+      "rust": [
+        "src/engines/source/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/source_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/source/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/source/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/source_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/source/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/camera.hpp",
+      "rust": [
+        "src/engines/unity/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/constants.hpp",
+      "rust": [
+        "src/engines/unity/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/formulas.hpp",
+      "rust": [
+        "src/engines/unity/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/mesh.hpp",
+      "rust": [
+        "src/engines/unity/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/primitives.hpp",
+      "rust": [
+        "src/engines/unity/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/unity_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/unity/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/unity/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unity_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/unity/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/actor_name.hpp",
+      "rust": [
+        "src/engines/unreal/actor_name.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/camera.hpp",
+      "rust": [
+        "src/engines/unreal/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/constants.hpp",
+      "rust": [
+        "src/engines/unreal/constants.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/formulas.hpp",
+      "rust": [
+        "src/engines/unreal/formulas.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/mesh.hpp",
+      "rust": [
+        "src/engines/unreal/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/object_array.hpp",
+      "rust": [
+        "src/engines/unreal/object_array.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/primitives.hpp",
+      "rust": [
+        "src/engines/unreal/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine aliases"
+    },
+    {
+      "cpp": "engines/unreal_engine/traits/camera_trait.hpp",
+      "rust": [
+        "src/engines/unreal/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/traits/mesh_trait.hpp",
+      "rust": [
+        "src/engines/unreal/mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "engines/unreal_engine/traits/pred_engine_trait.hpp",
+      "rust": [
+        "src/engines/unreal/pred_engine_trait.rs"
+      ],
+      "all_files_present": true,
+      "note": "engine module; shared macros also live in src/engines/mod.rs"
+    },
+    {
+      "cpp": "hashing.hpp",
+      "rust": [
+        "src/hashing.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "hooks/hooks_manager.hpp",
+      "rust": [
+        "src/hooks/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "hud/canvas_box.hpp",
+      "rust": [
+        "src/hud/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/entity_overlay.hpp",
+      "rust": [
+        "src/hud/overlay.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/entity_overlay_widgets.hpp",
+      "rust": [
+        "src/hud/widget.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/gradient.hpp",
+      "rust": [
+        "src/hud/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/hud_renderer_interface.hpp",
+      "rust": [
+        "src/hud/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/renderer_realizations/imgui_renderer.hpp",
+      "rust": [
+        "src/hud/imgui_renderer.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/screen_overlay.hpp",
+      "rust": [
+        "src/hud/overlay.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "hud/widget_render.hpp",
+      "rust": [
+        "src/hud/render.rs"
+      ],
+      "all_files_present": true,
+      "note": "renderer/widget implementation; API presence is not proof of behavior parity"
+    },
+    {
+      "cpp": "internal/constexpr_math.hpp",
+      "rust": [
+        "src/scalar.rs"
+      ],
+      "all_files_present": true,
+      "note": "delegated to Rust scalar/standard-library operations; const capability differs"
+    },
+    {
+      "cpp": "linear_algebra/mat.hpp",
+      "rust": [
+        "src/linear_algebra/mat.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "linear_algebra/quaternion.hpp",
+      "rust": [
+        "src/linear_algebra/quaternion.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "linear_algebra/triangle.hpp",
+      "rust": [
+        "src/linear_algebra/triangle.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "linear_algebra/vector2.hpp",
+      "rust": [
+        "src/linear_algebra/vector.rs"
+      ],
+      "all_files_present": true,
+      "note": "shared vector implementation"
+    },
+    {
+      "cpp": "linear_algebra/vector3.hpp",
+      "rust": [
+        "src/linear_algebra/vector.rs"
+      ],
+      "all_files_present": true,
+      "note": "shared vector implementation"
+    },
+    {
+      "cpp": "linear_algebra/vector4.hpp",
+      "rust": [
+        "src/linear_algebra/vector.rs"
+      ],
+      "all_files_present": true,
+      "note": "shared vector implementation"
+    },
+    {
+      "cpp": "lua/lua.hpp",
+      "rust": [
+        "src/lua/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "omath.hpp",
+      "rust": [
+        "src/lib.rs"
+      ],
+      "all_files_present": true,
+      "note": "crate module exports"
+    },
+    {
+      "cpp": "pathfinding/a_star.hpp",
+      "rust": [
+        "src/pathfinding/a_star.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "pathfinding/navigation_mesh.hpp",
+      "rust": [
+        "src/pathfinding/navigation_mesh.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "pathfinding/walk_bot.hpp",
+      "rust": [
+        "src/pathfinding/walk_bot.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/launcher.hpp",
+      "rust": [
+        "src/projectile_prediction/launcher.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/pred_engine_concept.hpp",
+      "rust": [
+        "src/projectile_prediction/pred_engine.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/proj_pred_engine.hpp",
+      "rust": [
+        "src/projectile_prediction/proj_pred_engine.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/proj_pred_engine_avx2.hpp",
+      "rust": [
+        "src/projectile_prediction/proj_pred_engine_batched.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/proj_pred_engine_drag.hpp",
+      "rust": [
+        "src/projectile_prediction/proj_pred_engine_drag.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/proj_pred_engine_legacy.hpp",
+      "rust": [
+        "src/projectile_prediction/proj_pred_engine_legacy.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/projectile.hpp",
+      "rust": [
+        "src/projectile_prediction/projectile.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/projectile_flight.hpp",
+      "rust": [
+        "src/projectile_prediction/projectile_flight.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projectile_prediction/target.hpp",
+      "rust": [
+        "src/projectile_prediction/target.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projection/camera.hpp",
+      "rust": [
+        "src/projection/camera.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "projection/error_codes.hpp",
+      "rust": [
+        "src/projection/error_codes.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "rev_eng/external_rev_object.hpp",
+      "rust": [
+        "src/rev_eng/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "rev_eng/internal_rev_object.hpp",
+      "rust": [
+        "src/rev_eng/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "rev_eng/memory_trait.hpp",
+      "rust": [
+        "src/rev_eng/mod.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module and adjacent implementation files"
+    },
+    {
+      "cpp": "trigonometry/angle.hpp",
+      "rust": [
+        "src/trigonometry/angle.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "trigonometry/angles.hpp",
+      "rust": [
+        "src/trigonometry/angles.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "trigonometry/view_angles.hpp",
+      "rust": [
+        "src/trigonometry/view_angles.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/color.hpp",
+      "rust": [
+        "src/utility/color.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/elf_pattern_scan.hpp",
+      "rust": [
+        "src/utility/elf_pattern_scan.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/macho_pattern_scan.hpp",
+      "rust": [
+        "src/utility/macho_pattern_scan.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/pattern_scan.hpp",
+      "rust": [
+        "src/utility/pattern_scan.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/pe_pattern_scan.hpp",
+      "rust": [
+        "src/utility/pe_pattern_scan.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    },
+    {
+      "cpp": "utility/section_scan_result.hpp",
+      "rust": [
+        "src/utility/section_scan_result.rs"
+      ],
+      "all_files_present": true,
+      "note": "Rust module"
+    }
+  ],
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-pc-windows-msvc\nrelease: 1.99.0\nLLVM version: 23.1.1",
+  "compiler_flags": [
+    "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.52.37025\\bin\\HostX64\\x64\\cl.exe",
+    "/nologo",
+    "/std:c++latest",
+    "/EHsc",
+    "/O2",
+    "/fp:precise",
+    "/MD",
+    "/IC:\\Users\\orange\\CLionProjetcs\\omath\\include",
+    "/FoC:\\Users\\orange\\CLionProjetcs\\omath-rs\\target\\port-audit\\",
+    "C:\\Users\\orange\\CLionProjetcs\\omath-rs\\tests\\cpp\\port_audit.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\pathfinding\\navigation_mesh.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\utility\\pattern_scan.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\hud\\canvas_box.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\hud\\widget_render.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\hud\\entity_overlay.cpp",
+    "C:\\Users\\orange\\CLionProjetcs\\omath\\source\\hud\\screen_overlay.cpp",
+    "/FeC:\\Users\\orange\\CLionProjetcs\\omath-rs\\target\\port-audit\\reference.exe"
+  ],
+  "cpp_tree_status": [
+    " M CMakePresets.json",
+    " M docs/hud/entity_overlay.md",
+    " M examples/CMakeLists.txt",
+    " M examples/example_kf1_overlay/CMakeLists.txt",
+    " M examples/example_kf1_overlay/example_kf1_overlay.cpp",
+    " M examples/kf1_common/kf1_target.hpp",
+    " M include/omath/hud/canvas_box.hpp",
+    " M include/omath/hud/entity_overlay.hpp",
+    " M source/hooks/hooks_manager.cpp",
+    " M source/hud/canvas_box.cpp",
+    " M source/hud/entity_overlay.cpp",
+    " M tests/general/unit_test_entity_overlay.cpp",
+    " M vcpkg.json",
+    "?? examples/example_kf1_overlay/dllmain.cpp",
+    "?? examples/example_kf1_overlay/kf1_actor_glow.hpp",
+    "?? examples/example_kf1_overlay/kf1_overlay_common.hpp"
+  ],
+  "cpp_source_sha256": {
+    "include/omath/3d_primitives/aabb.hpp": "0e7d3b910d36feedd1b11a8954a6dcc1d49619a60078a4c8ceeca1dbd4c9b35b",
+    "include/omath/3d_primitives/box.hpp": "2321560f89daa4dd2d760282c5f8412cc3aebca2ab95183f0057c460b2b33905",
+    "include/omath/3d_primitives/mesh.hpp": "55b63c6ada04770f01fd36dbfa95988737af06d43ea4cba6e19978c2c520f198",
+    "include/omath/3d_primitives/obb.hpp": "66093a2d464a83045e1a532702652610e31cfe7408c3f203cc17a8b27656cf81",
+    "include/omath/3d_primitives/plane.hpp": "289e89211bd9ac15205e0affbda5af19394fe77afbf7cb240158e5576df332b9",
+    "include/omath/algorithm/radar.hpp": "08ee7d58b68df26d6c79e30c0ddb45b50bc7c8237c11778f59a78f506601f357",
+    "include/omath/algorithm/targeting.hpp": "1d439ac6090ea146b6575f684cc50423e87cce976681f0c24dadf7946bf6019f",
+    "include/omath/collision/collider_interface.hpp": "c06815c1ae8b380b08c8fa472dbf347128217c5815b5772fea27df2a320b4fe2",
+    "include/omath/collision/epa_algorithm.hpp": "1cffb654f36cfe8ea4044b41c76aeb852362c12924d8fa68ab94309db1b8ab06",
+    "include/omath/collision/gjk_algorithm.hpp": "fd160ab2660691aa579f3e4657d7cbb492d63e9b62e11c86ad5071c2d6c29fb1",
+    "include/omath/collision/line_tracer.hpp": "70f2b557009622fbebc1ae626b5f9e336d446cfd1915a0d437cb87758497df2d",
+    "include/omath/collision/mesh_collider.hpp": "f54b75fe37b510189102c0f627914111378f5a271be4c37f5a18ee47523b8f1d",
+    "include/omath/collision/simplex.hpp": "7bc33c6af9d151b0a04cf8d722e0fa0fca1d63875a1bb4def29f5f685973a806",
+    "include/omath/containers/encrypted_variable.hpp": "3dd71f02153c82dc050d5f5dd402166d0a1624211d77e138d4c3082f690921c2",
+    "include/omath/engines/cry_engine/camera.hpp": "bd39df188ed9518646e1e03108b46e1a284eab15fb221ce8b7ec02844ad80abb",
+    "include/omath/engines/cry_engine/constants.hpp": "879744daf66b3a30a8135afd2f5176fef553bd7dd7bb58de9ffd6a13d324e859",
+    "include/omath/engines/cry_engine/formulas.hpp": "90431d9a319a5fca4945efba565293b1b1e8f9bade792422b29f1a787880589b",
+    "include/omath/engines/cry_engine/mesh.hpp": "1102238602cb83f003cedcf4f3d19603f80ef843ec4aeae620c20236fc814613",
+    "include/omath/engines/cry_engine/traits/camera_trait.hpp": "99b0c327bc1ebd8a01e2195aeb0443a88ca28ad28eb07503a067afd330d7f5d5",
+    "include/omath/engines/cry_engine/traits/mesh_trait.hpp": "39dd6534e7895a8c84f94320d5a57e0fed89d8b7535f276cb33137a6765b49fd",
+    "include/omath/engines/cry_engine/traits/pred_engine_trait.hpp": "8d1c0bf26b77040f27980190919c353ec34a4a60743a0b1f8bf1768b24d38b07",
+    "include/omath/engines/frostbite_engine/camera.hpp": "737d3dd09cdc97a2cb40a97445b3447630ceb4bd5a5cb883f684108e8a091619",
+    "include/omath/engines/frostbite_engine/constants.hpp": "7371c8cce9dd1ca81a320168fe8e727cf38d97ebb4891d4b65123fb1103f15ee",
+    "include/omath/engines/frostbite_engine/formulas.hpp": "1fbfd5f67f39dd2f21846302ec054e1fbd5af761c6d140cc6c75cea6cd26e36e",
+    "include/omath/engines/frostbite_engine/mesh.hpp": "e401fea6d7c3a2e539dcf547c9602b0d5947207073cba61e213543295e846b9b",
+    "include/omath/engines/frostbite_engine/primitives.hpp": "7ee30eac562700971f6aacd554fde0e3a47add3c3ceb2f0a7868886ac7713723",
+    "include/omath/engines/frostbite_engine/traits/camera_trait.hpp": "a50f1bdc32d3d47ee896ad8213cad1df4462f91101fc6b1b88d816b2386deccb",
+    "include/omath/engines/frostbite_engine/traits/mesh_trait.hpp": "3e25b97712d9090a2f8d78210e019ee64991364329aa03f8b01c9de34db31fe6",
+    "include/omath/engines/frostbite_engine/traits/pred_engine_trait.hpp": "ddabd3fd72f8c2aca3c10818bbd5815a529515fe5c9b745bc0ee3c4e50cde7f5",
+    "include/omath/engines/iw_engine/camera.hpp": "36abba8129ac3273960d19c7a847835e9d335566f40564060740ae555d1248fb",
+    "include/omath/engines/iw_engine/constants.hpp": "5da01e6283e292c22056f739d72ff95e17c0a964e8dfe1a97b7368fa1314857c",
+    "include/omath/engines/iw_engine/formulas.hpp": "4c840fa79f5e26badb2132bbbb16624ec1facf7ba256ab5d6b1a1fd0ef411103",
+    "include/omath/engines/iw_engine/mesh.hpp": "8ccd1b0be3698e832633133013ef5e67412db99f7bbdff3cd11707eb7a2f4c48",
+    "include/omath/engines/iw_engine/primitives.hpp": "436d1098033352859f11e0820b4b304dde57a59a88f186e3649d684e929fc0d2",
+    "include/omath/engines/iw_engine/traits/camera_trait.hpp": "e048b749b295a5384ab3aebbcfdb1b62f6c10f767245fae67aa83e430a6cf4b4",
+    "include/omath/engines/iw_engine/traits/mesh_trait.hpp": "a0de3d0717dffcee0bf607cf28431f355649357acc741aea69afa56407034993",
+    "include/omath/engines/iw_engine/traits/pred_engine_trait.hpp": "dee99c809ec7da8323d9a99d6b99d2dfa21b3df2b17ebcb9f314e6382c3184ad",
+    "include/omath/engines/opengl_engine/camera.hpp": "9022aec63268f16fd9fe0d11f14dbe164f9ce4ea2b3aea34160223d66580f3ea",
+    "include/omath/engines/opengl_engine/constants.hpp": "7166831ba6d35f43494c0021d62cc3e17447c7b9012c9337ae8d63cb7c9f751a",
+    "include/omath/engines/opengl_engine/formulas.hpp": "e39a8b96f4a2d1f128c731e89a11c0161f8b61ccfd617986e48f611a47f04071",
+    "include/omath/engines/opengl_engine/mesh.hpp": "b15b2d65ad7ec31d21f18286f01f6a7a955e53d1705b3bbb310a4282084b0d75",
+    "include/omath/engines/opengl_engine/primitives.hpp": "19a273128967840a8eb3dcf42139c093dda689b9a2dde3bc8fbb2ee660f9db61",
+    "include/omath/engines/opengl_engine/traits/camera_trait.hpp": "dc5ba15e44de90b4021efe4d0d9d1cd58bda89e2d47c81b787e086f7cb718bbe",
+    "include/omath/engines/opengl_engine/traits/mesh_trait.hpp": "d16dc464184d91797fa638abef594bb8f8aff08080ca32dcf43ddbb6df6bb421",
+    "include/omath/engines/opengl_engine/traits/pred_engine_trait.hpp": "3c5fc6e2c9935975804636f5d93f34855408c02615229bedab2af2a93c6bc477",
+    "include/omath/engines/rage_engine/camera.hpp": "8f9c366b4857596ee2eaff405f61d41cb10243b798c0664ebd94e1739316b288",
+    "include/omath/engines/rage_engine/constants.hpp": "f9e26f8927c11f29231e686af6a5effafa380830d8fee61f84e146d59e763a4a",
+    "include/omath/engines/rage_engine/formulas.hpp": "3ce81d6034529efa770d00da1dd2fa5b589a06052b8d2cfa5f50c305106f1451",
+    "include/omath/engines/rage_engine/mesh.hpp": "21c81593bf9ca20fb6865b06217067b5317872c09fb501abfff1de2702c52dee",
+    "include/omath/engines/rage_engine/traits/camera_trait.hpp": "01c1791c091d3d27e237b047b11a875546b5bc1771e9aa0ed20f74e0b5eb5069",
+    "include/omath/engines/rage_engine/traits/mesh_trait.hpp": "5f2b2c98de1604393e9bba55f36bf712b37fd70666f10ff9605ceadcd8ec69fe",
+    "include/omath/engines/rage_engine/traits/pred_engine_trait.hpp": "d40cf64024d8c3c61d484847f8e362af4c7a6f0cfe7820d7f4c078e96e3537ff",
+    "include/omath/engines/serious_engine/camera.hpp": "9a3f679d05a543c9e803d9981a8f782a1fc9ce3791d67848d342e79339e4f538",
+    "include/omath/engines/serious_engine/collider.hpp": "76db6590e8767221abc15f04738c5311b74dc28feaf6021cb6ab70a47d460ced",
+    "include/omath/engines/serious_engine/constants.hpp": "bddcc20bf6c32a14fccad89a4ea5f78c24b26e36c04ba88dea3eb44fcee1db43",
+    "include/omath/engines/serious_engine/formulas.hpp": "f126e024829b871a608da63490ab2d91b47ec4de16d3073e9f7a75965198b8bf",
+    "include/omath/engines/serious_engine/mesh.hpp": "cc5c5e360c3f0657f84cba129ef32b327c2c902e2cfae730a1e6842335be015e",
+    "include/omath/engines/serious_engine/primitives.hpp": "3bce72ae956f42b2b2e80a86897b60285b4fe8465765d9e50520d9a25f09a25d",
+    "include/omath/engines/serious_engine/traits/camera_trait.hpp": "89099a8c7afd5c7f6ebbf93785ed2e4c57a8ade3932890bc1c975f368d1b44bf",
+    "include/omath/engines/serious_engine/traits/mesh_trait.hpp": "7cda2959eb46fb8b2c5a1b4b6f4befa905469ef4ca7f23a917f5b5dadca48af1",
+    "include/omath/engines/serious_engine/traits/pred_engine_trait.hpp": "d1ac5044d5e34027f682f26977ff2a4da53864de799dc90d86e48dc4153b77e7",
+    "include/omath/engines/source_engine/camera.hpp": "986747ef0555b76070ec57d1551f81026c3cd5340374d7df86df3edaa30f98ba",
+    "include/omath/engines/source_engine/collider.hpp": "9e05868baf03b655d1b5b153e460904c30adddc915a9f030d4df910ad41dad66",
+    "include/omath/engines/source_engine/constants.hpp": "471d85f5f68ec47c3457c6f073240b166782e553831c716e5d862ef12ae864d0",
+    "include/omath/engines/source_engine/formulas.hpp": "4caa9b9175701bb49106508ebcfcdbaca5458020d5bd0775b44e02d7d16c1b3b",
+    "include/omath/engines/source_engine/mesh.hpp": "67a9ba6fcf1dd784c3d5cbe27d8db458b64dfeab0af3005de90c21e83fb6995e",
+    "include/omath/engines/source_engine/primitives.hpp": "307c3956380951c7eda3b94f5780f966eeb0b08a9a8b4522051c6c4569d3acf5",
+    "include/omath/engines/source_engine/traits/camera_trait.hpp": "802362b4f4b5fdfaf9206cb6af7399fd82585b5ee8944610373fab30536f487d",
+    "include/omath/engines/source_engine/traits/mesh_trait.hpp": "063ae0fbb60dbf2ef0aba3b82b8411d1bec629f6d2575bce6a54fe76f8b8a1b2",
+    "include/omath/engines/source_engine/traits/pred_engine_trait.hpp": "3727c533a32da0e7c95d9b193d3327efd1f833f291d511e3b0c9f1b2c173051c",
+    "include/omath/engines/unity_engine/camera.hpp": "e208c62b397f9cf40e2c76e973e361a80f5b09e8e59ddada329ef02d237249ca",
+    "include/omath/engines/unity_engine/constants.hpp": "c35d668ac8cd2f8d6878908e333cad54ad6370947a46e5640d473078402bb9a5",
+    "include/omath/engines/unity_engine/formulas.hpp": "eb12fb14f3d2c4c90b39013da01869cb1e0f57aa86b9adaa93912e24e3aca069",
+    "include/omath/engines/unity_engine/mesh.hpp": "b3fa0b693e7fcb6a1beffd2632b197f06f087af0da88fe4dd2ddab76e3d9e2fb",
+    "include/omath/engines/unity_engine/primitives.hpp": "9e87243c8cac72b9beba7f626a786f1653f162bbcf9c2ec3db3f52f28536cefc",
+    "include/omath/engines/unity_engine/traits/camera_trait.hpp": "97cf300893bb8480c335cc870a5352610ea03ac6085610bc2dc6439f1dd41cd6",
+    "include/omath/engines/unity_engine/traits/mesh_trait.hpp": "4e9817915c0d9e89fe747e1091f106ee6448d75430a89def684e96db6941c9bb",
+    "include/omath/engines/unity_engine/traits/pred_engine_trait.hpp": "8a82ee2bf831c2d84e086fb4273745deaf14c3515cdfd61e76612298ef3cbde1",
+    "include/omath/engines/unreal_engine/actor_name.hpp": "9bb50220f1b75f38aa1d653ea90beab12def47a0b4ca27dd564720b6e5a886e5",
+    "include/omath/engines/unreal_engine/camera.hpp": "0f433c7fd044a3ecdbbb1ab97ad4a8d595030268b9d338484785421a1f8b2009",
+    "include/omath/engines/unreal_engine/constants.hpp": "6ff29ced7ce0f5cd2eda23ed097a0fbe41fad03cb2d59ab03fa9c003e20130ba",
+    "include/omath/engines/unreal_engine/formulas.hpp": "bc401cdfd2c3f392ced8c445afd45545ed06ef015c9f9d8845fab979834f2620",
+    "include/omath/engines/unreal_engine/mesh.hpp": "7ad8fa6d4661eaa4dd196a177babddb0db05a7c1c74ffa97dea45f88979c85ec",
+    "include/omath/engines/unreal_engine/object_array.hpp": "038c55d6fc4b7d5953c28c64e2b8a1cfeb601a18b17777c3b3f7523ccefa5ab8",
+    "include/omath/engines/unreal_engine/primitives.hpp": "91eee47c57bb48741e838a6f9065875ddb155acf0650684fbf8dba87bc535343",
+    "include/omath/engines/unreal_engine/traits/camera_trait.hpp": "ef75f63855645ef018f0fa706780a2d6763416606ab0ce529da1ce1cdc664bec",
+    "include/omath/engines/unreal_engine/traits/mesh_trait.hpp": "3796b26b46712813367465ac57f54b1a0203dae52ee934be879e5e4cd3a71291",
+    "include/omath/engines/unreal_engine/traits/pred_engine_trait.hpp": "61631a682fca8c48988e1f41fedad84e4ccf0b5a6e943384d5c429998d0eddbe",
+    "include/omath/hashing.hpp": "2efbc693d2e670bb0755a13f9c3eb6115c443967d839314eaf46bf108f475432",
+    "include/omath/hooks/hooks_manager.hpp": "973574dcb947f4fc6d62eddefdd66bccedf926a10738c12021d83e4aa078de69",
+    "include/omath/hud/canvas_box.hpp": "e62773e1df2d086f020be2cf4ffc7deee9424fbfd33ce6aaf25e3fddc8969cad",
+    "include/omath/hud/entity_overlay.hpp": "680c40aae1eac5f6ad51c304e98c278660201390a79974550b21bc48c319e32e",
+    "include/omath/hud/entity_overlay_widgets.hpp": "c61625d4869cf192bb74220b797eefd7751d30797a0080d877b103e6bfa38a63",
+    "include/omath/hud/gradient.hpp": "20251ef4820afae020587ad0b8f6179a7376e7b44e711d177c966aa69bc19df3",
+    "include/omath/hud/hud_renderer_interface.hpp": "8eb45cac559d55d207130d1e816781f12fcd6728ef5028a459ec13ffacc8fe49",
+    "include/omath/hud/renderer_realizations/imgui_renderer.hpp": "80343d45391d237c9e0b41c1c8d8ed3e0ea914a260278ae85e51edfc6afdcbef",
+    "include/omath/hud/screen_overlay.hpp": "f9f3cd09b81d636b63b4e22f73ab64b66959d153fe1842e5d7642b776526a0fe",
+    "include/omath/hud/widget_render.hpp": "8b28cd8a3a08533871c9a6713cd907c29e946436501c2f9dd8f0b4e43a9ac6f6",
+    "include/omath/internal/constexpr_math.hpp": "d4c3140a03ef7e5e8db805db7ee10b858395323fa8ab3358c134d166b7bd19cd",
+    "include/omath/linear_algebra/mat.hpp": "85ec7e2adfa292f52b8da63ffe9ce443237b280a41fedb5ecb7f7ccc690b14f4",
+    "include/omath/linear_algebra/quaternion.hpp": "e4c889ee53f76a9b711cc2440d18ceb37fbca37e9e217adcec3edf88c9e6241b",
+    "include/omath/linear_algebra/triangle.hpp": "7e714ff23f3a38c315755e672df44ff500822452e4b877279cd28cdc2f3510cf",
+    "include/omath/linear_algebra/vector2.hpp": "2cbb5e908e774fffc2cb1d77e80fe2055ed515c8680d4e72f7c5ff011efeb936",
+    "include/omath/linear_algebra/vector3.hpp": "ecd594524939dfec12bcd8beff24f4f07818e82a666037aea656a420f3766f86",
+    "include/omath/linear_algebra/vector4.hpp": "54bb53de582fe4f6c675651dd75e1132803804e2b664f35aa06e5604655fd099",
+    "include/omath/lua/lua.hpp": "17b61bfd43a490c79eb4afd4261c2fb4a8946382803f2afffa7aaffbca730a01",
+    "include/omath/omath.hpp": "45acff907c906d7a8c7e3a385cd126df7699b4310487212e83045850cb31f69d",
+    "include/omath/pathfinding/a_star.hpp": "95746b05e17d410f795e87af229e2256f145fec6213eb853b197dae0897ac278",
+    "include/omath/pathfinding/navigation_mesh.hpp": "ab6749f4ea9d2f04ff60c2c53d8cde1eb99f1209ec38b35531795feca0270a5b",
+    "include/omath/pathfinding/walk_bot.hpp": "a087e6f1a13d5edac1561e3c6b00b5dd906c8a534692316164a70a9d779d74c2",
+    "include/omath/projectile_prediction/launcher.hpp": "8d299fe7d8dd2dedac0010f2e640ed2f9d67d803096838ec491303c54d6fb20d",
+    "include/omath/projectile_prediction/pred_engine_concept.hpp": "5f60966f7e2842139d0422bde595ac98fd15915fc1d1af705b04f52546c8d6fa",
+    "include/omath/projectile_prediction/proj_pred_engine.hpp": "adf4f33a2ddca315ead25ea3f53590b61cb7c55231ce17163162a2f47bbbdb51",
+    "include/omath/projectile_prediction/proj_pred_engine_avx2.hpp": "016032d08bbe87e9a6b7050283341c739840b3591e092f47faaa3a381adeead1",
+    "include/omath/projectile_prediction/proj_pred_engine_drag.hpp": "346ccd141062a71cb94fc09ef80cdc63aab3823c900bed8471feb6e311121c14",
+    "include/omath/projectile_prediction/proj_pred_engine_legacy.hpp": "23fbbfdde26113bfd1fdbb972bfe23867fd09595d4f73cbf6bfc2d61582f34da",
+    "include/omath/projectile_prediction/projectile.hpp": "d0b55fb319e9cfbe66f9b9831fcd8f44c628bc6c7acecbd30b2d942560fe03ef",
+    "include/omath/projectile_prediction/projectile_flight.hpp": "37bfd1158c122f62712c838973a29bb66c5037afce6a06cb436d2273c3e1c0f5",
+    "include/omath/projectile_prediction/target.hpp": "8180a15590ff6e1cd91063b080569fc005db204184924104effeba7205b2a2fd",
+    "include/omath/projection/camera.hpp": "d50c899e1c3bb1ee8953f22e7c9a3b4ef8e3be0bb3c1e73e1e75361c25027475",
+    "include/omath/projection/error_codes.hpp": "2c34f4532d2094a818447ca59a44a5e0f1e56c5df3055429f9f9746e83121a1b",
+    "include/omath/rev_eng/external_rev_object.hpp": "b72fd145c7d979dabb3711895fe3158e19b9e9227ce6a20faf7a678edb3ae135",
+    "include/omath/rev_eng/internal_rev_object.hpp": "8256e9ffcb459497bcdd794f271d68a6509c9d72295b6201a54778bd36dd355c",
+    "include/omath/rev_eng/memory_trait.hpp": "9a40fdfec478a3e8147d1f916fee971ebc2532702c8f931f862304f003ab40dd",
+    "include/omath/trigonometry/angle.hpp": "ffdcd19e48200094331f35cc272d785a3f175dd7b3ba726e9973be4ab47d0ed8",
+    "include/omath/trigonometry/angles.hpp": "0db69a2410904277f046aec864d04340d04b5329896ea42ac8c5b3d9f23b843c",
+    "include/omath/trigonometry/view_angles.hpp": "be95f2862ee9839f0e74fb90b184cb8fa97652d06205124b53a8c622a5228286",
+    "include/omath/utility/color.hpp": "c51a1722147dceb245f4c5c200cf4bb2c2c5f7d0b9aa85638066ce391bcb0768",
+    "include/omath/utility/elf_pattern_scan.hpp": "f5fdafa92b8150391ec13b7914ecdfc2d03e963e75fae9f367aa3824737b33b5",
+    "include/omath/utility/macho_pattern_scan.hpp": "4e790d552f1eff71ea84215577e164605f6ed6e8d9e357233a364b4852a39640",
+    "include/omath/utility/pattern_scan.hpp": "3548e2c50f94415186a9a83c404a8ae35cfb0dd8269454e2ab2d50ec5b13c2b1",
+    "include/omath/utility/pe_pattern_scan.hpp": "7bec69b39e5308998d04968ef7d627810aae9b3ce2ec81e52d20184e59fb4771",
+    "include/omath/utility/section_scan_result.hpp": "fde0e770564a2f87ac333429642f0a385fd508e9eda0dfa921b66cbe96d1a9f5"
+  },
+  "imgui_conversion_api": {
+    "rust": {
+      "compiled": false,
+      "diagnostics": "target/port-audit/imgui-api-rust.log"
+    },
+    "cpp": {
+      "status": "compiled",
+      "include": "C:\\Users\\orange\\CLionProjetcs\\omath\\cmake-build\\vcpkg_installed\\x86-windows-static\\include"
+    }
+  },
+  "mapping_warning": "A mapped implementation file does not certify complete API or semantic parity.",
+  "windows_x86": {
+    "status": "failed",
+    "log": "target/port-audit/windows-x86.log"
+  },
+  "known_gaps_detected": true,
+  "fully_ported": false,
+  "verdict": "gaps_confirmed"
+}

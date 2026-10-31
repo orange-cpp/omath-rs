@@ -1,0 +1,6 @@
+    Checking omath v3.10.1 (C:\Users\orange\CLionProjetcs\omath-rs)
+src\hooks\mod.rs:410:17: error[E0308]: mismatched types: expected `i32`, found `isize`
+src\hooks\mod.rs:417:31: error[E0308]: mismatched types: expected `isize`, found `i32`
+src\hooks\mod.rs:431:20: error[E0308]: mismatched types: expected `i32`, found `isize`
+src\hooks\mod.rs:438:66: error[E0308]: mismatched types: expected `i32`, found `isize`
+error: could not compile `omath` (lib) due to 4 previous errors
