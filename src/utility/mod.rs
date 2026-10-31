@@ -14,3 +14,5 @@ pub use macho_pattern_scan::MachOPatternScanner;
 pub use pattern_scan::{PatternScanError, PatternScanner};
 pub use pe_pattern_scan::PePatternScanner;
 pub use section_scan_result::SectionScanResult;
+pub mod loaded_module;
+pub use loaded_module::LoadedModule;

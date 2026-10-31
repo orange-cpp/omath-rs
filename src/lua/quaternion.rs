@@ -27,8 +27,14 @@ impl UserData for Quatf {
             Ok(Quatf::from_axis_angle(axis, angle_rad))
         });
 
-        methods.add_meta_function(MetaMethod::Add, |_, (left, right): (Quatf, Quatf)| Ok(left + right));
-        add_mul(methods, Some(|left, right| left * right), |quaternion, scalar| quaternion * scalar as f32);
+        methods.add_meta_function(MetaMethod::Add, |_, (left, right): (Quatf, Quatf)| {
+            Ok(left + right)
+        });
+        add_mul(
+            methods,
+            Some(|left, right| left * right),
+            |quaternion, scalar| quaternion * scalar as f32,
+        );
         methods.add_meta_method(MetaMethod::Unm, |_, this, ()| Ok(-*this));
         add_eq(methods);
         methods.add_meta_method(MetaMethod::ToString, |_, this, ()| {
@@ -43,8 +49,12 @@ impl UserData for Quatf {
         methods.add_method("normalized", |_, this, ()| Ok(this.normalized()));
         methods.add_method("inverse", |_, this, ()| Ok(this.inverse()));
         methods.add_method("rotate", |_, this, vector: Vec3f| Ok(this.rotate(vector)));
-        methods.add_method("to_rotation_matrix3", |_, this, ()| Ok(this.to_rotation_matrix3()));
-        methods.add_method("to_rotation_matrix4", |_, this, ()| Ok(this.to_rotation_matrix4()));
+        methods.add_method("to_rotation_matrix3", |_, this, ()| {
+            Ok(this.to_rotation_matrix3())
+        });
+        methods.add_method("to_rotation_matrix4", |_, this, ()| {
+            Ok(this.to_rotation_matrix4())
+        });
         methods.add_method("as_table", |lua, this, ()| {
             let table = lua.create_table()?;
             table.set("x", this.x)?;

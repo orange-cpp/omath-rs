@@ -16,9 +16,30 @@ pub struct Color {
 }
 
 impl Color {
-    pub const RED: Self = Self { value: Vector4::new(1.0, 0.0, 0.0, 1.0) };
-    pub const GREEN: Self = Self { value: Vector4::new(0.0, 1.0, 0.0, 1.0) };
-    pub const BLUE: Self = Self { value: Vector4::new(0.0, 0.0, 1.0, 1.0) };
+    #[cfg(feature = "imgui")]
+    pub fn to_im_vec4(&self) -> imgui::sys::ImVec4 {
+        let v = self.value;
+        imgui::sys::ImVec4 {
+            x: v.x,
+            y: v.y,
+            z: v.z,
+            w: v.w,
+        }
+    }
+    #[cfg(feature = "imgui")]
+    pub fn to_im_color(&self) -> imgui::ImColor32 {
+        let v = self.value;
+        imgui::ImColor32::from_rgba_f32s(v.x, v.y, v.z, v.w)
+    }
+    pub const RED: Self = Self {
+        value: Vector4::new(1.0, 0.0, 0.0, 1.0),
+    };
+    pub const GREEN: Self = Self {
+        value: Vector4::new(0.0, 1.0, 0.0, 1.0),
+    };
+    pub const BLUE: Self = Self {
+        value: Vector4::new(0.0, 0.0, 1.0, 1.0),
+    };
 
     #[inline]
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
@@ -27,7 +48,9 @@ impl Color {
 
     #[inline]
     pub fn from_vector(value: Vector4<f32>) -> Self {
-        Self { value: value.clamped(0.0, 1.0) }
+        Self {
+            value: value.clamped(0.0, 1.0),
+        }
     }
 
     #[inline]
@@ -69,7 +92,12 @@ impl Color {
     }
 
     pub fn to_hsv(&self) -> Hsv {
-        let Vector4 { x: red, y: green, z: blue, .. } = self.value;
+        let Vector4 {
+            x: red,
+            y: green,
+            z: blue,
+            ..
+        } = self.value;
 
         let max = red.max(green).max(blue);
         let min = red.min(green).min(blue);
@@ -90,19 +118,32 @@ impl Color {
             hue += 1.0;
         }
 
-        Hsv { hue, saturation: if max == 0.0 { 0.0 } else { delta / max }, value: max }
+        Hsv {
+            hue,
+            saturation: if max == 0.0 { 0.0 } else { delta / max },
+            value: max,
+        }
     }
 
     pub fn set_hue(&mut self, hue: f32) {
-        self.apply_hsv(Hsv { hue, ..self.to_hsv() });
+        self.apply_hsv(Hsv {
+            hue,
+            ..self.to_hsv()
+        });
     }
 
     pub fn set_saturation(&mut self, saturation: f32) {
-        self.apply_hsv(Hsv { saturation, ..self.to_hsv() });
+        self.apply_hsv(Hsv {
+            saturation,
+            ..self.to_hsv()
+        });
     }
 
     pub fn set_value(&mut self, value: f32) {
-        self.apply_hsv(Hsv { value, ..self.to_hsv() });
+        self.apply_hsv(Hsv {
+            value,
+            ..self.to_hsv()
+        });
     }
 
     /// Linear interpolation. `ratio` is clamped to `[0, 1]`.
@@ -119,7 +160,11 @@ impl Color {
     }
 
     pub fn to_hsv_string(&self) -> String {
-        let Hsv { hue, saturation, value } = self.to_hsv();
+        let Hsv {
+            hue,
+            saturation,
+            value,
+        } = self.to_hsv();
         format!("[h:{hue}, s:{saturation}, v:{value}]")
     }
 
@@ -142,6 +187,13 @@ impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let to_byte = |channel: f32| (channel * 255.0 + 0.5) as i32;
         let Vector4 { x, y, z, w } = self.value;
-        write!(f, "[r:{}, g:{}, b:{}, a:{}]", to_byte(x), to_byte(y), to_byte(z), to_byte(w))
+        write!(
+            f,
+            "[r:{}, g:{}, b:{}, a:{}]",
+            to_byte(x),
+            to_byte(y),
+            to_byte(z),
+            to_byte(w)
+        )
     }
 }

@@ -17,7 +17,11 @@ fn random_visible_component<T: Real>(rng: &mut Rng, dist: (T, T)) -> T {
     let value = rng.uniform(dist);
     let fifty = T::from_f64(50.0);
     if value.abs_value() < fifty {
-        return if value < T::ZERO { value - fifty } else { value + fifty };
+        return if value < T::ZERO {
+            value - fifty
+        } else {
+            value + fifty
+        };
     }
     value
 }
@@ -87,13 +91,29 @@ fn expect_view_angles_round_trip<E: CameraEngine>(angles: ViewAnglesOf<E>) {
     let rebuilt = make_camera::<E>(recovered, fov).get_view_matrix();
 
     let angle_difference = |a: E::Scalar, b: E::Scalar| remainder(a.to_f64() - b.to_f64(), 360.0);
-    expect_near!(angle_difference(recovered.pitch.as_degrees(), angles.pitch.as_degrees()), 0.0, 1e-2);
-    expect_near!(angle_difference(recovered.yaw.as_degrees(), angles.yaw.as_degrees()), 0.0, 1e-2);
-    expect_near!(angle_difference(recovered.roll.as_degrees(), angles.roll.as_degrees()), 0.0, 1e-2);
+    expect_near!(
+        angle_difference(recovered.pitch.as_degrees(), angles.pitch.as_degrees()),
+        0.0,
+        1e-2
+    );
+    expect_near!(
+        angle_difference(recovered.yaw.as_degrees(), angles.yaw.as_degrees()),
+        0.0,
+        1e-2
+    );
+    expect_near!(
+        angle_difference(recovered.roll.as_degrees(), angles.roll.as_degrees()),
+        0.0,
+        1e-2
+    );
 
     for row in 0..3 {
         for col in 0..3 {
-            expect_near!(rebuilt.at(row, col).to_f64(), view.at(row, col).to_f64(), 1e-4_f32);
+            expect_near!(
+                rebuilt.at(row, col).to_f64(),
+                view.at(row, col).to_f64(),
+                1e-4_f32
+            );
         }
     }
 }
@@ -127,7 +147,10 @@ impl<E: CameraEngine> CameraEngine for WithoutRotationExtraction<E> {
     const DEPTH_RANGE: NdcDepthRange = E::DEPTH_RANGE;
     const AXES: projection::CameraAxes = E::AXES;
 
-    fn calc_look_at_angle(cam_origin: Vector3<E::Scalar>, look_at: Vector3<E::Scalar>) -> ViewAnglesOf<E> {
+    fn calc_look_at_angle(
+        cam_origin: Vector3<E::Scalar>,
+        look_at: Vector3<E::Scalar>,
+    ) -> ViewAnglesOf<E> {
         E::calc_look_at_angle(cam_origin, look_at)
     }
 
@@ -157,7 +180,10 @@ impl CameraEngine for WorldAxisRollTrait {
     type RollRange = omath::engines::Normalized180;
 
     const DEPTH_RANGE: NdcDepthRange = NdcDepthRange::ZeroToOne;
-    const AXES: projection::CameraAxes = projection::CameraAxes { inverted_forward: true, inverted_right: false };
+    const AXES: projection::CameraAxes = projection::CameraAxes {
+        inverted_forward: true,
+        inverted_right: false,
+    };
 
     fn calc_look_at_angle(cam_origin: Vector3<f32>, look_at: Vector3<f32>) -> unity::ViewAngles {
         <unity::CameraTrait as CameraEngine>::calc_look_at_angle(cam_origin, look_at)
@@ -208,7 +234,11 @@ fn expect_roll_keeps_forward<E: CameraEngine>() {
 
         let level_forward = make(0.0).get_forward();
         let rolled_forward = make(roll).get_forward();
-        expect_near!(rolled_forward.dot(level_forward).to_f64(), 1.0_f32, 1e-5_f32);
+        expect_near!(
+            rolled_forward.dot(level_forward).to_f64(),
+            1.0_f32,
+            1e-5_f32
+        );
     }
 }
 
@@ -246,7 +276,8 @@ fn screen_to_ndc_top_left() {
         1000.0,
     );
 
-    let ndc_top_left = cam.screen_to_ndc(Vector3::new(1500.0, 300.0, 1.0), ScreenStart::TopLeftCorner);
+    let ndc_top_left =
+        cam.screen_to_ndc(Vector3::new(1500.0, 300.0, 1.0), ScreenStart::TopLeftCorner);
     expect_near!(ndc_top_left.x, 0.5625, 0.0001);
     expect_near!(ndc_top_left.y, 0.4444, 0.0001);
 }
@@ -264,8 +295,10 @@ fn screen_to_ndc_bottom_left() {
         1000.0,
     );
 
-    let ndc_bottom_left =
-        cam.screen_to_ndc(Vector3::new(1263.53833, 547.061523, 0.99405992), ScreenStart::BottomLeftCorner);
+    let ndc_bottom_left = cam.screen_to_ndc(
+        Vector3::new(1_263.538_3, 547.061_5, 0.994_059_9),
+        ScreenStart::BottomLeftCorner,
+    );
     expect_near!(ndc_bottom_left.x, 0.974278628, 0.0001);
     expect_near!(ndc_bottom_left.y, 0.519615293, 0.0001);
 }
@@ -373,9 +406,14 @@ fn unclipped_world_to_screen_bottom_left_corner() {
         1000.0,
     );
 
-    let top_left = cam.world_to_screen_unclipped_with(Vector3::new(1000.0, 0.0, 50.0), ScreenStart::TopLeftCorner);
-    let bottom_left =
-        cam.world_to_screen_unclipped_with(Vector3::new(1000.0, 0.0, 50.0), ScreenStart::BottomLeftCorner);
+    let top_left = cam.world_to_screen_unclipped_with(
+        Vector3::new(1000.0, 0.0, 50.0),
+        ScreenStart::TopLeftCorner,
+    );
+    let bottom_left = cam.world_to_screen_unclipped_with(
+        Vector3::new(1000.0, 0.0, 50.0),
+        ScreenStart::BottomLeftCorner,
+    );
 
     assert!(top_left.is_ok());
     assert!(bottom_left.is_ok());
@@ -402,7 +440,11 @@ fn unclipped_world_to_screen_round_trip() {
     );
 
     for _i in 0..100 {
-        let world_pos: Vector3<f32> = Vector3::new(rng.uniform(dist_fwd), rng.uniform(dist_side), rng.uniform(dist_up));
+        let world_pos: Vector3<f32> = Vector3::new(
+            rng.uniform(dist_fwd),
+            rng.uniform(dist_side),
+            rng.uniform(dist_up),
+        );
         let screen = cam.world_to_screen_unclipped(world_pos);
         if !screen.is_ok() {
             continue;
@@ -432,7 +474,10 @@ fn unclipped_world_to_screen_unity_engine() {
     );
 
     // Point directly in front
-    let projected = cam.world_to_screen_unclipped_with(Vector3::new(0.0, 0.0, 500.0), ScreenStart::BottomLeftCorner);
+    let projected = cam.world_to_screen_unclipped_with(
+        Vector3::new(0.0, 0.0, 500.0),
+        ScreenStart::BottomLeftCorner,
+    );
     assert!(projected.is_ok());
     expect_near!(projected.unwrap().x, 640.0, 0.5);
     expect_near!(projected.unwrap().y, 360.0, 0.5);
@@ -458,8 +503,10 @@ fn screen_to_world_top_left_corner() {
     for _i in 0..100 {
         let initial_screen_cords = Vector2::new(rng.uniform(dist_x), rng.uniform(dist_y));
 
-        let world_cords = cam.screen_to_world_2d_with(initial_screen_cords, ScreenStart::TopLeftCorner);
-        let screen_cords = cam.world_to_screen_with(world_cords.unwrap(), ScreenStart::TopLeftCorner);
+        let world_cords =
+            cam.screen_to_world_2d_with(initial_screen_cords, ScreenStart::TopLeftCorner);
+        let screen_cords =
+            cam.world_to_screen_with(world_cords.unwrap(), ScreenStart::TopLeftCorner);
 
         expect_near!(screen_cords.unwrap().x, initial_screen_cords.x, 0.001);
         expect_near!(screen_cords.unwrap().y, initial_screen_cords.y, 0.001);
@@ -486,8 +533,10 @@ fn screen_to_world_bottom_left_corner() {
     for _i in 0..100 {
         let initial_screen_cords = Vector2::new(rng.uniform(dist_x), rng.uniform(dist_y));
 
-        let world_cords = cam.screen_to_world_2d_with(initial_screen_cords, ScreenStart::BottomLeftCorner);
-        let screen_cords = cam.world_to_screen_with(world_cords.unwrap(), ScreenStart::BottomLeftCorner);
+        let world_cords =
+            cam.screen_to_world_2d_with(initial_screen_cords, ScreenStart::BottomLeftCorner);
+        let screen_cords =
+            cam.world_to_screen_with(world_cords.unwrap(), ScreenStart::BottomLeftCorner);
 
         expect_near!(screen_cords.unwrap().x, initial_screen_cords.x, 0.001);
         expect_near!(screen_cords.unwrap().y, initial_screen_cords.y, 0.001);
@@ -507,7 +556,10 @@ fn aabb_inside_frustum_not_culled() {
     );
 
     // Small box_ directly in front of camera (Source Engine: +X forward, +Y left, +Z up)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, -1.0, -1.0), Vector3::new(110.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, -1.0, -1.0),
+        Vector3::new(110.0, 1.0, 1.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -524,7 +576,10 @@ fn aabb_behind_camera_culled() {
     );
 
     // Box entirely behind the camera
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-200.0, -1.0, -1.0), Vector3::new(-100.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-200.0, -1.0, -1.0),
+        Vector3::new(-100.0, 1.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -541,7 +596,10 @@ fn aabb_beyond_far_plane_culled() {
     );
 
     // Box beyond far plane (1000)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(1500.0, -1.0, -1.0), Vector3::new(2000.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(1500.0, -1.0, -1.0),
+        Vector3::new(2000.0, 1.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -558,7 +616,10 @@ fn aabb_far_left_culled() {
     );
 
     // Box far to the side, outside the frustum
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, 4000.0, -1.0), Vector3::new(110.0, 5000.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, 4000.0, -1.0),
+        Vector3::new(110.0, 5000.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -575,7 +636,10 @@ fn aabb_far_right_culled() {
     );
 
     // Box far to the other side, outside the frustum
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, -5000.0, -1.0), Vector3::new(110.0, -4000.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, -5000.0, -1.0),
+        Vector3::new(110.0, -4000.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -592,7 +656,10 @@ fn aabb_above_culled() {
     );
 
     // Box far above the frustum
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, -1.0, 5000.0), Vector3::new(110.0, 1.0, 6000.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, -1.0, 5000.0),
+        Vector3::new(110.0, 1.0, 6000.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -609,7 +676,10 @@ fn aabb_partially_inside_not_culled() {
     );
 
     // Large box_ that straddles the frustum boundary — partially inside
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(50.0, -5000.0, -5000.0), Vector3::new(500.0, 5000.0, 5000.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(50.0, -5000.0, -5000.0),
+        Vector3::new(500.0, 5000.0, 5000.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -643,7 +713,10 @@ fn aabb_straddles_far_plane_not_culled() {
     );
 
     // Box that straddles the far plane
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(900.0, -1.0, -1.0), Vector3::new(1100.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(900.0, -1.0, -1.0),
+        Vector3::new(1100.0, 1.0, 1.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -660,11 +733,17 @@ fn aabb_culled_unity_engine() {
     );
 
     // Box in front — not culled
-    let inside: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, 50.0), Vector3::new(1.0, 1.0, 100.0));
+    let inside: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, 50.0),
+        Vector3::new(1.0, 1.0, 100.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&inside)));
 
     // Box behind — culled
-    let behind: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, -200.0), Vector3::new(1.0, 1.0, -100.0));
+    let behind: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, -200.0),
+        Vector3::new(1.0, 1.0, -100.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&behind));
 }
 
@@ -681,7 +760,10 @@ fn aabb_below_culled() {
     );
 
     // Box far below the frustum (Source Engine: +Z up)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, -1.0, -6000.0), Vector3::new(110.0, 1.0, -5000.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, -1.0, -6000.0),
+        Vector3::new(110.0, 1.0, -5000.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -698,7 +780,10 @@ fn aabb_encloses_camera_not_culled() {
     );
 
     // Huge box_ that fully encloses the camera
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-500.0, -500.0, -500.0), Vector3::new(500.0, 500.0, 500.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-500.0, -500.0, -500.0),
+        Vector3::new(500.0, 500.0, 500.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -732,7 +817,10 @@ fn aabb_exactly_at_far_plane_not_culled() {
     );
 
     // Box ending exactly at the far plane distance
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(990.0, -1.0, -1.0), Vector3::new(1000.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(990.0, -1.0, -1.0),
+        Vector3::new(1000.0, 1.0, 1.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -749,7 +837,10 @@ fn aabb_narrow_fov_culled_at_edge() {
         1000.0,
     );
 
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(100.0, 200.0, -1.0), Vector3::new(110.0, 210.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(100.0, 200.0, -1.0),
+        Vector3::new(110.0, 210.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -766,7 +857,10 @@ fn aabb_wide_fov_not_culled_at_edge() {
         1000.0,
     );
 
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(100.0, 200.0, -1.0), Vector3::new(110.0, 210.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(100.0, 200.0, -1.0),
+        Vector3::new(110.0, 210.0, 1.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -783,7 +877,10 @@ fn aabb_camera_off_origin() {
     );
 
     // Box in front of shifted camera
-    let in_front: Aabb<f32> = Aabb::new(Vector3::new(600.0, -1.0, -1.0), Vector3::new(700.0, 1.0, 1.0));
+    let in_front: Aabb<f32> = Aabb::new(
+        Vector3::new(600.0, -1.0, -1.0),
+        Vector3::new(700.0, 1.0, 1.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&in_front)));
 
     // Box behind shifted camera
@@ -805,11 +902,15 @@ fn aabb_short_far_plane_culled() {
     );
 
     // Box at distance 100 — beyond the 50-unit far plane
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(90.0, -1.0, -1.0), Vector3::new(110.0, 1.0, 1.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(90.0, -1.0, -1.0),
+        Vector3::new(110.0, 1.0, 1.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 
     // Box at distance 30 — within range
-    let near_box: Aabb<f32> = Aabb::new(Vector3::new(25.0, -1.0, -1.0), Vector3::new(35.0, 1.0, 1.0));
+    let near_box: Aabb<f32> =
+        Aabb::new(Vector3::new(25.0, -1.0, -1.0), Vector3::new(35.0, 1.0, 1.0));
     assert!(!(cam.is_aabb_culled_by_frustum(&near_box)));
 }
 
@@ -825,7 +926,7 @@ fn aabb_point_sized_inside_not_culled() {
         1000.0,
     );
 
-    // Degenerate zero-volume AABB (a point) inside the frustum
+    // Degenerate zero-volume Bounds (a point) inside the frustum
     let aabb: Aabb<f32> = Aabb::new(Vector3::new(100.0, 0.0, 0.0), Vector3::new(100.0, 0.0, 0.0));
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
@@ -844,7 +945,10 @@ fn aabb_opengl_engine_inside_not_culled() {
     );
 
     // Box in front of camera (OpenGL: -Z forward)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, -110.0), Vector3::new(1.0, 1.0, -90.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, -110.0),
+        Vector3::new(1.0, 1.0, -90.0),
+    );
     assert!(!(cam.is_aabb_culled_by_frustum(&aabb)));
 }
 
@@ -861,7 +965,10 @@ fn aabb_opengl_engine_behind_culled() {
     );
 
     // Box behind (OpenGL: +Z is behind the camera)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, 100.0), Vector3::new(1.0, 1.0, 200.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, 100.0),
+        Vector3::new(1.0, 1.0, 200.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -878,7 +985,10 @@ fn aabb_opengl_engine_beyond_far_culled() {
     );
 
     // Box beyond far plane along -Z
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, -2000.0), Vector3::new(1.0, 1.0, -1500.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, -2000.0),
+        Vector3::new(1.0, 1.0, -1500.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -895,7 +1005,10 @@ fn aabb_opengl_engine_side_culled() {
     );
 
     // Box far to the right (OpenGL: +X right)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(4000.0, -1.0, -110.0), Vector3::new(5000.0, 1.0, -90.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(4000.0, -1.0, -110.0),
+        Vector3::new(5000.0, 1.0, -90.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -912,7 +1025,10 @@ fn aabb_unity_engine_beyond_far_culled() {
     );
 
     // Box beyond 500-unit far plane (Unity: +Z forward)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-1.0, -1.0, 600.0), Vector3::new(1.0, 1.0, 700.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, -1.0, 600.0),
+        Vector3::new(1.0, 1.0, 700.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -929,7 +1045,10 @@ fn aabb_unity_engine_side_culled() {
     );
 
     // Box far above (Unity: +Y up)
-    let aabb: Aabb<f32> = Aabb::new(Vector3::new(-1.0, 5000.0, 50.0), Vector3::new(1.0, 6000.0, 100.0));
+    let aabb: Aabb<f32> = Aabb::new(
+        Vector3::new(-1.0, 5000.0, 50.0),
+        Vector3::new(1.0, 6000.0, 100.0),
+    );
     assert!(cam.is_aabb_culled_by_frustum(&aabb));
 }
 
@@ -979,8 +1098,14 @@ fn world_to_view_coordinates_rotated_source_camera() {
         source::YawAngle::from_degrees(90.0),
         source::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        source::Camera::new(Vector3::new(10.0, 20.0, 30.0), angles, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Vector3::new(10.0, 20.0, 30.0),
+        angles,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let view_coordinates = cam.world_to_view_coordinates(Vector3::new(14.0, 26.0, 38.0));
 
@@ -1018,8 +1143,14 @@ fn calc_view_angles_from_view_matrix_looking_forward() {
         source::YawAngle::from_degrees(0.0),
         source::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        source::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let result = source::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1036,8 +1167,14 @@ fn calc_view_angles_from_view_matrix_positive_pitch_and_yaw() {
         source::YawAngle::from_degrees(45.0),
         source::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        source::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let result = source::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1054,8 +1191,14 @@ fn calc_view_angles_from_view_matrix_negative_pitch_and_yaw() {
         source::YawAngle::from_degrees(-90.0),
         source::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        source::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let result = source::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1098,8 +1241,14 @@ fn calc_view_angles_from_view_matrix_recovers_roll() {
         source::YawAngle::from_degrees(30.0),
         source::RollAngle::from_degrees(15.0),
     );
-    let cam =
-        source::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let result = source::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1195,8 +1344,22 @@ fn calc_origin_from_view_matrix_independent_of_angles() {
         source::RollAngle::from_degrees(0.0),
     );
 
-    let cam_a = source::Camera::new(expected_origin, angles_a, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
-    let cam_b = source::Camera::new(expected_origin, angles_b, ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam_a = source::Camera::new(
+        expected_origin,
+        angles_a,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
+    let cam_b = source::Camera::new(
+        expected_origin,
+        angles_b,
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let origin_a = source::Camera::calc_origin_from_view_matrix(&cam_a.get_view_matrix());
     let origin_b = source::Camera::calc_origin_from_view_matrix(&cam_b.get_view_matrix());
@@ -1219,7 +1382,14 @@ fn unity_calc_view_angles_from_view_matrix_looking_forward() {
         unity::YawAngle::from_degrees(0.0),
         unity::RollAngle::from_degrees(0.0),
     );
-    let cam = unity::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let result = unity::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1236,7 +1406,14 @@ fn unity_calc_view_angles_from_view_matrix_positive_pitch_and_yaw() {
         unity::YawAngle::from_degrees(45.0),
         unity::RollAngle::from_degrees(0.0),
     );
-    let cam = unity::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let result = unity::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1253,7 +1430,14 @@ fn unity_calc_view_angles_from_view_matrix_negative_pitch_and_yaw() {
         unity::YawAngle::from_degrees(-90.0),
         unity::RollAngle::from_degrees(0.0),
     );
-    let cam = unity::Camera::new(Vector3::new(0.0, 0.0, 0.0), angles, ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Vector3::new(0.0, 0.0, 0.0),
+        angles,
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let result = unity::Camera::calc_view_angles_from_view_matrix(&cam.get_view_matrix());
 
@@ -1290,8 +1474,14 @@ fn unity_calc_origin_from_view_matrix_arbitrary_position() {
         unity::YawAngle::from_degrees(0.0),
         unity::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        unity::Camera::new(Vector3::new(100.0, 200.0, -50.0), angles, ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Vector3::new(100.0, 200.0, -50.0),
+        angles,
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let origin = unity::Camera::calc_origin_from_view_matrix(&cam.get_view_matrix());
 
@@ -1309,8 +1499,14 @@ fn unity_calc_origin_from_view_matrix_with_rotation() {
         unity::YawAngle::from_degrees(45.0),
         unity::RollAngle::from_degrees(0.0),
     );
-    let cam =
-        unity::Camera::new(Vector3::new(300.0, -100.0, 75.0), angles, ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Vector3::new(300.0, -100.0, 75.0),
+        angles,
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let origin = unity::Camera::calc_origin_from_view_matrix(&cam.get_view_matrix());
 
@@ -1521,8 +1717,14 @@ fn extract_projection_params_fov_round_trip() {
     // covered by ExtractProjectionParams_FovRoundTripAllEngines.
     let k_eps: f32 = 1e-4;
     let fov = projection::FieldOfView::from_degrees(75.0);
-    let cam =
-        unity::Camera::new(Default::default(), Default::default(), ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let params = unity::Camera::extract_projection_params(&cam.get_projection_matrix());
 
@@ -1533,8 +1735,14 @@ fn extract_projection_params_fov_round_trip() {
 fn extract_projection_params_aspect_ratio_round_trip() {
     let k_eps: f32 = 1e-4;
     let fov = projection::FieldOfView::from_degrees(90.0);
-    let cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let params = source::Camera::extract_projection_params(&cam.get_projection_matrix());
 
@@ -1545,8 +1753,14 @@ fn extract_projection_params_aspect_ratio_round_trip() {
 fn extract_projection_params_unity_engine() {
     let k_eps: f32 = 1e-4;
     let fov = projection::FieldOfView::from_degrees(60.0);
-    let cam =
-        unity::Camera::new(Default::default(), Default::default(), ViewPort::new(1280.0, 720.0), fov, 0.03, 1000.0);
+    let cam = unity::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1280.0, 720.0),
+        fov,
+        0.03,
+        1000.0,
+    );
 
     let params = unity::Camera::extract_projection_params(&cam.get_projection_matrix());
 
@@ -1671,7 +1885,14 @@ fn calc_view_angles_from_view_matrix_fallback_keeps_forward_for_world_axis_roll(
 fn accessors_get_fov_near_far_origin() {
     let fov = projection::FieldOfView::from_degrees(90.0);
     let origin: Vector3<f32> = Vector3::new(10.0, 20.0, 30.0);
-    let cam = source::Camera::new(origin, Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.1, 500.0);
+    let cam = source::Camera::new(
+        origin,
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.1,
+        500.0,
+    );
 
     expect_near!(cam.get_field_of_view().as_degrees(), 90.0, 1e-4);
     expect_float_eq!(cam.get_near_plane(), 0.1);
@@ -1685,8 +1906,14 @@ fn accessors_get_fov_near_far_origin() {
 fn set_field_of_view_invalidates_projection() {
     let fov_a = projection::FieldOfView::from_degrees(90.0);
     let fov_b = projection::FieldOfView::from_degrees(45.0);
-    let mut cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov_a, 0.01, 1000.0);
+    let mut cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov_a,
+        0.01,
+        1000.0,
+    );
 
     let proj_before = cam.get_projection_matrix();
     cam.set_field_of_view(fov_b);
@@ -1699,8 +1926,14 @@ fn set_field_of_view_invalidates_projection() {
 #[test]
 fn set_near_plane_invalidates_projection() {
     let fov = projection::FieldOfView::from_degrees(90.0);
-    let mut cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let mut cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let proj_before = cam.get_projection_matrix();
     cam.set_near_plane(1.0);
@@ -1713,8 +1946,14 @@ fn set_near_plane_invalidates_projection() {
 #[test]
 fn set_far_plane_invalidates_projection() {
     let fov = projection::FieldOfView::from_degrees(90.0);
-    let mut cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let mut cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let proj_before = cam.get_projection_matrix();
     cam.set_far_plane(100.0);
@@ -1751,8 +1990,14 @@ fn set_origin_invalidates_view_matrix() {
 #[test]
 fn set_view_port_invalidates_projection() {
     let fov = projection::FieldOfView::from_degrees(90.0);
-    let mut cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let mut cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let proj_before = cam.get_projection_matrix();
     // 1280x800 is 8:5, different aspect ratio from 1920x1080 (16:9)
@@ -1765,8 +2010,14 @@ fn set_view_port_invalidates_projection() {
 #[test]
 fn set_view_angles_invalidates_view_matrix() {
     let fov = projection::FieldOfView::from_degrees(90.0);
-    let mut cam =
-        source::Camera::new(Default::default(), Default::default(), ViewPort::new(1920.0, 1080.0), fov, 0.01, 1000.0);
+    let mut cam = source::Camera::new(
+        Default::default(),
+        Default::default(),
+        ViewPort::new(1920.0, 1080.0),
+        fov,
+        0.01,
+        1000.0,
+    );
 
     let view_before = cam.get_view_matrix();
     let rotated: source::ViewAngles = source::ViewAngles::new(
@@ -1929,8 +2180,11 @@ fn triangle_inside_frustum_not_culled() {
     );
 
     // Small triangle directly in front (Source: +X forward)
-    let tri: Triangle<Vector3<f32>> =
-        Triangle::new(Vector3::new(100.0, 0.0, 1.0), Vector3::new(100.0, 1.0, -1.0), Vector3::new(100.0, -1.0, -1.0));
+    let tri: Triangle<Vector3<f32>> = Triangle::new(
+        Vector3::new(100.0, 0.0, 1.0),
+        Vector3::new(100.0, 1.0, -1.0),
+        Vector3::new(100.0, -1.0, -1.0),
+    );
     assert!(!(cam.is_culled_by_frustum(&tri)));
 }
 

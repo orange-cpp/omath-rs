@@ -30,7 +30,13 @@ pub trait PredEngine {
 
     fn calc_view_basis(pitch: Self::Scalar, yaw: Self::Scalar) -> ViewBasis<Self::Scalar>;
 
-    fn calc_direct_pitch_angle(origin: Vector3<Self::Scalar>, view_to: Vector3<Self::Scalar>) -> Self::Scalar;
+    fn calc_direct_pitch_angle(
+        origin: Vector3<Self::Scalar>,
+        view_to: Vector3<Self::Scalar>,
+    ) -> Self::Scalar;
 
-    fn calc_direct_yaw_angle(origin: Vector3<Self::Scalar>, view_to: Vector3<Self::Scalar>) -> Self::Scalar;
+    fn calc_direct_yaw_angle(
+        origin: Vector3<Self::Scalar>,
+        view_to: Vector3<Self::Scalar>,
+    ) -> Self::Scalar;
 }

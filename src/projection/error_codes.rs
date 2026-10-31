@@ -14,7 +14,9 @@ impl fmt::Display for Error {
         f.write_str(match self {
             Self::WorldPositionIsOutOfScreenBounds => "world position is out of screen bounds",
             Self::InvViewProjMatDetEqZero => "view-projection matrix is not invertible",
-            Self::PerspectiveDividerLessEqZero => "perspective divider is less than or equal to zero",
+            Self::PerspectiveDividerLessEqZero => {
+                "perspective divider is less than or equal to zero"
+            }
         })
     }
 }

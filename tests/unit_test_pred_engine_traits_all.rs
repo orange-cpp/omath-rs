@@ -9,7 +9,8 @@ mod common;
 use common::expect_near;
 use omath::engines::{cry, frostbite, iw, opengl, rage, serious, source, unity, unreal};
 use omath::projectile_prediction::{
-    AimSolution, Launcher, MuzzleOffset, PredEngine, ProjPredEngineInterface, ProjPredEngineLegacy, Projectile, Target,
+    AimSolution, Launcher, MuzzleOffset, PredEngine, ProjPredEngineInterface, ProjPredEngineLegacy,
+    Projectile, Target,
 };
 use omath::projection::{CameraEngine, ViewAnglesOf};
 use omath::scalar::Scalar;
@@ -70,7 +71,10 @@ fn zero_angles_basis_is_the_world_axes<E: Engine>() {
 }
 
 fn basis_is_orthonormal_and_keeps_handedness<E: Engine>() {
-    let handedness = E::axis_forward().cross(E::axis_right()).dot(E::axis_up()).to_f64();
+    let handedness = E::axis_forward()
+        .cross(E::axis_right())
+        .dot(E::axis_up())
+        .to_f64();
 
     for pitch in K_PITCHES {
         for yaw in K_YAWS {
@@ -82,7 +86,11 @@ fn basis_is_orthonormal_and_keeps_handedness<E: Engine>() {
             near(basis.forward.dot(basis.right), 0.0, 1e-5);
             near(basis.forward.dot(basis.up), 0.0, 1e-5);
             near(basis.right.dot(basis.up), 0.0, 1e-5);
-            near(basis.forward.cross(basis.right).dot(basis.up), handedness, 1e-5);
+            near(
+                basis.forward.cross(basis.right).dot(basis.up),
+                handedness,
+                1e-5,
+            );
         }
     }
 }
@@ -94,8 +102,19 @@ fn basis_round_trips_through_direct_angles<E: Engine>() {
         for yaw in K_YAWS {
             let forward = E::Trait::calc_view_basis(s(pitch), s(yaw)).forward;
 
-            near(E::Trait::calc_direct_pitch_angle(Vector3::default(), forward), pitch, 1e-3);
-            near(angle_difference(E::Trait::calc_direct_yaw_angle(Vector3::default(), forward), s(yaw)), 0.0, 1e-3);
+            near(
+                E::Trait::calc_direct_pitch_angle(Vector3::default(), forward),
+                pitch,
+                1e-3,
+            );
+            near(
+                angle_difference(
+                    E::Trait::calc_direct_yaw_angle(Vector3::default(), forward),
+                    s(yaw),
+                ),
+                0.0,
+                1e-3,
+            );
         }
     }
 }
@@ -124,28 +143,44 @@ fn raising_the_pitch_turns_forward_towards_up<E: Engine>() {
     for yaw in K_YAWS {
         let basis = E::Trait::calc_view_basis(s(20.0), s(yaw));
         let game_velocity = basis.forward * forward_speed + basis.up * up_speed;
-        let raised =
-            E::Trait::calc_view_basis(s::<E::Scalar>(20.0) + offset, s(yaw)).forward * forward_speed.hypot(up_speed);
+        let raised = E::Trait::calc_view_basis(s::<E::Scalar>(20.0) + offset, s(yaw)).forward
+            * forward_speed.hypot(up_speed);
 
         near(game_velocity.distance_to(raised), 0.0, 2e-2);
     }
 }
 
 fn positive_pitch_launches_upwards<E: Engine>() {
-    let round = Projectile { launch_speed: s(100.0), gravity_scale: s(1.0), ..Default::default() };
+    let round = Projectile {
+        launch_speed: s(100.0),
+        gravity_scale: s(1.0),
+        ..Default::default()
+    };
     let origin = world::<E>(5.0, -3.0, 40.0);
 
-    let up_shot = E::Trait::predict_projectile_position(origin, &round, s(30.0), s(0.0), s(1.0), s(0.0)) - origin;
+    let up_shot =
+        E::Trait::predict_projectile_position(origin, &round, s(30.0), s(0.0), s(1.0), s(0.0))
+            - origin;
     near(up_shot.dot(E::axis_up()), 50.0, 1e-3);
-    near(up_shot.dot(E::axis_forward()), 100.0 * angles::degrees_to_radians(30.0_f64).cos(), 1e-3);
+    near(
+        up_shot.dot(E::axis_forward()),
+        100.0 * angles::degrees_to_radians(30.0_f64).cos(),
+        1e-3,
+    );
     near(up_shot.dot(E::axis_right()), 0.0, 1e-3);
 
-    let down_shot = E::Trait::predict_projectile_position(origin, &round, s(-30.0), s(0.0), s(1.0), s(0.0)) - origin;
+    let down_shot =
+        E::Trait::predict_projectile_position(origin, &round, s(-30.0), s(0.0), s(1.0), s(0.0))
+            - origin;
     near(down_shot.dot(E::axis_up()), -50.0, 1e-3);
 }
 
 fn projectile_starts_at_the_launch_origin_and_flies_straight_without_gravity<E: Engine>() {
-    let round = Projectile { launch_speed: s(250.0), gravity_scale: s(0.0), ..Default::default() };
+    let round = Projectile {
+        launch_speed: s(250.0),
+        gravity_scale: s(0.0),
+        ..Default::default()
+    };
     let origin = world::<E>(10.0, 20.0, 30.0);
 
     expect_vectors_near(
@@ -164,26 +199,47 @@ fn projectile_starts_at_the_launch_origin_and_flies_straight_without_gravity<E: 
 }
 
 fn gravity_pulls_along_the_engines_down_axis<E: Engine>() {
-    let round = Projectile { launch_speed: s(300.0), gravity_scale: s(0.5), ..Default::default() };
+    let round = Projectile {
+        launch_speed: s(300.0),
+        gravity_scale: s(0.5),
+        ..Default::default()
+    };
     let origin = world::<E>(0.0, 0.0, 100.0);
 
-    let weightless = E::Trait::predict_projectile_position(origin, &round, s(10.0), s(25.0), s(2.0), s(0.0));
-    let falling = E::Trait::predict_projectile_position(origin, &round, s(10.0), s(25.0), s(2.0), s(800.0));
+    let weightless =
+        E::Trait::predict_projectile_position(origin, &round, s(10.0), s(25.0), s(2.0), s(0.0));
+    let falling =
+        E::Trait::predict_projectile_position(origin, &round, s(10.0), s(25.0), s(2.0), s(800.0));
 
     // 0.5 * (800 * 0.5) * 2^2 = 800 straight down, nothing sideways
-    expect_vectors_near(weightless - falling, E::axis_up() * s::<E::Scalar>(800.0), 1e-2);
+    expect_vectors_near(
+        weightless - falling,
+        E::axis_up() * s::<E::Scalar>(800.0),
+        1e-2,
+    );
 }
 
 fn target_prediction_falls_only_when_airborne<E: Engine>() {
-    let mut target =
-        Target { origin: world::<E>(100.0, 50.0, 300.0), velocity: world::<E>(-20.0, 10.0, 5.0), is_airborne: false };
+    let mut target = Target {
+        origin: world::<E>(100.0, 50.0, 300.0),
+        velocity: world::<E>(-20.0, 10.0, 5.0),
+        is_airborne: false,
+    };
 
     let grounded = E::Trait::predict_target_position(&target, s(2.0), s(800.0));
-    expect_vectors_near(grounded, target.origin + target.velocity * s::<E::Scalar>(2.0), 1e-3);
+    expect_vectors_near(
+        grounded,
+        target.origin + target.velocity * s::<E::Scalar>(2.0),
+        1e-3,
+    );
 
     target.is_airborne = true;
     let airborne = E::Trait::predict_target_position(&target, s(2.0), s(800.0));
-    expect_vectors_near(grounded - airborne, E::axis_up() * s::<E::Scalar>(1600.0), 1e-2);
+    expect_vectors_near(
+        grounded - airborne,
+        E::axis_up() * s::<E::Scalar>(1600.0),
+        1e-2,
+    );
 }
 
 fn splits_a_vector_into_ground_distance_and_height<E: Engine>() {
@@ -202,12 +258,22 @@ fn direct_angles_of_the_axes<E: Engine>() {
 
     near(E::Trait::calc_direct_pitch_angle(origin, ahead), 0.0, 1e-3);
     near(E::Trait::calc_direct_yaw_angle(origin, ahead), 0.0, 1e-3);
-    near(E::Trait::calc_direct_pitch_angle(origin, origin + world::<E>(10.0, 0.0, 10.0)), 45.0, 1e-3);
-    near(E::Trait::calc_direct_pitch_angle(origin, origin + world::<E>(10.0, 0.0, -10.0)), -45.0, 1e-3);
+    near(
+        E::Trait::calc_direct_pitch_angle(origin, origin + world::<E>(10.0, 0.0, 10.0)),
+        45.0,
+        1e-3,
+    );
+    near(
+        E::Trait::calc_direct_pitch_angle(origin, origin + world::<E>(10.0, 0.0, -10.0)),
+        -45.0,
+        1e-3,
+    );
 
     // Turning to the right and to the left are opposite yaws of the same size, whichever sign the engine gives them
-    let to_the_right = E::Trait::calc_direct_yaw_angle(origin, origin + world::<E>(10.0, 10.0, 0.0));
-    let to_the_left = E::Trait::calc_direct_yaw_angle(origin, origin + world::<E>(10.0, -10.0, 0.0));
+    let to_the_right =
+        E::Trait::calc_direct_yaw_angle(origin, origin + world::<E>(10.0, 10.0, 0.0));
+    let to_the_left =
+        E::Trait::calc_direct_yaw_angle(origin, origin + world::<E>(10.0, -10.0, 0.0));
     near(to_the_right.to_f64().abs(), 45.0, 1e-3);
     near(to_the_right + to_the_left, 0.0, 1e-3);
 }
@@ -224,20 +290,37 @@ struct Scenario<T> {
 
 impl<T: Real> Scenario<T> {
     fn new(projectile: Projectile<T>, launcher: Launcher<T>, target: Target<T>) -> Self {
-        Self { projectile, launcher, target, gravity: s(800.0), hit_tolerance: s(10.0) }
+        Self {
+            projectile,
+            launcher,
+            target,
+            gravity: s(800.0),
+            hit_tolerance: s(10.0),
+        }
     }
 }
 
 fn round<T: Real>(launch_speed: f64, gravity_scale: f64) -> Projectile<T> {
-    Projectile { launch_speed: s(launch_speed), gravity_scale: s(gravity_scale), ..Default::default() }
+    Projectile {
+        launch_speed: s(launch_speed),
+        gravity_scale: s(gravity_scale),
+        ..Default::default()
+    }
 }
 
 fn eye_at<E: Engine>(forward: f64, right: f64, up: f64) -> Launcher<E::Scalar> {
-    Launcher { eye_origin: world::<E>(forward, right, up), ..Default::default() }
+    Launcher {
+        eye_origin: world::<E>(forward, right, up),
+        ..Default::default()
+    }
 }
 
 fn muzzle<T: Real>(forward: f64, right: f64, up: f64) -> MuzzleOffset<T> {
-    MuzzleOffset { forward: s(forward), right: s(right), up: s(up) }
+    MuzzleOffset {
+        forward: s(forward),
+        right: s(right),
+        up: s(up),
+    }
 }
 
 /// Solves, then fires the trait's own projectile from where the solution puts the muzzle and checks it arrives. Returns
@@ -263,7 +346,8 @@ fn solve_and_check<E: Engine>(scenario: &Scenario<E::Scalar>) -> AimSolution<E::
         aim.time_of_flight,
         scenario.gravity,
     );
-    let target_position = E::Trait::predict_target_position(&scenario.target, aim.time_of_flight, scenario.gravity);
+    let target_position =
+        E::Trait::predict_target_position(&scenario.target, aim.time_of_flight, scenario.gravity);
 
     assert!(
         projectile_position.distance_to(target_position) <= scenario.hit_tolerance,
@@ -273,9 +357,24 @@ fn solve_and_check<E: Engine>(scenario: &Scenario<E::Scalar>) -> AimSolution<E::
 
     // The aim point sits on the eye's view ray, as far out as the target
     let eye = scenario.launcher.eye_origin;
-    near(E::Trait::calc_direct_pitch_angle(eye, aim.aim_point), aim.angles.pitch.to_f64(), 0.01);
-    near(angle_difference(E::Trait::calc_direct_yaw_angle(eye, aim.aim_point), aim.angles.yaw), 0.0, 0.01);
-    near(eye.distance_to(aim.aim_point), eye.distance_to(target_position).to_f64(), 0.05);
+    near(
+        E::Trait::calc_direct_pitch_angle(eye, aim.aim_point),
+        aim.angles.pitch.to_f64(),
+        0.01,
+    );
+    near(
+        angle_difference(
+            E::Trait::calc_direct_yaw_angle(eye, aim.aim_point),
+            aim.angles.yaw,
+        ),
+        0.0,
+        0.01,
+    );
+    near(
+        eye.distance_to(aim.aim_point),
+        eye.distance_to(target_position).to_f64(),
+        0.05,
+    );
 
     aim
 }
@@ -284,7 +383,11 @@ fn engine_hits_an_elevated_target_with_an_upward_pitch<E: Engine>() {
     let scenario = Scenario::new(
         round(1500.0, 1.0),
         eye_at::<E>(0.0, 0.0, 64.0),
-        Target { origin: world::<E>(800.0, 200.0, 250.0), velocity: Vector3::default(), is_airborne: false },
+        Target {
+            origin: world::<E>(800.0, 200.0, 250.0),
+            velocity: Vector3::default(),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
@@ -296,7 +399,11 @@ fn engine_hits_a_target_below_with_a_downward_pitch<E: Engine>() {
     let scenario = Scenario::new(
         round(2000.0, 0.5),
         eye_at::<E>(0.0, 0.0, 600.0),
-        Target { origin: world::<E>(700.0, -250.0, 0.0), velocity: Vector3::default(), is_airborne: false },
+        Target {
+            origin: world::<E>(700.0, -250.0, 0.0),
+            velocity: Vector3::default(),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
@@ -306,33 +413,57 @@ fn engine_hits_a_target_below_with_a_downward_pitch<E: Engine>() {
 fn engine_leads_a_moving_target_from_an_offset_muzzle<E: Engine>() {
     let scenario = Scenario::new(
         round(1100.0, 0.4),
-        Launcher { muzzle_offset: muzzle(16.0, 8.0, -6.0), ..eye_at::<E>(0.0, 0.0, 64.0) },
-        Target { origin: world::<E>(600.0, -150.0, 0.0), velocity: world::<E>(-40.0, 90.0, 0.0), is_airborne: false },
+        Launcher {
+            muzzle_offset: muzzle(16.0, 8.0, -6.0),
+            ..eye_at::<E>(0.0, 0.0, 64.0)
+        },
+        Target {
+            origin: world::<E>(600.0, -150.0, 0.0),
+            velocity: world::<E>(-40.0, 90.0, 0.0),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
 
     // It aims where the target will be, not where it is
-    assert!(aim.predicted_target_position.distance_to(scenario.target.origin) > s(30.0));
+    assert!(
+        aim.predicted_target_position
+            .distance_to(scenario.target.origin)
+            > s(30.0)
+    );
 }
 
 fn engine_hits_a_falling_target<E: Engine>() {
     let scenario = Scenario::new(
         round(1800.0, 0.5),
         eye_at::<E>(0.0, 0.0, 64.0),
-        Target { origin: world::<E>(400.0, 120.0, 500.0), velocity: world::<E>(15.0, -10.0, -30.0), is_airborne: true },
+        Target {
+            origin: world::<E>(400.0, 120.0, 500.0),
+            velocity: world::<E>(15.0, -10.0, -30.0),
+            is_airborne: true,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
-    assert!(aim.predicted_target_position.dot(E::axis_up()) < scenario.target.origin.dot(E::axis_up()));
+    assert!(
+        aim.predicted_target_position.dot(E::axis_up()) < scenario.target.origin.dot(E::axis_up())
+    );
 }
 
 /// A rocket has no arc to hide behind: from the rotated muzzle the solved direction has to run through the target.
 fn rocket_from_an_offset_muzzle_flies_through_the_target<E: Engine>() {
     let scenario = Scenario::new(
         round(1100.0, 0.0),
-        Launcher { muzzle_offset: muzzle(23.5, 12.0, -3.0), ..eye_at::<E>(0.0, 0.0, 64.0) },
-        Target { origin: world::<E>(900.0, 300.0, 150.0), velocity: Vector3::default(), is_airborne: false },
+        Launcher {
+            muzzle_offset: muzzle(23.5, 12.0, -3.0),
+            ..eye_at::<E>(0.0, 0.0, 64.0)
+        },
+        Target {
+            origin: world::<E>(900.0, 300.0, 150.0),
+            velocity: Vector3::default(),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
@@ -345,7 +476,8 @@ fn rocket_from_an_offset_muzzle_flies_through_the_target<E: Engine>() {
     assert!(off_the_ray.length() <= s(0.05));
 
     // and the eye does not look straight at the target: the muzzle is off to the side
-    let direct_yaw = E::Trait::calc_direct_yaw_angle(scenario.launcher.eye_origin, scenario.target.origin);
+    let direct_yaw =
+        E::Trait::calc_direct_yaw_angle(scenario.launcher.eye_origin, scenario.target.origin);
     assert!(angle_difference(aim.angles.yaw, direct_yaw).abs() > 0.3);
 }
 
@@ -359,14 +491,21 @@ fn tilted_rocket_from_an_offset_muzzle_flies_through_the_target<E: Engine>() {
             launch_pitch_offset: s(10.0),
             ..eye_at::<E>(0.0, 0.0, 64.0)
         },
-        Target { origin: world::<E>(900.0, 300.0, 150.0), velocity: Vector3::default(), is_airborne: false },
+        Target {
+            origin: world::<E>(900.0, 300.0, 150.0),
+            velocity: Vector3::default(),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
 
     let view = E::Trait::calc_view_basis(aim.angles.pitch, aim.angles.yaw);
-    let launch_direction =
-        E::Trait::calc_view_basis(aim.angles.pitch + scenario.launcher.launch_pitch_offset, aim.angles.yaw).forward;
+    let launch_direction = E::Trait::calc_view_basis(
+        aim.angles.pitch + scenario.launcher.launch_pitch_offset,
+        aim.angles.yaw,
+    )
+    .forward;
     let to_target = scenario.target.origin - scenario.launcher.launch_origin(view);
     let off_the_ray = to_target - launch_direction * to_target.dot(launch_direction);
     assert!(off_the_ray.length() <= s(0.05));
@@ -374,7 +513,11 @@ fn tilted_rocket_from_an_offset_muzzle_flies_through_the_target<E: Engine>() {
     // The eye looks well below the line the round takes
     near(
         aim.angles.pitch + s(10.0),
-        E::Trait::calc_direct_pitch_angle(scenario.launcher.launch_origin(view), scenario.target.origin).to_f64(),
+        E::Trait::calc_direct_pitch_angle(
+            scenario.launcher.launch_origin(view),
+            scenario.target.origin,
+        )
+        .to_f64(),
         1e-3,
     );
 }
@@ -385,38 +528,63 @@ fn pipe_style_launch_fired_the_way_the_game_does_hits<E: Engine>() {
     let up_speed = s::<E::Scalar>(200.0);
 
     let scenario = Scenario::new(
-        Projectile { launch_speed: forward_speed.hypot(up_speed), gravity_scale: s(0.5), ..Default::default() },
+        Projectile {
+            launch_speed: forward_speed.hypot(up_speed),
+            gravity_scale: s(0.5),
+            ..Default::default()
+        },
         Launcher {
             muzzle_offset: muzzle(16.0, 8.0, -6.0),
             launch_pitch_offset: angles::radians_to_degrees(up_speed.atan2(forward_speed)),
             ..eye_at::<E>(0.0, 0.0, 64.0)
         },
-        Target { origin: world::<E>(600.0, 150.0, 0.0), velocity: world::<E>(-40.0, 30.0, 0.0), is_airborne: false },
+        Target {
+            origin: world::<E>(600.0, 150.0, 0.0),
+            velocity: world::<E>(-40.0, 30.0, 0.0),
+            is_airborne: false,
+        },
     );
 
     let aim = solve_and_check::<E>(&scenario);
 
     let basis = E::Trait::calc_view_basis(aim.angles.pitch, aim.angles.yaw);
     let time = aim.time_of_flight;
-    let drop = s::<E::Scalar>(0.5) * scenario.gravity * scenario.projectile.gravity_scale * time * time;
+    let drop =
+        s::<E::Scalar>(0.5) * scenario.gravity * scenario.projectile.gravity_scale * time * time;
     let position = scenario.launcher.launch_origin(basis)
         + (basis.forward * forward_speed + basis.up * up_speed) * time
         - E::axis_up() * drop;
 
     assert!(
-        position.distance_to(E::Trait::predict_target_position(&scenario.target, time, scenario.gravity)) <= s(6.0)
+        position.distance_to(E::Trait::predict_target_position(
+            &scenario.target,
+            time,
+            scenario.gravity
+        )) <= s(6.0)
     );
 }
 
 fn engine_reports_no_solution_for_an_unreachable_target<E: Engine>() {
-    let engine =
-        ProjPredEngineLegacy::<E::Trait>::new(s(800.0), E::Scalar::ONE / s::<E::Scalar>(100.0), s(5.0), s(5.0));
+    let engine = ProjPredEngineLegacy::<E::Trait>::new(
+        s(800.0),
+        E::Scalar::ONE / s::<E::Scalar>(100.0),
+        s(5.0),
+        s(5.0),
+    );
 
     let slow = round(10.0, 1.0);
     let launcher = eye_at::<E>(0.0, 0.0, 64.0);
-    let far_away = Target { origin: world::<E>(50000.0, 0.0, 0.0), velocity: Vector3::default(), is_airborne: false };
+    let far_away = Target {
+        origin: world::<E>(50000.0, 0.0, 0.0),
+        velocity: Vector3::default(),
+        is_airborne: false,
+    };
 
-    assert!(engine.maybe_calculate_aim(&slow, &launcher, &far_away).is_none());
+    assert!(
+        engine
+            .maybe_calculate_aim(&slow, &launcher, &far_away)
+            .is_none()
+    );
 }
 
 macro_rules! test_engine {

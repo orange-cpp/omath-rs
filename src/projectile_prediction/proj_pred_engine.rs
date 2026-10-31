@@ -36,7 +36,11 @@ pub struct AimSolution<T> {
 /// [`Projectile::origin`] and [`Projectile::launch_offset`] as a fixed world-space offset, which is how the engines
 /// behaved before [`Launcher`] existed.
 pub fn launcher_from_projectile<T: Real>(projectile: &Projectile<T>) -> Launcher<T> {
-    Launcher { eye_origin: projectile.origin, world_offset: projectile.launch_offset, ..Launcher::default() }
+    Launcher {
+        eye_origin: projectile.origin,
+        world_offset: projectile.launch_offset,
+        ..Launcher::default()
+    }
 }
 
 /// A projectile prediction solver.
@@ -50,16 +54,26 @@ pub trait ProjPredEngineInterface<T: Real> {
 
     /// Compatibility wrapper over [`maybe_calculate_aim`](Self::maybe_calculate_aim), see
     /// [`launcher_from_projectile`]. Kept for one release; new code should call it with a [`Launcher`].
-    fn maybe_calculate_aim_point(&self, projectile: &Projectile<T>, target: &Target<T>) -> Option<Vector3<T>> {
-        let solution = self.maybe_calculate_aim(projectile, &launcher_from_projectile(projectile), target)?;
+    fn maybe_calculate_aim_point(
+        &self,
+        projectile: &Projectile<T>,
+        target: &Target<T>,
+    ) -> Option<Vector3<T>> {
+        let solution =
+            self.maybe_calculate_aim(projectile, &launcher_from_projectile(projectile), target)?;
 
         Some(solution.aim_point)
     }
 
     /// Compatibility wrapper over [`maybe_calculate_aim`](Self::maybe_calculate_aim), see
     /// [`launcher_from_projectile`]. Kept for one release; new code should call it with a [`Launcher`].
-    fn maybe_calculate_aim_angles(&self, projectile: &Projectile<T>, target: &Target<T>) -> Option<AimAngles<T>> {
-        let solution = self.maybe_calculate_aim(projectile, &launcher_from_projectile(projectile), target)?;
+    fn maybe_calculate_aim_angles(
+        &self,
+        projectile: &Projectile<T>,
+        target: &Target<T>,
+    ) -> Option<AimAngles<T>> {
+        let solution =
+            self.maybe_calculate_aim(projectile, &launcher_from_projectile(projectile), target)?;
 
         Some(solution.angles)
     }

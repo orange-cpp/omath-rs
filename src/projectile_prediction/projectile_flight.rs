@@ -69,18 +69,18 @@ impl<E: PredEngine> ProjectileFlight<E> {
     }
 
     pub fn step(&mut self) {
-        self.velocity = self.velocity - self.world_up * (self.gravity * self.time_step);
+        self.velocity -= self.world_up * (self.gravity * self.time_step);
 
         let rate = self.projectile.drag * self.velocity.length()
             + self.projectile.drag_forward * self.velocity.dot(self.forward).abs_value()
             + self.projectile.drag_up * self.velocity.dot(self.up).abs_value();
 
         // A step cannot take more than the whole velocity
-        self.velocity = self.velocity * (E::Scalar::ONE - E::Scalar::ONE.min_of(rate * self.time_step));
+        self.velocity *= E::Scalar::ONE - E::Scalar::ONE.min_of(rate * self.time_step);
 
         self.clamp_speed();
 
-        self.position = self.position + self.velocity * self.time_step;
+        self.position += self.velocity * self.time_step;
         self.step_count += 1;
     }
 
@@ -105,14 +105,14 @@ impl<E: PredEngine> ProjectileFlight<E> {
     fn clamp_speed(&mut self) {
         let max_speed = self.projectile.max_speed;
 
-        if !(max_speed > E::Scalar::ZERO) {
+        if max_speed.partial_cmp(&E::Scalar::ZERO) != Some(std::cmp::Ordering::Greater) {
             return;
         }
 
         let speed = self.velocity.length();
 
         if speed > max_speed {
-            self.velocity = self.velocity * (max_speed / speed);
+            self.velocity *= max_speed / speed;
         }
     }
 }

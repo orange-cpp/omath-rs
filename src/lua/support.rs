@@ -2,8 +2,8 @@
 
 use crate::Real;
 use mlua::{
-    Error, FromLua, FromLuaMulti, Function, IntoLua, IntoLuaMulti, Lua, MetaMethod, MultiValue, Result, Table, UserData,
-    UserDataMethods, Value,
+    Error, FromLua, FromLuaMulti, Function, IntoLua, IntoLuaMulti, Lua, MetaMethod, MultiValue,
+    Result, Table, UserData, UserDataMethods, Value,
 };
 
 const FAILURE_KEY: &str = "omath.failure";
@@ -48,7 +48,8 @@ return raising, read_only
 
 pub(super) fn install_helpers(lua: &Lua) -> Result<()> {
     let failure = lua.create_table()?;
-    let (raising, read_only): (Function, Function) = lua.load(HELPERS).set_name("=omath").call(failure.clone())?;
+    let (raising, read_only): (Function, Function) =
+        lua.load(HELPERS).set_name("=omath").call(failure.clone())?;
 
     lua.set_named_registry_value(FAILURE_KEY, failure)?;
     lua.set_named_registry_value(RAISING_KEY, raising)?;
@@ -65,9 +66,13 @@ where
 {
     let raw = lua.create_function(move |lua, args: A| match function(lua, args)? {
         Ok(value) => value.into_lua_multi(lua),
-        Err(message) => (lua.named_registry_value::<Table>(FAILURE_KEY)?, message).into_lua_multi(lua),
+        Err(message) => {
+            (lua.named_registry_value::<Table>(FAILURE_KEY)?, message).into_lua_multi(lua)
+        }
     })?;
-    let wrapped: Function = lua.named_registry_value::<Function>(RAISING_KEY)?.call(raw)?;
+    let wrapped: Function = lua
+        .named_registry_value::<Function>(RAISING_KEY)?
+        .call(raw)?;
 
     lua.set_named_registry_value(key, wrapped)
 }
@@ -78,7 +83,8 @@ pub(super) fn raising_function(lua: &Lua, key: &str) -> Result<Function> {
 
 /// A read-only view of `values`, as sol2's `new_enum` makes.
 pub(super) fn read_only_table(lua: &Lua, values: Table) -> Result<Table> {
-    lua.named_registry_value::<Function>(READ_ONLY_KEY)?.call(values)
+    lua.named_registry_value::<Function>(READ_ONLY_KEY)?
+        .call(values)
 }
 
 /// `parent[name]`, created if missing.
@@ -94,12 +100,18 @@ pub(super) fn subtable(lua: &Lua, parent: &Table, name: &str) -> Result<Table> {
 }
 
 pub(super) fn no_matching_overload() -> Error {
-    Error::runtime("no matching function call takes this number of arguments and the specified types")
+    Error::runtime(
+        "no matching function call takes this number of arguments and the specified types",
+    )
 }
 
 /// Constructors dispatch on the exact argument count, where a tuple of arguments would ignore extra ones.
 pub(super) fn expect_args(args: &MultiValue, count: usize) -> Result<()> {
-    if args.len() == count { Ok(()) } else { Err(no_matching_overload()) }
+    if args.len() == count {
+        Ok(())
+    } else {
+        Err(no_matching_overload())
+    }
 }
 
 /// The number a value holds, without the string coercion of [`FromLua`]: sol2 overloads do not take numeric strings.
@@ -112,7 +124,11 @@ pub(super) fn number(value: &Value) -> Option<f64> {
 }
 
 pub(super) fn userdata<T: Copy + 'static>(value: &Value) -> Option<T> {
-    value.as_userdata()?.borrow::<T>().ok().map(|borrowed| *borrowed)
+    value
+        .as_userdata()?
+        .borrow::<T>()
+        .ok()
+        .map(|borrowed| *borrowed)
 }
 
 pub(super) fn copy_from_userdata<T: Copy + 'static>(value: Value) -> Result<T> {
@@ -176,33 +192,54 @@ where
 }
 
 /// `__mul`, with the scalar on either side. Without `by_self`, `T * T` has no overload.
-pub(super) fn add_mul<T, M>(methods: &mut M, by_self: Option<fn(T, T) -> T>, by_scalar: fn(T, f64) -> T)
-where
+pub(super) fn add_mul<T, M>(
+    methods: &mut M,
+    by_self: Option<fn(T, T) -> T>,
+    by_scalar: fn(T, f64) -> T,
+) where
     T: UserData + Copy + 'static,
     M: UserDataMethods<T>,
 {
-    methods.add_meta_function(MetaMethod::Mul, move |_, (left, right): (Value, Value)| {
-        match (userdata::<T>(&left), userdata::<T>(&right), number(&left), number(&right), by_self) {
+    methods.add_meta_function(
+        MetaMethod::Mul,
+        move |_, (left, right): (Value, Value)| match (
+            userdata::<T>(&left),
+            userdata::<T>(&right),
+            number(&left),
+            number(&right),
+            by_self,
+        ) {
             (Some(left), Some(right), _, _, Some(by_self)) => Ok(by_self(left, right)),
-            (Some(value), _, _, Some(scalar), _) | (_, Some(value), Some(scalar), _, _) => Ok(by_scalar(value, scalar)),
+            (Some(value), _, _, Some(scalar), _) | (_, Some(value), Some(scalar), _, _) => {
+                Ok(by_scalar(value, scalar))
+            }
             _ => Err(no_matching_overload()),
-        }
-    });
+        },
+    );
 }
 
 /// `__div`, with the scalar on the right only. Without `by_self`, `T / T` has no overload.
-pub(super) fn add_div<T, M>(methods: &mut M, by_self: Option<fn(T, T) -> T>, by_scalar: fn(T, f64) -> T)
-where
+pub(super) fn add_div<T, M>(
+    methods: &mut M,
+    by_self: Option<fn(T, T) -> T>,
+    by_scalar: fn(T, f64) -> T,
+) where
     T: UserData + Copy + 'static,
     M: UserDataMethods<T>,
 {
-    methods.add_meta_function(MetaMethod::Div, move |_, (left, right): (Value, Value)| {
-        match (userdata::<T>(&left), userdata::<T>(&right), number(&right), by_self) {
+    methods.add_meta_function(
+        MetaMethod::Div,
+        move |_, (left, right): (Value, Value)| match (
+            userdata::<T>(&left),
+            userdata::<T>(&right),
+            number(&right),
+            by_self,
+        ) {
             (Some(left), Some(right), _, Some(by_self)) => Ok(by_self(left, right)),
             (Some(value), _, Some(scalar), _) => Ok(by_scalar(value, scalar)),
             _ => Err(no_matching_overload()),
-        }
-    });
+        },
+    );
 }
 
 /// The scalars the bindings use, with `std::format("{}", value)` as their string form.
@@ -257,7 +294,11 @@ impl CppFloatForms {
         } else {
             digits + 1
         };
-        let exponent_text = format!("{}{:02}", if exponent < 0 { '-' } else { '+' }, exponent.abs());
+        let exponent_text = format!(
+            "{}{:02}",
+            if exponent < 0 { '-' } else { '+' },
+            exponent.abs()
+        );
         let scientific_length = mantissa.len() + 1 + exponent_text.len();
 
         if fixed_length as usize > scientific_length {

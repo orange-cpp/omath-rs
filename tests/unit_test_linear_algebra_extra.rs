@@ -28,8 +28,12 @@ fn formatter_and_hash_vector3() {
     assert_eq!(h1, h2);
 
     // point_to_same_direction
-    assert!(Vector3::<f32>::new(1.0, 0.0, 0.0).point_to_same_direction(Vector3::new(2.0, 0.0, 0.0)));
-    assert!(!Vector3::<f32>::new(1.0, 0.0, 0.0).point_to_same_direction(Vector3::new(-1.0, 0.0, 0.0)));
+    assert!(
+        Vector3::<f32>::new(1.0, 0.0, 0.0).point_to_same_direction(Vector3::new(2.0, 0.0, 0.0))
+    );
+    assert!(
+        !Vector3::<f32>::new(1.0, 0.0, 0.0).point_to_same_direction(Vector3::new(-1.0, 0.0, 0.0))
+    );
 }
 
 #[test]

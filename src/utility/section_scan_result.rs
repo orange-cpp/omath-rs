@@ -58,7 +58,11 @@ macro_rules! impl_section_scanner {
             ) -> Option<SectionScanResult> {
                 let file_data = std::fs::read(path_to_file).ok()?;
 
-                Self::scan_for_parsed_pattern_in_memory_file(&file_data, pattern, target_section_name)
+                Self::scan_for_parsed_pattern_in_memory_file(
+                    &file_data,
+                    pattern,
+                    target_section_name,
+                )
             }
 
             pub fn scan_for_pattern_in_memory_file(
@@ -68,7 +72,11 @@ macro_rules! impl_section_scanner {
             ) -> Option<SectionScanResult> {
                 let pattern = PatternScanner::parse_pattern(pattern).ok()?;
 
-                Self::scan_for_parsed_pattern_in_memory_file(file_data, &pattern, target_section_name)
+                Self::scan_for_parsed_pattern_in_memory_file(
+                    file_data,
+                    &pattern,
+                    target_section_name,
+                )
             }
 
             /// Takes a pattern from [`PatternScanner::parse_pattern`] or [`consteval_pattern!`](crate::consteval_pattern).

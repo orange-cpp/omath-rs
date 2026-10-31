@@ -21,7 +21,11 @@ fn ray(start: (f32, f32, f32), end: (f32, f32, f32)) -> Ray {
 
 // One canonical right-angled triangle in the XY plane.
 const fn triangle() -> Triangle<Vec3> {
-    Triangle::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0))
+    Triangle::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(1.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+    )
 }
 
 #[test]
@@ -38,7 +42,11 @@ fn various_rays() {
     ];
 
     for (i, (ray, expected_clear)) in cases.iter().enumerate() {
-        assert_eq!(can_trace_line(ray, &triangle()), *expected_clear, "case {i}");
+        assert_eq!(
+            can_trace_line(ray, &triangle()),
+            *expected_clear,
+            "case {i}"
+        );
     }
 }
 
@@ -68,7 +76,11 @@ fn distant_triangle_clear() {
 
 #[test]
 fn cant_hit() {
-    let triangle = Triangle::new(Vec3::new(2.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0), Vec3::new(2.0, 2.0, 2.0));
+    let triangle = Triangle::new(
+        Vec3::new(2.0, 0.0, 0.0),
+        Vec3::new(2.0, 2.0, 0.0),
+        Vec3::new(2.0, 2.0, 2.0),
+    );
 
     let ray = ray((0.0, 0.0, 0.0), (1.0, 0.0, 0.0));
 
@@ -77,7 +89,11 @@ fn cant_hit() {
 
 #[test]
 fn can_hit() {
-    let triangle = Triangle::new(Vec3::new(2.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 0.0), Vec3::new(2.0, 2.0, 2.0));
+    let triangle = Triangle::new(
+        Vec3::new(2.0, 0.0, 0.0),
+        Vec3::new(2.0, 2.0, 0.0),
+        Vec3::new(2.0, 2.0, 2.0),
+    );
 
     let ray = ray((0.0, 0.0, 0.0), (2.1, 0.0, 0.0));
 

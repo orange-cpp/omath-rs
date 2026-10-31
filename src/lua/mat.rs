@@ -1,12 +1,14 @@
 //! `omath.Mat3`, `omath.Mat4`, `omath.Mat4ColumnMajor` and `omath.Mat4d`.
 
 use super::support::{
-    CppInt, add_div, add_eq, add_mul, expect_args, from_lua_userdata, number, raising_function, set_raising_function,
+    CppInt, add_div, add_eq, add_mul, expect_args, from_lua_userdata, number, raising_function,
+    set_raising_function,
 };
 use super::vector::Vec3f;
 use crate::{ColumnMajor, Mat, NdcDepthRange, RowMajor};
 use mlua::{
-    AnyUserData, Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods, Value,
+    AnyUserData, Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields,
+    UserDataMethods, Value,
 };
 
 type Mat3f = Mat<3, 3, f32, RowMajor>;
@@ -22,21 +24,33 @@ const MISSING_VALUE: &str = "matrix row has missing value";
 
 /// The C++ index is an `int`, so a wide integer wraps before the range check.
 fn checked_index(index: CppInt, limit: usize) -> Option<usize> {
-    usize::try_from(index.0 as i32).ok().filter(|&index| index < limit)
+    usize::try_from(index.0 as i32)
+        .ok()
+        .filter(|&index| index < limit)
 }
 
 /// The helpers only `Mat4` and `Mat4ColumnMajor` have.
 macro_rules! mat4_helpers {
     ($methods:ident, $mat:ty) => {
-        $methods.add_function("to_screen_mat", |_, (width, height): (f32, f32)| Ok(<$mat>::to_screen(width, height)));
-        $methods.add_function("translation", |_, diff: Vec3f| Ok(<$mat>::translation(diff)));
+        $methods.add_function("to_screen_mat", |_, (width, height): (f32, f32)| {
+            Ok(<$mat>::to_screen(width, height))
+        });
+        $methods.add_function("translation", |_, diff: Vec3f| {
+            Ok(<$mat>::translation(diff))
+        });
         $methods.add_function("scale", |_, scale: Vec3f| Ok(<$mat>::scale(scale)));
-        $methods.add_function("look_at_left_handed", |_, (eye, center, up): (Vec3f, Vec3f, Vec3f)| {
-            Ok(<$mat>::look_at_left_handed(eye, center, up))
-        });
-        $methods.add_function("look_at_right_handed", |_, (eye, center, up): (Vec3f, Vec3f, Vec3f)| {
-            Ok(<$mat>::look_at_right_handed(eye, center, up))
-        });
+        $methods.add_function(
+            "look_at_left_handed",
+            |_, (eye, center, up): (Vec3f, Vec3f, Vec3f)| {
+                Ok(<$mat>::look_at_left_handed(eye, center, up))
+            },
+        );
+        $methods.add_function(
+            "look_at_right_handed",
+            |_, (eye, center, up): (Vec3f, Vec3f, Vec3f)| {
+                Ok(<$mat>::look_at_right_handed(eye, center, up))
+            },
+        );
         $methods.add_function(
             "perspective_left_handed_vertical_fov",
             |_, (field_of_view, aspect_ratio, near, far): (f32, f32, f32, f32)| {
@@ -162,7 +176,14 @@ macro_rules! square_mat {
 
 square_mat!(Mat3f, f32, 3, "Mat3", register_mat3);
 square_mat!(Mat4f, f32, 4, "Mat4", register_mat4, mat4_helpers);
-square_mat!(Mat4ColumnMajor, f32, 4, "Mat4ColumnMajor", register_mat4_column_major, mat4_helpers);
+square_mat!(
+    Mat4ColumnMajor,
+    f32,
+    4,
+    "Mat4ColumnMajor",
+    register_mat4_column_major,
+    mat4_helpers
+);
 square_mat!(Mat4d, f64, 4, "Mat4d", register_mat4d);
 
 pub(super) fn register(lua: &Lua, omath: &Table) -> Result<()> {

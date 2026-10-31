@@ -3,7 +3,10 @@ mod common;
 use common::*;
 use omath::scalar::Scalar;
 use omath::trigonometry::angles;
-use omath::{Angle, ColumnMajor, Mat, MatStoreType, NdcDepthRange, RowMajor, StoreOrder, Vector3, angle_range};
+use omath::{
+    Angle, ColumnMajor, Mat, MatStoreType, NdcDepthRange, RowMajor, StoreOrder, Vector3,
+    angle_range,
+};
 
 type M4 = Mat<4, 4>;
 
@@ -52,7 +55,11 @@ fn expect_multiplication_matches_scalar_reference<
 fn expect_identity<const N: usize, S: StoreOrder>(mat: Mat<N, N, f32, S>, tolerance: f32) {
     for row in 0..N {
         for column in 0..N {
-            expect_near(mat.at(row, column), if row == column { 1.0f32 } else { 0.0f32 }, tolerance);
+            expect_near(
+                mat.at(row, column),
+                if row == column { 1.0f32 } else { 0.0f32 },
+                tolerance,
+            );
         }
     }
 }
@@ -89,7 +96,6 @@ fn constructor_default() {
 
 #[test]
 fn constructor_initializer_list() {
-
     let m = Mat::<2, 2>::from_rows([[1.0f32, 2.0f32], [3.0f32, 4.0f32]]);
     assert_eq!(row_count(&m), 2);
     assert_eq!(columns_count(&m), 2);
@@ -97,7 +103,6 @@ fn constructor_initializer_list() {
     expect_float_eq(m.at(0, 1), 2.0f32);
     expect_float_eq(m.at(1, 0), 3.0f32);
     expect_float_eq(m.at(1, 1), 4.0f32);
-
 }
 
 #[test]
@@ -118,7 +123,6 @@ fn constructor_copy() {
     assert_eq!(columns_count(&m3), columns_count(&m2));
     expect_float_eq(m3.at(0, 0), m2.at(0, 0));
     expect_float_eq(m3.at(1, 1), m2.at(1, 1));
-
 }
 
 #[test]
@@ -143,7 +147,6 @@ fn operator_multiplication_matrix() {
     expect_float_eq(m3.at(0, 1), 10.0f32);
     expect_float_eq(m3.at(1, 0), 15.0f32);
     expect_float_eq(m3.at(1, 1), 22.0f32);
-
 }
 
 #[test]
@@ -153,7 +156,6 @@ fn operator_multiplication_scalar() {
     let m3 = m2 * 2.0f32;
     expect_float_eq(m3.at(0, 0), 2.0f32);
     expect_float_eq(m3.at(1, 1), 8.0f32);
-
 }
 
 #[test]
@@ -163,7 +165,6 @@ fn operator_division_scalar() {
     let m3 = m2 / 2.0f32;
     expect_float_eq(m3.at(0, 0), 0.5f32);
     expect_float_eq(m3.at(1, 1), 2.0f32);
-
 }
 
 #[test]
@@ -175,7 +176,6 @@ fn transpose() {
     expect_float_eq(m3.at(0, 1), m2.at(1, 0));
     expect_float_eq(m3.at(1, 0), m2.at(0, 1));
     expect_float_eq(m3.at(1, 1), m2.at(1, 1));
-
 }
 
 #[test]
@@ -184,7 +184,6 @@ fn determinant() {
 
     let det: f32 = m2.determinant();
     expect_float_eq(det, -2.0f32);
-
 }
 
 #[test]
@@ -193,7 +192,6 @@ fn sum() {
 
     let sum: f32 = m2.sum();
     expect_float_eq(sum, 10.0f32);
-
 }
 
 #[test]
@@ -240,14 +238,12 @@ fn assignment_operator_move() {
 
 #[test]
 fn static_method_to_screen_mat() {
-
     let screen_mat = M4::to_screen(800.0f32, 600.0f32);
     expect_float_eq(screen_mat.at(0, 0), 400.0f32);
     expect_float_eq(screen_mat.at(1, 1), -300.0f32);
     expect_float_eq(screen_mat.at(3, 0), 400.0f32);
     expect_float_eq(screen_mat.at(3, 1), 300.0f32);
     expect_float_eq(screen_mat.at(3, 3), 1.0f32);
-
 }
 
 #[test]
@@ -267,7 +263,8 @@ fn method_at_out_of_range_column() {
 #[test]
 fn operator_multiplication_row_major_simd_and_tail() {
     let left = Mat::<3, 5, f32, RowMajor>::from_fn(|row, column| (row * 3 + column + 1) as f32);
-    let right = Mat::<5, 33, f32, RowMajor>::from_fn(|row, column| ((row + 1) * (column % 5 + 1)) as f32);
+    let right =
+        Mat::<5, 33, f32, RowMajor>::from_fn(|row, column| ((row + 1) * (column % 5 + 1)) as f32);
 
     expect_multiplication_matches_scalar_reference(left, right);
 }
@@ -275,7 +272,8 @@ fn operator_multiplication_row_major_simd_and_tail() {
 #[test]
 fn operator_multiplication_column_major_simd_and_tail() {
     let left = Mat::<17, 5, f64, ColumnMajor>::from_fn(|row, column| (row * 3 + column + 1) as f64);
-    let right = Mat::<5, 3, f64, ColumnMajor>::from_fn(|row, column| ((row + 1) * (column + 1)) as f64);
+    let right =
+        Mat::<5, 3, f64, ColumnMajor>::from_fn(|row, column| ((row + 1) * (column + 1)) as f64);
 
     expect_multiplication_matches_scalar_reference(left, right);
 }
@@ -293,13 +291,22 @@ fn operator_multiplication_integer_falls_back_from_avx() {
 
 #[test]
 fn determinant_3x3() {
-    let det = Mat::<3, 3>::from_rows([[6.0f32, 1.0f32, 1.0f32], [4.0f32, -2.0f32, 5.0f32], [2.0f32, 8.0f32, 7.0f32]]).determinant();
+    let det = Mat::<3, 3>::from_rows([
+        [6.0f32, 1.0f32, 1.0f32],
+        [4.0f32, -2.0f32, 5.0f32],
+        [2.0f32, 8.0f32, 7.0f32],
+    ])
+    .determinant();
     expect_float_eq(det, -306.0f32);
 }
 
 #[test]
 fn strip_3x3() {
-    let m = Mat::<3, 3>::from_rows([[3.0f32, 0.0f32, 2.0f32], [2.0f32, 0.0f32, -2.0f32], [0.0f32, 1.0f32, 1.0f32]]);
+    let m = Mat::<3, 3>::from_rows([
+        [3.0f32, 0.0f32, 2.0f32],
+        [2.0f32, 0.0f32, -2.0f32],
+        [0.0f32, 1.0f32, 1.0f32],
+    ]);
     let minor: Mat<2, 2> = m.strip(0, 0);
     assert_eq!(row_count(&minor), 2);
     assert_eq!(columns_count(&minor), 2);
@@ -311,7 +318,6 @@ fn strip_3x3() {
 
 #[test]
 fn transpose_non_square() {
-
     let m = Mat::<2, 3>::from_rows([[1.0f32, 2.0f32, 3.0f32], [4.0f32, 5.0f32, 6.0f32]]);
     let transposed = m.transposed();
     assert_eq!(row_count(&transposed), 3);
@@ -322,7 +328,6 @@ fn transpose_non_square() {
     expect_float_eq(transposed.at(0, 1), 4.0f32);
     expect_float_eq(transposed.at(1, 1), 5.0f32);
     expect_float_eq(transposed.at(2, 1), 6.0f32);
-
 }
 
 #[test]
@@ -355,7 +360,13 @@ fn inverted4x4_column_major() {
 
 #[test]
 fn inverted4x4_view_projection() {
-    let projection = M4::perspective_left_handed_vertical_fov(73.7f32, 16.0f32 / 9.0f32, 1.0f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let projection = M4::perspective_left_handed_vertical_fov(
+        73.7f32,
+        16.0f32 / 9.0f32,
+        1.0f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
     let view = M4::camera_view(
         Vector3::new(0.936f32, 0.312f32, -0.160f32),
         Vector3::new(-0.289f32, 0.884f32, 0.369f32),
@@ -373,17 +384,24 @@ fn inverted4x4_view_projection() {
 
 #[test]
 fn inverted4x4_singular() {
-
     // Row 3 is row 1 doubled, so the determinant is zero
-    let singular = Mat::<4, 4>::from_rows([[1.0f32, 2.0f32, 3.0f32, 4.0f32], [5.0f32, 6.0f32, 7.0f32, 8.0f32], [2.0f32, 4.0f32, 6.0f32, 8.0f32], [9.0f32, 1.0f32, 2.0f32, 3.0f32]]);
+    let singular = Mat::<4, 4>::from_rows([
+        [1.0f32, 2.0f32, 3.0f32, 4.0f32],
+        [5.0f32, 6.0f32, 7.0f32, 8.0f32],
+        [2.0f32, 4.0f32, 6.0f32, 8.0f32],
+        [9.0f32, 1.0f32, 2.0f32, 3.0f32],
+    ]);
 
     assert!(!(singular.inverted().is_some()));
-
 }
 
 #[test]
 fn inverted3x3_round_trip() {
-    let mat = Mat::<3, 3>::from_rows([[2.0f32, 0.0f32, 1.0f32], [1.0f32, 3.0f32, 2.0f32], [1.0f32, 1.0f32, 2.0f32]]);
+    let mat = Mat::<3, 3>::from_rows([
+        [2.0f32, 0.0f32, 1.0f32],
+        [1.0f32, 3.0f32, 2.0f32],
+        [1.0f32, 1.0f32, 2.0f32],
+    ]);
 
     let inverse = mat.inverted();
     assert!(inverse.is_some());
@@ -393,12 +411,23 @@ fn inverted3x3_round_trip() {
 
 #[test]
 fn equanity() {
-
     let left_handed = Vector3::<f32>::new(0.0f32, 2.0f32, 10.0f32);
     let right_handed = Vector3::<f32>::new(0.0f32, 2.0f32, -10.0f32);
 
-    let proj_left_handed = M4::perspective_left_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
-    let proj_right_handed = M4::perspective_right_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj_left_handed = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
+    let proj_right_handed = M4::perspective_right_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let mut ndc_left_handed = proj_left_handed * col(left_handed);
     let mut ndc_right_handed = proj_right_handed * col(right_handed);
@@ -407,25 +436,33 @@ fn equanity() {
     ndc_right_handed /= ndc_right_handed.at(3, 0);
 
     assert_eq!(ndc_left_handed, ndc_right_handed);
-
 }
 
 #[test]
 fn mat_perspective_left_handed() {
-
-    let perspective_proj = M4::perspective_left_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let perspective_proj = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
     let mut projected = perspective_proj * col(Vector3::new(0.0f32, 0.0f32, 0.1001f32));
 
     projected /= projected.at(3, 0);
 
     assert!(projected.at(2, 0) > -1.0f32 && projected.at(2, 0) < 0.0f32);
-
 }
 
 #[test]
 fn mat_perspective_left_handed_zero_to_one() {
-
-    let proj = M4::perspective_left_handed_vertical_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let proj = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // Near plane point should map to z ~ 0
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, 0.1f32));
@@ -442,13 +479,17 @@ fn mat_perspective_left_handed_zero_to_one() {
     mid_pt /= mid_pt.at(3, 0);
     assert!(mid_pt.at(2, 0) > 0.0f32);
     assert!(mid_pt.at(2, 0) < 1.0f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_zero_to_one() {
-
-    let proj = M4::perspective_right_handed_vertical_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let proj = M4::perspective_right_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // Near plane point (negative z for right-handed) should map to z ~ 0
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, -0.1f32));
@@ -465,15 +506,25 @@ fn mat_perspective_right_handed_zero_to_one() {
     mid_pt /= mid_pt.at(3, 0);
     assert!(mid_pt.at(2, 0) > 0.0f32);
     assert!(mid_pt.at(2, 0) < 1.0f32);
-
 }
 
 #[test]
 fn mat_perspective_negative_one_to_one_range() {
-
     // Verify existing [-1, 1] behavior with explicit template arg matches default
-    let proj_default = M4::perspective_left_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
-    let proj_explicit = M4::perspective_left_handed_vertical_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj_default = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
+    let proj_explicit = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     assert_eq!(proj_default, proj_explicit);
 
@@ -486,13 +537,17 @@ fn mat_perspective_negative_one_to_one_range() {
     let mut far_pt = proj_default * col(Vector3::new(0.0f32, 0.0f32, 1000.0f32));
     far_pt /= far_pt.at(3, 0);
     expect_near(far_pt.at(2, 0), 1.0f32, 1e-3f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_neg_one_to_one() {
-
-    let proj = M4::perspective_right_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_right_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     // Near plane (negative z for RH) should map to z ~ -1
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, -0.1f32));
@@ -509,14 +564,18 @@ fn mat_perspective_right_handed_neg_one_to_one() {
     mid_pt /= mid_pt.at(3, 0);
     assert!(mid_pt.at(2, 0) > -1.0f32);
     assert!(mid_pt.at(2, 0) < 1.0f32);
-
 }
 
 #[test]
 fn mat_perspective_left_handed_horizontal_fov_zero_to_one() {
-
     // hfov=90 deg, aspect=16/9 => tan(hfov/2)=1, so x_axis=1 and y_axis=aspect
-    let proj = M4::perspective_left_handed_horizontal_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let proj = M4::perspective_left_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // Near plane should map to z ~ 0
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, 0.1f32));
@@ -532,13 +591,17 @@ fn mat_perspective_left_handed_horizontal_fov_zero_to_one() {
     let mut right_edge = proj * col(Vector3::new(0.1f32, 0.0f32, 0.1f32));
     right_edge /= right_edge.at(3, 0);
     expect_near(right_edge.at(0, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
 fn mat_perspective_left_handed_horizontal_fov_neg_one_to_one() {
-
-    let proj = M4::perspective_left_handed_horizontal_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_left_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, 0.1f32));
     near_pt /= near_pt.at(3, 0);
@@ -551,13 +614,17 @@ fn mat_perspective_left_handed_horizontal_fov_neg_one_to_one() {
     let mut right_edge = proj * col(Vector3::new(0.1f32, 0.0f32, 0.1f32));
     right_edge /= right_edge.at(3, 0);
     expect_near(right_edge.at(0, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_horizontal_fov_zero_to_one() {
-
-    let proj = M4::perspective_right_handed_horizontal_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let proj = M4::perspective_right_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, -0.1f32));
     near_pt /= near_pt.at(3, 0);
@@ -570,13 +637,17 @@ fn mat_perspective_right_handed_horizontal_fov_zero_to_one() {
     let mut right_edge = proj * col(Vector3::new(0.1f32, 0.0f32, -0.1f32));
     right_edge /= right_edge.at(3, 0);
     expect_near(right_edge.at(0, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_horizontal_fov_neg_one_to_one() {
-
-    let proj = M4::perspective_right_handed_horizontal_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_right_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let mut near_pt = proj * col(Vector3::new(0.0f32, 0.0f32, -0.1f32));
     near_pt /= near_pt.at(3, 0);
@@ -589,7 +660,6 @@ fn mat_perspective_right_handed_horizontal_fov_neg_one_to_one() {
     let mut right_edge = proj * col(Vector3::new(0.1f32, 0.0f32, -0.1f32));
     right_edge /= right_edge.at(3, 0);
     expect_near(right_edge.at(0, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
@@ -598,8 +668,20 @@ fn mat_perspective_horizontal_vs_vertical_fov_equivalence() {
     let aspect = 16.0f32 / 9.0f32;
     let vfov_deg = angles::horizontal_fov_to_vertical(hfov_deg, aspect);
 
-    let proj_h = M4::perspective_left_handed_horizontal_fov(hfov_deg, aspect, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
-    let proj_v = M4::perspective_left_handed_vertical_fov(vfov_deg, aspect, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj_h = M4::perspective_left_handed_horizontal_fov(
+        hfov_deg,
+        aspect,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
+    let proj_v = M4::perspective_left_handed_vertical_fov(
+        vfov_deg,
+        aspect,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     for i in 0..4 {
         for j in 0..4 {
@@ -610,65 +692,92 @@ fn mat_perspective_horizontal_vs_vertical_fov_equivalence() {
 
 #[test]
 fn mat_perspective_left_handed_vertical_fov_handedness() {
-
-    let proj = M4::perspective_left_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let in_front = proj * col(Vector3::new(0.0f32, 0.0f32, 1.0f32));
     let behind = proj * col(Vector3::new(0.0f32, 0.0f32, -1.0f32));
 
     assert!(in_front.at(3, 0) > 0.0f32);
     assert!(behind.at(3, 0) < 0.0f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_vertical_fov_handedness() {
-
-    let proj = M4::perspective_right_handed_vertical_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_right_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let in_front = proj * col(Vector3::new(0.0f32, 0.0f32, -1.0f32));
     let behind = proj * col(Vector3::new(0.0f32, 0.0f32, 1.0f32));
 
     assert!(in_front.at(3, 0) > 0.0f32);
     assert!(behind.at(3, 0) < 0.0f32);
-
 }
 
 #[test]
 fn mat_perspective_left_handed_horizontal_fov_handedness() {
-
-    let proj = M4::perspective_left_handed_horizontal_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_left_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let in_front = proj * col(Vector3::new(0.0f32, 0.0f32, 1.0f32));
     let behind = proj * col(Vector3::new(0.0f32, 0.0f32, -1.0f32));
 
     assert!(in_front.at(3, 0) > 0.0f32);
     assert!(behind.at(3, 0) < 0.0f32);
-
 }
 
 #[test]
 fn mat_perspective_right_handed_horizontal_fov_handedness() {
-
-    let proj = M4::perspective_right_handed_horizontal_fov(90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::NegativeOneToOne);
+    let proj = M4::perspective_right_handed_horizontal_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let in_front = proj * col(Vector3::new(0.0f32, 0.0f32, -1.0f32));
     let behind = proj * col(Vector3::new(0.0f32, 0.0f32, 1.0f32));
 
     assert!(in_front.at(3, 0) > 0.0f32);
     assert!(behind.at(3, 0) < 0.0f32);
-
 }
 
 #[test]
 fn mat_perspective_zero_to_one_equanity() {
-
     // LH and RH should produce same NDC for mirrored z
     let left_handed = Vector3::<f32>::new(0.0f32, 2.0f32, 10.0f32);
     let right_handed = Vector3::<f32>::new(0.0f32, 2.0f32, -10.0f32);
 
-    let proj_lh = M4::perspective_left_handed_vertical_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
-    let proj_rh = M4::perspective_right_handed_vertical_fov( 90.0f32, 16.0f32 / 9.0f32, 0.1f32, 1000.0f32, NdcDepthRange::ZeroToOne);
+    let proj_lh = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
+    let proj_rh = M4::perspective_right_handed_vertical_fov(
+        90.0f32,
+        16.0f32 / 9.0f32,
+        0.1f32,
+        1000.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     let mut ndc_lh = proj_lh * col(left_handed);
     let mut ndc_rh = proj_rh * col(right_handed);
@@ -677,13 +786,19 @@ fn mat_perspective_zero_to_one_equanity() {
     ndc_rh /= ndc_rh.at(3, 0);
 
     assert_eq!(ndc_lh, ndc_rh);
-
 }
 
 #[test]
 fn mat_ortho_left_handed_zero_to_one() {
-
-    let ortho = M4::ortho_left_handed( -1.0f32, 1.0f32, -1.0f32, 1.0f32, 0.1f32, 100.0f32, NdcDepthRange::ZeroToOne);
+    let ortho = M4::ortho_left_handed(
+        -1.0f32,
+        1.0f32,
+        -1.0f32,
+        1.0f32,
+        0.1f32,
+        100.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // Near plane should map to z ~ 0
     let near_pt = ortho * col(Vector3::new(0.0f32, 0.0f32, 0.1f32));
@@ -692,13 +807,19 @@ fn mat_ortho_left_handed_zero_to_one() {
     // Far plane should map to z ~ 1
     let far_pt = ortho * col(Vector3::new(0.0f32, 0.0f32, 100.0f32));
     expect_near(far_pt.at(2, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
 fn mat_ortho_right_handed_zero_to_one() {
-
-    let ortho = M4::ortho_right_handed( -1.0f32, 1.0f32, -1.0f32, 1.0f32, 0.1f32, 100.0f32, NdcDepthRange::ZeroToOne);
+    let ortho = M4::ortho_right_handed(
+        -1.0f32,
+        1.0f32,
+        -1.0f32,
+        1.0f32,
+        0.1f32,
+        100.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // Near plane (negative z for RH) should map to z ~ 0
     let near_pt = ortho * col(Vector3::new(0.0f32, 0.0f32, -0.1f32));
@@ -707,18 +828,31 @@ fn mat_ortho_right_handed_zero_to_one() {
     // Far plane should map to z ~ 1
     let far_pt = ortho * col(Vector3::new(0.0f32, 0.0f32, -100.0f32));
     expect_near(far_pt.at(2, 0), 1.0f32, 1e-4f32);
-
 }
 
 #[test]
 fn mat_ortho_negative_one_to_one_default() {
-
     // Verify explicit [-1, 1] matches default
-    let ortho_default = M4::ortho_left_handed(-1.0f32, 1.0f32, -1.0f32, 1.0f32, 0.1f32, 100.0f32, NdcDepthRange::NegativeOneToOne);
-    let ortho_explicit = M4::ortho_left_handed(-1.0f32, 1.0f32, -1.0f32, 1.0f32, 0.1f32, 100.0f32, NdcDepthRange::NegativeOneToOne);
+    let ortho_default = M4::ortho_left_handed(
+        -1.0f32,
+        1.0f32,
+        -1.0f32,
+        1.0f32,
+        0.1f32,
+        100.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
+    let ortho_explicit = M4::ortho_left_handed(
+        -1.0f32,
+        1.0f32,
+        -1.0f32,
+        1.0f32,
+        0.1f32,
+        100.0f32,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     assert_eq!(ortho_default, ortho_explicit);
-
 }
 
 #[test]
@@ -730,7 +864,10 @@ fn to_screen_mat_keeps_scalar_type() {
     expect_double_eq(screen.at(3, 1), 300.0);
 
     let column_major = Mat::<4, 4, f32, ColumnMajor>::to_screen(800.0f32, 600.0f32);
-    assert_eq!(Mat::<4, 4, f32, ColumnMajor>::store_ordering(), MatStoreType::ColumnMajor);
+    assert_eq!(
+        Mat::<4, 4, f32, ColumnMajor>::store_ordering(),
+        MatStoreType::ColumnMajor
+    );
     expect_float_eq(column_major.at(3, 1), 300.0f32);
 }
 
@@ -751,7 +888,10 @@ fn in_place_multiply_returns_self() {
     let b = Mat::<2, 2>::from_rows([[0.0f32, 1.0f32], [1.0f32, 0.0f32]]);
 
     a *= b;
-    assert_eq!(a, Mat::<2, 2>::from_rows([[2.0f32, 1.0f32], [4.0f32, 3.0f32]]));
+    assert_eq!(
+        a,
+        Mat::<2, 2>::from_rows([[2.0f32, 1.0f32], [4.0f32, 3.0f32]])
+    );
 }
 
 #[test]
@@ -766,7 +906,10 @@ fn equality_is_constexpr() {
 #[test]
 fn to_string_formatting() {
     let a = Mat::<2, 2>::from_rows([[1.0f32, 2.0f32], [3.0f32, 4.0f32]]);
-    assert_eq!(a.to_string(), "[[    1.000,     2.000]\n [    3.000,     4.000]]");
+    assert_eq!(
+        a.to_string(),
+        "[[    1.000,     2.000]\n [    3.000,     4.000]]"
+    );
     assert_eq!(format!("{}", a), a.to_string());
 }
 
@@ -781,11 +924,15 @@ fn rotation_yxz_and_zxy_match_the_axis_products() {
 
                 expect_mat3_near(
                     M4::rotation_yxz(first, pitch, last),
-                    M4::rotation_axis_y(first) * M4::rotation_axis_x(pitch) * M4::rotation_axis_z(last),
+                    M4::rotation_axis_y(first)
+                        * M4::rotation_axis_x(pitch)
+                        * M4::rotation_axis_z(last),
                 );
                 expect_mat3_near(
                     M4::rotation_zxy(first, pitch, last),
-                    M4::rotation_axis_z(first) * M4::rotation_axis_x(pitch) * M4::rotation_axis_y(last),
+                    M4::rotation_axis_z(first)
+                        * M4::rotation_axis_x(pitch)
+                        * M4::rotation_axis_y(last),
                 );
             }
         }
@@ -818,12 +965,18 @@ fn extract_rotation_yxz_and_zxy_at_the_singularity_keep_the_rotation() {
         let yxz_rotation = M4::rotation_yxz(any(40.0f32), any(x), any(25.0f32));
         let yxz = yxz_rotation.extract_rotation_yxz();
         expect_float_eq(yxz.z, 0.0f32);
-        expect_mat3_near(M4::rotation_yxz(any(yxz.y), any(yxz.x), any(yxz.z)), yxz_rotation);
+        expect_mat3_near(
+            M4::rotation_yxz(any(yxz.y), any(yxz.x), any(yxz.z)),
+            yxz_rotation,
+        );
 
         let zxy_rotation = M4::rotation_zxy(any(40.0f32), any(x), any(25.0f32));
         let zxy = zxy_rotation.extract_rotation_zxy();
         expect_float_eq(zxy.y, 0.0f32);
-        expect_mat3_near(M4::rotation_zxy(any(zxy.z), any(zxy.x), any(zxy.y)), zxy_rotation);
+        expect_mat3_near(
+            M4::rotation_zxy(any(zxy.z), any(zxy.x), any(zxy.y)),
+            zxy_rotation,
+        );
     }
 }
 
@@ -835,7 +988,11 @@ fn static_assert_inverse_round_trip() {
     let product = k_affine * inverse;
     for row in 0..4 {
         for column in 0..4 {
-            assert!(close_to(product.at(row, column), if row == column { 1.0f32 } else { 0.0f32 }, 1e-5f32));
+            assert!(close_to(
+                product.at(row, column),
+                if row == column { 1.0f32 } else { 0.0f32 },
+                1e-5f32
+            ));
         }
     }
 }
@@ -843,29 +1000,66 @@ fn static_assert_inverse_round_trip() {
 #[test]
 fn static_assert_extract_scale() {
     let scale = M4::scale(Vector3::new(2.0f32, 3.0f32, 4.0f32)).extract_scale();
-    assert!(close_to(scale.x, 2.0f32, 1e-5f32) && close_to(scale.y, 3.0f32, 1e-5f32) && close_to(scale.z, 4.0f32, 1e-5f32));
+    assert!(
+        close_to(scale.x, 2.0f32, 1e-5f32)
+            && close_to(scale.y, 3.0f32, 1e-5f32)
+            && close_to(scale.z, 4.0f32, 1e-5f32)
+    );
 }
 
 #[test]
 fn static_assert_rotation_axis_z() {
     let rotation = M4::rotation_axis_z(Pitch::from_degrees(90.0f32));
-    assert!(close_to(rotation.at(0, 0), 0.0f32, 1e-5f32) && close_to(rotation.at(0, 1), -1.0f32, 1e-5f32));
-    assert!(close_to(rotation.at(1, 0), 1.0f32, 1e-5f32) && close_to(rotation.at(1, 1), 0.0f32, 1e-5f32));
-    assert!(close_to(rotation.at(2, 2), 1.0f32, 1e-5f32) && close_to(rotation.at(3, 3), 1.0f32, 1e-5f32));
+    assert!(
+        close_to(rotation.at(0, 0), 0.0f32, 1e-5f32)
+            && close_to(rotation.at(0, 1), -1.0f32, 1e-5f32)
+    );
+    assert!(
+        close_to(rotation.at(1, 0), 1.0f32, 1e-5f32)
+            && close_to(rotation.at(1, 1), 0.0f32, 1e-5f32)
+    );
+    assert!(
+        close_to(rotation.at(2, 2), 1.0f32, 1e-5f32)
+            && close_to(rotation.at(3, 3), 1.0f32, 1e-5f32)
+    );
 }
 
 #[test]
 fn static_assert_vertical_fov_perspective() {
-    let projection = M4::perspective_left_handed_vertical_fov(90.0f32, 1.0f32, 1.0f32, 11.0f32, NdcDepthRange::ZeroToOne);
-    assert!(close_to(projection.at(0, 0), 1.0f32, 1e-5f32) && close_to(projection.at(1, 1), 1.0f32, 1e-5f32));
-    assert!(close_to(projection.at(2, 2), 1.1f32, 1e-5f32) && close_to(projection.at(2, 3), -1.1f32, 1e-5f32));
+    let projection = M4::perspective_left_handed_vertical_fov(
+        90.0f32,
+        1.0f32,
+        1.0f32,
+        11.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
+    assert!(
+        close_to(projection.at(0, 0), 1.0f32, 1e-5f32)
+            && close_to(projection.at(1, 1), 1.0f32, 1e-5f32)
+    );
+    assert!(
+        close_to(projection.at(2, 2), 1.1f32, 1e-5f32)
+            && close_to(projection.at(2, 3), -1.1f32, 1e-5f32)
+    );
     assert!(close_to(projection.at(3, 2), 1.0f32, 1e-5f32));
 }
 
 #[test]
 fn static_assert_horizontal_fov_perspective() {
-    let projection = M4::perspective_right_handed_horizontal_fov(90.0f32, 2.0f32, 1.0f32, 11.0f32, NdcDepthRange::ZeroToOne);
-    assert!(close_to(projection.at(0, 0), 1.0f32, 1e-5f32) && close_to(projection.at(1, 1), 2.0f32, 1e-5f32));
-    assert!(close_to(projection.at(2, 2), -1.1f32, 1e-5f32) && close_to(projection.at(2, 3), -1.1f32, 1e-5f32));
+    let projection = M4::perspective_right_handed_horizontal_fov(
+        90.0f32,
+        2.0f32,
+        1.0f32,
+        11.0f32,
+        NdcDepthRange::ZeroToOne,
+    );
+    assert!(
+        close_to(projection.at(0, 0), 1.0f32, 1e-5f32)
+            && close_to(projection.at(1, 1), 2.0f32, 1e-5f32)
+    );
+    assert!(
+        close_to(projection.at(2, 2), -1.1f32, 1e-5f32)
+            && close_to(projection.at(2, 3), -1.1f32, 1e-5f32)
+    );
     assert!(close_to(projection.at(3, 2), -1.0f32, 1e-5f32));
 }

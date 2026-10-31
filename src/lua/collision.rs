@@ -1,17 +1,19 @@
 //! `omath.primitives` and `omath.collision`.
 
 use super::support::{
-    expect_args, from_lua_userdata, no_matching_overload, number, raising_function, read_only_table,
-    set_raising_function, subtable, userdata,
+    expect_args, from_lua_userdata, no_matching_overload, number, raising_function,
+    read_only_table, set_raising_function, subtable, userdata,
 };
 use super::triangle::Triangle3f;
 use super::vector::Vec3f;
 use crate::collision::{
-    Collider, EpaParams, GjkSettings, Ray, can_trace_line, epa_solve, find_support_vertex, get_ray_hit_point,
-    is_collide, is_collide_with_simplex_info,
+    Collider, EpaParams, GjkSettings, Ray, can_trace_line, epa_solve, find_support_vertex,
+    get_ray_hit_point, is_collide, is_collide_with_simplex_info,
 };
 use crate::primitives::{Aabb, Obb, UpAxis, UpX, UpZ};
-use mlua::{Lua, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods, UserDataRef, Value};
+use mlua::{
+    Lua, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods, UserDataRef, Value,
+};
 
 type Aabbf = Aabb<f32>;
 type Obbf = Obb<f32>;
@@ -75,7 +77,9 @@ impl UserData for Aabbf {
                 UpAxis::Z => Aabb::<f32, UpZ>::new(this.min, this.max).bottom(),
             })
         });
-        methods.add_method("is_collide", |_, this, other: Aabbf| Ok(this.is_collide(&other)));
+        methods.add_method("is_collide", |_, this, other: Aabbf| {
+            Ok(this.is_collide(&other))
+        });
         methods.add_method("as_table", |lua, this, ()| {
             let table = lua.create_table()?;
             table.set("min", this.min)?;
@@ -97,7 +101,13 @@ impl UserData for Obbf {
             }
             expect_args(&args, 5)?;
             let (center, axis_x, axis_y, axis_z, half_extents) = lua.unpack_multi(args)?;
-            Ok(Obbf { center, axis_x, axis_y, axis_z, half_extents })
+            Ok(Obbf {
+                center,
+                axis_x,
+                axis_y,
+                axis_z,
+                half_extents,
+            })
         });
 
         methods.add_method("vertices", |_, this, ()| Ok(this.vertices()));
@@ -126,11 +136,20 @@ impl UserData for Ray3f {
                 _ => return Err(no_matching_overload()),
             };
             let (start, end): (Vec3f, Vec3f) = lua.unpack_multi(args)?;
-            Ok(Ray3f { start, end, infinite_length })
+            Ok(Ray3f {
+                start,
+                end,
+                infinite_length,
+            })
         });
 
-        methods.add_method("direction_vector", |_, this, ()| Ok(this.direction_vector()));
-        methods.add_method("direction_vector_normalized", |_, this, ()| Ok(this.direction_vector_normalized()));
+        methods.add_method(
+            "direction_vector",
+            |_, this, ()| Ok(this.direction_vector()),
+        );
+        methods.add_method("direction_vector_normalized", |_, this, ()| {
+            Ok(this.direction_vector_normalized())
+        });
     }
 }
 
@@ -178,9 +197,10 @@ impl UserData for ConvexCollider {
     }
 
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("find_abs_furthest_vertex_position", |_, this, direction: Vec3f| {
-            Ok(this.find_abs_furthest_vertex_position(direction))
-        });
+        methods.add_method(
+            "find_abs_furthest_vertex_position",
+            |_, this, direction: Vec3f| Ok(this.find_abs_furthest_vertex_position(direction)),
+        );
         methods.add_method("get_origin", |_, this, ()| Ok(this.get_origin()));
         methods.add_method_mut("set_origin", |_, this, origin: Vec3f| {
             this.set_origin(origin);
@@ -196,9 +216,10 @@ struct LineTracer;
 
 impl UserData for LineTracer {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function("can_trace_line", |_, (ray, triangle): (Ray3f, Triangle3f)| {
-            Ok(can_trace_line(&ray, &triangle))
-        });
+        methods.add_function(
+            "can_trace_line",
+            |_, (ray, triangle): (Ray3f, Triangle3f)| Ok(can_trace_line(&ray, &triangle)),
+        );
         methods.add_function("get_ray_hit_point", |_, (ray, target): (Ray3f, Value)| {
             if let Some(triangle) = userdata::<Triangle3f>(&target) {
                 Ok(get_ray_hit_point(&ray, &triangle))
@@ -210,9 +231,12 @@ impl UserData for LineTracer {
                 Err(no_matching_overload())
             }
         });
-        methods.add_function("ray_hits_triangle", |_, (ray, triangle): (Ray3f, Triangle3f)| {
-            Ok(get_ray_hit_point(&ray, &triangle) != ray.end)
-        });
+        methods.add_function(
+            "ray_hits_triangle",
+            |_, (ray, triangle): (Ray3f, Triangle3f)| {
+                Ok(get_ray_hit_point(&ray, &triangle) != ray.end)
+            },
+        );
         methods.add_function("ray_hits_aabb", |_, (ray, aabb): (Ray3f, Aabbf)| {
             Ok(get_ray_hit_point(&ray, &aabb) != ray.end)
         });
@@ -246,7 +270,11 @@ pub(super) fn register_collision(lua: &Lua, omath: &Table) -> Result<()> {
         };
         let vertices = vertices_from_table(&points)?;
 
-        Ok(if vertices.is_empty() { Err(NO_VERTICES) } else { Ok(ConvexCollider { vertices, origin }) })
+        Ok(if vertices.is_empty() {
+            Err(NO_VERTICES)
+        } else {
+            Ok(ConvexCollider { vertices, origin })
+        })
     })?;
 
     collision.set("Ray", lua.create_proxy::<Ray3f>()?)?;

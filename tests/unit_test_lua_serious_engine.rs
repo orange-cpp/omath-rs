@@ -26,7 +26,10 @@ fn camera_positive_heading_turns_left() {
 
 #[test]
 fn camera_horizontal_fov_reaches_the_screen_edge() {
-    lua_support::check(SCRIPT, "Serious_Camera_horizontal_fov_reaches_the_screen_edge");
+    lua_support::check(
+        SCRIPT,
+        "Serious_Camera_horizontal_fov_reaches_the_screen_edge",
+    );
 }
 
 #[test]

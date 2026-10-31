@@ -1,5 +1,6 @@
 use super::{
-    AimAngles, AimSolution, Arc, Launcher, PredEngine, ProjPredEngineInterface, Projectile, ProjectileFlight, Target,
+    AimAngles, AimSolution, Arc, Launcher, PredEngine, ProjPredEngineInterface, Projectile,
+    ProjectileFlight, Target,
 };
 use crate::Vector3;
 use crate::engines::source;
@@ -141,7 +142,13 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
         launcher: &Launcher<E::Scalar>,
         view_angles: AimAngles<E::Scalar>,
     ) -> ProjectileFlight<E> {
-        ProjectileFlight::new(projectile, launcher, view_angles, self.gravity_constant, self.simulation_time_step)
+        ProjectileFlight::new(
+            projectile,
+            launcher,
+            view_angles,
+            self.gravity_constant,
+            self.simulation_time_step,
+        )
     }
 
     /// One shot at the target as it will be at `at`: the view pitch that lands there, and when the round does. The
@@ -149,13 +156,28 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
     /// Carrying the last pass's pitch over instead looks cheaper and is a trap: a step in time can move the target by
     /// tens of degrees, and a search started on the wrong side of the arc's peak, where turning the pitch the way it
     /// expects moves the round the other way, walks itself into the limit.
-    fn shoot_at(&self, search: &mut Search<'_, E::Scalar>, at: E::Scalar) -> Option<PitchSolution<E::Scalar>> {
-        let Search { projectile, launcher, target, time_limit, arc, .. } = *search;
+    fn shoot_at(
+        &self,
+        search: &mut Search<'_, E::Scalar>,
+        at: E::Scalar,
+    ) -> Option<PitchSolution<E::Scalar>> {
+        let Search {
+            projectile,
+            launcher,
+            target,
+            time_limit,
+            arc,
+            ..
+        } = *search;
 
         search.predicted = E::predict_target_position(target, at, self.gravity_constant);
         let predicted = search.predicted;
 
-        let parabola = self.maybe_calculate_parabola_launch_pitches(projectile, launcher.eye_origin, predicted)?;
+        let parabola = self.maybe_calculate_parabola_launch_pitches(
+            projectile,
+            launcher.eye_origin,
+            predicted,
+        )?;
 
         let mut start_pitch = match arc {
             Arc::Low => parabola.low,
@@ -168,11 +190,12 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
         // that either.
         let floor_pitch = parabola.low - launcher.launch_pitch_offset;
         if arc == Arc::High {
-            let cosine =
-                E::calc_vector_2d_distance(predicted - launcher.eye_origin) / (projectile.launch_speed * time_limit);
+            let cosine = E::calc_vector_2d_distance(predicted - launcher.eye_origin)
+                / (projectile.launch_speed * time_limit);
             if cosine < E::Scalar::ONE {
-                start_pitch =
-                    start_pitch.min_of(angles::radians_to_degrees(cosine.acos()) - launcher.launch_pitch_offset);
+                start_pitch = start_pitch.min_of(
+                    angles::radians_to_degrees(cosine.acos()) - launcher.launch_pitch_offset,
+                );
             }
         }
 
@@ -188,7 +211,9 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
         // A shade past the last loft, on the side that has the round pass above the target, so that the pair of passes
         // closes on the answer straight away
         let hint = search.loft.map(|loft| {
-            start_pitch + loft * E::Scalar::from_f64(1.05) + E::Scalar::from_f64(0.1) * climb::<E::Scalar>(arc)
+            start_pitch
+                + loft * E::Scalar::from_f64(1.05)
+                + E::Scalar::from_f64(0.1) * climb::<E::Scalar>(arc)
         });
 
         // A level view looks along the horizontal, whichever axes the engine keeps that in
@@ -212,14 +237,24 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
     /// Flies the round from this view pitch until it has covered the horizontal distance to the target point, and
     /// reports the height it passes at and when. The muzzle is placed from the same angles, so the way it swings with
     /// the view is part of the answer rather than an error in it. Empty when the round never gets that far.
-    fn fly_past(&self, search: &PitchSearch<'_, E::Scalar>, view_pitch: E::Scalar) -> Option<Pass<E::Scalar>> {
-        let mut flight =
-            self.flight(search.projectile, search.launcher, AimAngles { pitch: view_pitch, yaw: search.yaw });
+    fn fly_past(
+        &self,
+        search: &PitchSearch<'_, E::Scalar>,
+        view_pitch: E::Scalar,
+    ) -> Option<Pass<E::Scalar>> {
+        let mut flight = self.flight(
+            search.projectile,
+            search.launcher,
+            AimAngles {
+                pitch: view_pitch,
+                yaw: search.yaw,
+            },
+        );
 
         let to_target = search.target_point - flight.origin();
         let distance = to_target.dot(search.heading);
 
-        if !(distance > E::Scalar::ZERO) {
+        if distance.partial_cmp(&E::Scalar::ZERO) != Some(std::cmp::Ordering::Greater) {
             return None;
         }
 
@@ -241,7 +276,8 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
                 let fraction = (distance - previous_travel) / (travel - previous_travel);
 
                 return Some(Pass {
-                    height_error: previous_height + (flown_height - previous_height) * fraction - height,
+                    height_error: previous_height + (flown_height - previous_height) * fraction
+                        - height,
                     time: previous_time + self.simulation_time_step * fraction,
                 });
             }
@@ -269,7 +305,10 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
 
         if gravity == E::Scalar::ZERO || distance2d == E::Scalar::ZERO {
             let direct = E::calc_direct_pitch_angle(origin, target_point);
-            return Some(ParabolaPitches { low: direct, high: direct });
+            return Some(ParabolaPitches {
+                low: direct,
+                high: direct,
+            });
         }
 
         let speed_sqr = projectile.launch_speed * projectile.launch_speed;
@@ -316,7 +355,8 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
 
         // How close to the target's height a pass has to come before the pitch counts as found
         let height_tolerance = self.distance_tolerance / E::Scalar::from_f64(100.0);
-        let is_on_target = |pass: &Pass<E::Scalar>| pass.height_error.abs_value() <= height_tolerance;
+        let is_on_target =
+            |pass: &Pass<E::Scalar>| pass.height_error.abs_value() <= height_tolerance;
         let is_below = |pass: &Pass<E::Scalar>| pass.height_error < E::Scalar::ZERO;
 
         let lowest = match arc {
@@ -345,7 +385,10 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
 
         let mut near = near?;
         if is_on_target(&near) {
-            return Some(PitchSolution { view_pitch: near_pitch, time: near.time });
+            return Some(PitchSolution {
+                view_pitch: near_pitch,
+                time: near.time,
+            });
         }
 
         let direction = if is_below(&near) { climb } else { -climb };
@@ -357,7 +400,10 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
 
             if let Some(far) = self.fly_past(search, far_pitch) {
                 if is_on_target(&far) {
-                    return Some(PitchSolution { view_pitch: far_pitch, time: far.time });
+                    return Some(PitchSolution {
+                        view_pitch: far_pitch,
+                        time: far.time,
+                    });
                 }
                 if is_below(&far) != is_below(&near) {
                     crossing = Some((far_pitch, far));
@@ -372,8 +418,11 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
                 break crossing;
             }
 
-            let at_the_limit =
-                if direction > E::Scalar::ZERO { near_pitch >= pitch_limit } else { near_pitch <= lowest };
+            let at_the_limit = if direction > E::Scalar::ZERO {
+                near_pitch >= pitch_limit
+            } else {
+                near_pitch <= lowest
+            };
             if at_the_limit {
                 return None;
             }
@@ -385,7 +434,10 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
             let far = self.fly_past(search, far_pitch)?;
 
             if is_on_target(&far) {
-                return Some(PitchSolution { view_pitch: far_pitch, time: far.time });
+                return Some(PitchSolution {
+                    view_pitch: far_pitch,
+                    time: far.time,
+                });
             }
 
             if is_below(&far) != is_below(&near) {
@@ -415,16 +467,25 @@ impl<E: PredEngine> ProjPredEngineDrag<E> {
             std::mem::swap(&mut below_error, &mut above_error);
         }
 
-        let mut best = PitchSolution { view_pitch: below_pitch, time: near.time };
+        let mut best = PitchSolution {
+            view_pitch: below_pitch,
+            time: near.time,
+        };
         let mut last_side = 0;
 
         for _ in 0..MAX_REFINEMENTS {
-            let pitch = (below_pitch * above_error - above_pitch * below_error) / (above_error - below_error);
+            let pitch = (below_pitch * above_error - above_pitch * below_error)
+                / (above_error - below_error);
             let pass = self.fly_past(search, pitch)?;
 
-            best = PitchSolution { view_pitch: pitch, time: pass.time };
+            best = PitchSolution {
+                view_pitch: pitch,
+                time: pass.time,
+            };
 
-            if is_on_target(&pass) || (above_pitch - below_pitch).abs_value() < E::Scalar::from_f64(1e-4) {
+            if is_on_target(&pass)
+                || (above_pitch - below_pitch).abs_value() < E::Scalar::from_f64(1e-4)
+            {
                 break;
             }
 
@@ -469,9 +530,12 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineDrag<E>
     ) -> Option<AimSolution<E::Scalar>> {
         const MAX_ITERATIONS: usize = 12;
 
-        if !(self.simulation_time_step > E::Scalar::ZERO)
-            || !(self.maximum_simulation_time > E::Scalar::ZERO)
-            || !(projectile.launch_speed > E::Scalar::ZERO)
+        if self.simulation_time_step.partial_cmp(&E::Scalar::ZERO)
+            != Some(std::cmp::Ordering::Greater)
+            || self.maximum_simulation_time.partial_cmp(&E::Scalar::ZERO)
+                != Some(std::cmp::Ordering::Greater)
+            || projectile.launch_speed.partial_cmp(&E::Scalar::ZERO)
+                != Some(std::cmp::Ordering::Greater)
         {
             return None;
         }
@@ -483,7 +547,11 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineDrag<E>
         let time_limit = self.maximum_simulation_time * E::Scalar::from_f64(1.25);
 
         // A round without gravity flies one straight line, and both arcs are it
-        let arc = if self.gravity_constant * projectile.gravity_scale > E::Scalar::ZERO { self.arc } else { Arc::Low };
+        let arc = if self.gravity_constant * projectile.gravity_scale > E::Scalar::ZERO {
+            self.arc
+        } else {
+            Arc::Low
+        };
 
         // Where the target will be depends on how long the round takes, and how long the round takes depends on where
         // the target will be. The time that satisfies both is the one where the round, aimed at where the target is at
@@ -536,8 +604,11 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineDrag<E>
                     continue;
                 }
 
-                let distance =
-                    launcher.eye_origin.distance_to(E::predict_target_position(target, at, self.gravity_constant));
+                let distance = launcher.eye_origin.distance_to(E::predict_target_position(
+                    target,
+                    at,
+                    self.gravity_constant,
+                ));
 
                 if distance < nearest {
                     nearest = distance;
@@ -564,7 +635,8 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineDrag<E>
 
             if let (false, Some((previous_time, previous_mismatch))) = (settled, previous) {
                 if mismatch != previous_mismatch {
-                    next_time = time - mismatch * (time - previous_time) / (mismatch - previous_mismatch);
+                    next_time =
+                        time - mismatch * (time - previous_time) / (mismatch - previous_mismatch);
                 }
             }
 
@@ -592,15 +664,22 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineDrag<E>
             solved = next?;
         }
 
-        if time > self.maximum_simulation_time || !Self::is_view_pitch_reachable(solved.view_pitch, search.yaw) {
+        if time > self.maximum_simulation_time
+            || !Self::is_view_pitch_reachable(solved.view_pitch, search.yaw)
+        {
             return None;
         }
 
         // Whatever came out above has to put the round on the target, at the time claimed
         let predicted = E::predict_target_position(target, time, self.gravity_constant);
 
-        let angles = AimAngles { pitch: solved.view_pitch, yaw: search.yaw };
-        if self.predict_projectile_position(projectile, launcher, angles, time).distance_to(predicted)
+        let angles = AimAngles {
+            pitch: solved.view_pitch,
+            yaw: search.yaw,
+        };
+        if self
+            .predict_projectile_position(projectile, launcher, angles, time)
+            .distance_to(predicted)
             > self.distance_tolerance
         {
             return None;

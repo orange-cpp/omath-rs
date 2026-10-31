@@ -25,7 +25,16 @@ fn base64_decode() {
     assert!(hashing::base64_decode("Zm9v").is_ok());
     assert_eq!(hashing::base64_decode("Zm9v").unwrap(), b"foo");
     assert_eq!(hashing::base64_decode("Zm9vYmFy").unwrap(), b"foobar");
-    assert_eq!(hashing::base64_decode("Zm9v=").unwrap_err(), Base64Error::InvalidLength);
-    assert_eq!(hashing::base64_decode("Zm?v").unwrap_err(), Base64Error::InvalidCharacter);
-    assert_eq!(hashing::base64_decode("Zm9=").unwrap_err(), Base64Error::InvalidPadding);
+    assert_eq!(
+        hashing::base64_decode("Zm9v=").unwrap_err(),
+        Base64Error::InvalidLength
+    );
+    assert_eq!(
+        hashing::base64_decode("Zm?v").unwrap_err(),
+        Base64Error::InvalidCharacter
+    );
+    assert_eq!(
+        hashing::base64_decode("Zm9=").unwrap_err(),
+        Base64Error::InvalidPadding
+    );
 }

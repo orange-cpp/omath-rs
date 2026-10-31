@@ -12,7 +12,10 @@ fn assert_every_truncation_is_none(image: &[u8], scan: impl Fn(&[u8]) -> bool) {
     assert!(scan(image), "the untruncated image must scan");
 
     for size in 0..image.len() {
-        assert!(!scan(&image[..size]), "image truncated to {size} bytes was accepted");
+        assert!(
+            !scan(&image[..size]),
+            "image truncated to {size} bytes was accepted"
+        );
     }
 }
 
@@ -71,9 +74,18 @@ fn truncated_file_returns_none() {
     let elf_file = TempFile::create(&elf[..elf.len() - 1]);
     let macho_file = TempFile::create(&macho[..macho.len() - 1]);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(pe_file.path(), "DE AD", ".text"), None);
-    assert_eq!(ElfPatternScanner::scan_for_pattern_in_file(elf_file.path(), "DE AD", ".text"), None);
-    assert_eq!(MachOPatternScanner::scan_for_pattern_in_file(macho_file.path(), "DE AD", "__text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(pe_file.path(), "DE AD", ".text"),
+        None
+    );
+    assert_eq!(
+        ElfPatternScanner::scan_for_pattern_in_file(elf_file.path(), "DE AD", ".text"),
+        None
+    );
+    assert_eq!(
+        MachOPatternScanner::scan_for_pattern_in_file(macho_file.path(), "DE AD", "__text"),
+        None
+    );
 }
 
 #[test]
@@ -115,7 +127,10 @@ fn pe_section_past_end_of_file_returns_none() {
     w32(&mut image, PE_SH_OFF + 16, 0x1000); // size_raw_data
     let f = TempFile::create(&image);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "00", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "00", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -123,14 +138,16 @@ fn pe_image_base_wraps_at_image_width() {
     let mut image = build_minimal_pe(&CODE);
     w64(&mut image, PE_OH_OFF + 24, u64::MAX);
 
-    let result = PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
+    let result =
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
     assert_eq!(result.virtual_base_addr, 0xFFF);
 
     let mut image = build_minimal_pe(&CODE);
     w16(&mut image, PE_OH_OFF, 0x10B);
     w32(&mut image, PE_OH_OFF + 28, 0xFFFF_F800);
 
-    let result = PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
+    let result =
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
     assert_eq!(result.virtual_base_addr, 0x800);
 }
 
@@ -140,7 +157,8 @@ fn pe32_image_base_is_read_from_its_own_offset() {
     w16(&mut image, PE_OH_OFF, 0x10B);
     w32(&mut image, PE_OH_OFF + 28, 0x0040_0000);
 
-    let result = PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
+    let result =
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text").unwrap();
 
     assert_eq!(result.virtual_base_addr, 0x0040_1000);
 }
@@ -150,8 +168,13 @@ fn pe32_image_base_is_read_from_its_own_offset() {
 fn pe_section_name_of_eight_characters() {
     let image = build_minimal_pe_with_section(&CODE, b".textbss");
 
-    assert!(PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".textbss").is_some());
-    assert_eq!(PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text"), None);
+    assert!(
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".textbss").is_some()
+    );
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -204,7 +227,8 @@ fn elf_section_name_offset_past_table_is_skipped() {
 fn elf32_finds_pattern() {
     let image = make_elf32_with_text_section(&CODE);
 
-    let result = ElfPatternScanner::scan_for_pattern_in_memory_file(&image, "BE EF", ".text").unwrap();
+    let result =
+        ElfPatternScanner::scan_for_pattern_in_memory_file(&image, "BE EF", ".text").unwrap();
 
     assert_eq!(result.target_offset, 2);
     assert_eq!(result.raw_base_addr, 0x34);
@@ -215,7 +239,10 @@ fn elf32_finds_pattern() {
 fn empty_section_does_not_match_empty_pattern() {
     let image = build_minimal_pe(&[]);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_memory_file(&image, "", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_memory_file(&image, "", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -237,7 +264,10 @@ fn macho_huge_nsects_returns_none() {
     let mut image = build_minimal_macho64(&CODE);
     w32(&mut image, MACHO64_HDR_SIZE + 64, u32::MAX);
 
-    assert_eq!(MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__nonexistent"), None);
+    assert_eq!(
+        MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__nonexistent"),
+        None
+    );
 }
 
 #[test]
@@ -255,8 +285,10 @@ fn macho_section_in_second_segment_is_found_in_file() {
     let image = make_macho64_with_two_segments();
     let f = TempFile::create(&image);
 
-    let from_file = MachOPatternScanner::scan_for_pattern_in_file(f.path(), "DE AD", "__data").unwrap();
-    let from_memory = MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__data").unwrap();
+    let from_file =
+        MachOPatternScanner::scan_for_pattern_in_file(f.path(), "DE AD", "__data").unwrap();
+    let from_memory =
+        MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__data").unwrap();
 
     assert_eq!(from_file, from_memory);
     assert_eq!(from_file.virtual_base_addr, 0x2000);
@@ -268,7 +300,10 @@ fn macho_section_name_of_sixteen_characters() {
     let section = MACHO64_HDR_SIZE + MACHO64_SEG_SIZE;
     image[section..section + 16].copy_from_slice(b"__sixteen_chars_");
 
-    assert!(MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__sixteen_chars_").is_some());
+    assert!(
+        MachOPatternScanner::scan_for_pattern_in_memory_file(&image, "DE AD", "__sixteen_chars_")
+            .is_some()
+    );
 }
 
 /// Minimal ELF32 file: header, .text at 0x34, "\0.text\0\0", then 3 section headers of 40 bytes.
@@ -318,9 +353,12 @@ fn make_macho64_with_two_segments() -> Vec<u8> {
     w32(&mut buf, 16, 2); // ncmds
     w32(&mut buf, 20, 2 * CMD_SIZE as u32); // sizeofcmds
 
-    for (index, (name, addr, raw_off)) in [(&b"__text"[..], 0x1000, TEXT_RAW_OFF), (b"__data", 0x2000, DATA_RAW_OFF)]
-        .into_iter()
-        .enumerate()
+    for (index, (name, addr, raw_off)) in [
+        (&b"__text"[..], 0x1000, TEXT_RAW_OFF),
+        (b"__data", 0x2000, DATA_RAW_OFF),
+    ]
+    .into_iter()
+    .enumerate()
     {
         let segment = MACHO64_HDR_SIZE + index * CMD_SIZE;
         w32(&mut buf, segment, LC_SEGMENT_64);

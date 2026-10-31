@@ -9,7 +9,10 @@ pub trait Collider {
     type Scalar: Real;
 
     /// The world-space vertex furthest along `direction`.
-    fn find_abs_furthest_vertex_position(&self, direction: Vector3<Self::Scalar>) -> Vector3<Self::Scalar>;
+    fn find_abs_furthest_vertex_position(
+        &self,
+        direction: Vector3<Self::Scalar>,
+    ) -> Vector3<Self::Scalar>;
 
     fn get_origin(&self) -> Vector3<Self::Scalar>;
     fn set_origin(&mut self, new_origin: Vector3<Self::Scalar>);

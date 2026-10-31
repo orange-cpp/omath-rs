@@ -1,6 +1,8 @@
 //! `omath.Vec2`, `omath.Vec3` and `omath.Vec4`.
 
-use super::support::{LuaScalar, add_div, add_eq, add_mul, expect_args, float_fields, from_lua_userdata};
+use super::support::{
+    LuaScalar, add_div, add_eq, add_mul, expect_args, float_fields, from_lua_userdata,
+};
 use crate::{Vector2, Vector3, Vector4};
 use mlua::{Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods};
 
@@ -57,8 +59,12 @@ impl UserData for Vec2f {
         add_div(methods, None, |vector, scalar| vector / scalar as f32);
 
         methods.add_method("normalized", |_, this, ()| Ok(this.normalized()));
-        methods.add_method("distance_to", |_, this, other: Vec2f| Ok(this.distance_to(other)));
-        methods.add_method("distance_to_sqr", |_, this, other: Vec2f| Ok(this.distance_to_sqr(other)));
+        methods.add_method("distance_to", |_, this, other: Vec2f| {
+            Ok(this.distance_to(other))
+        });
+        methods.add_method("distance_to_sqr", |_, this, other: Vec2f| {
+            Ok(this.distance_to_sqr(other))
+        });
     }
 }
 
@@ -70,16 +76,30 @@ impl UserData for Vec3f {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         vector_methods!(methods, Vec3f, "Vec3", x, y, z);
 
-        add_mul(methods, Some(|left, right| left * right), |vector, scalar| vector * scalar as f32);
-        add_div(methods, Some(|left, right| left / right), |vector, scalar| vector / scalar as f32);
+        add_mul(
+            methods,
+            Some(|left, right| left * right),
+            |vector, scalar| vector * scalar as f32,
+        );
+        add_div(
+            methods,
+            Some(|left, right| left / right),
+            |vector, scalar| vector / scalar as f32,
+        );
 
         methods.add_method("length_2d", |_, this, ()| Ok(this.length_2d()));
         methods.add_method("normalized", |_, this, ()| Ok(this.normalized()));
         methods.add_method("cross", |_, this, other: Vec3f| Ok(this.cross(other)));
-        methods.add_method("distance_to", |_, this, other: Vec3f| Ok(this.distance_to(other)));
-        methods.add_method("distance_to_sqr", |_, this, other: Vec3f| Ok(this.distance_to_sqr(other)));
+        methods.add_method("distance_to", |_, this, other: Vec3f| {
+            Ok(this.distance_to(other))
+        });
+        methods.add_method("distance_to_sqr", |_, this, other: Vec3f| {
+            Ok(this.distance_to_sqr(other))
+        });
         methods.add_method("sum_2d", |_, this, ()| Ok(this.sum_2d()));
-        methods.add_method("point_to_same_direction", |_, this, other: Vec3f| Ok(this.point_to_same_direction(other)));
+        methods.add_method("point_to_same_direction", |_, this, other: Vec3f| {
+            Ok(this.point_to_same_direction(other))
+        });
         methods.add_method("as_array", |_, this, ()| Ok(this.as_array()));
         methods.add_method("angle_between", |_, this, other: Vec3f| {
             Ok(match this.angle_between(other) {
@@ -87,9 +107,12 @@ impl UserData for Vec3f {
                 Err(_) => (None, Some("impossible angle (zero-length vector)")),
             })
         });
-        methods.add_method("is_perpendicular", |_, this, (other, epsilon): (Vec3f, Option<f32>)| {
-            Ok(this.is_perpendicular(other, epsilon.unwrap_or(0.0001)))
-        });
+        methods.add_method(
+            "is_perpendicular",
+            |_, this, (other, epsilon): (Vec3f, Option<f32>)| {
+                Ok(this.is_perpendicular(other, epsilon.unwrap_or(0.0001)))
+            },
+        );
         methods.add_method("as_table", |lua, this, ()| {
             let table = lua.create_table()?;
             table.set("x", this.x)?;
@@ -108,8 +131,16 @@ impl UserData for Vec4f {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         vector_methods!(methods, Vec4f, "Vec4", x, y, z, w);
 
-        add_mul(methods, Some(|left, right| left * right), |vector, scalar| vector * scalar as f32);
-        add_div(methods, Some(|left, right| left / right), |vector, scalar| vector / scalar as f32);
+        add_mul(
+            methods,
+            Some(|left, right| left * right),
+            |vector, scalar| vector * scalar as f32,
+        );
+        add_div(
+            methods,
+            Some(|left, right| left / right),
+            |vector, scalar| vector / scalar as f32,
+        );
 
         methods.add_method_mut("clamp", |_, this, (min, max): (f32, f32)| {
             *this = this.clamped(min, max);

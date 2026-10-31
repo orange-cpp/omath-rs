@@ -5,8 +5,8 @@ mod common;
 use common::expect_float_eq;
 use omath::Vector3;
 use omath::projectile_prediction::{
-    AimAngles, AimSolution, Launcher, MuzzleOffset, ProjPredEngineInterface, ProjPredEngineLegacy, Projectile, Target,
-    ViewBasis, launcher_from_projectile,
+    AimAngles, AimSolution, Launcher, MuzzleOffset, ProjPredEngineInterface, ProjPredEngineLegacy,
+    Projectile, Target, ViewBasis, launcher_from_projectile,
 };
 use std::cell::{Cell, RefCell};
 
@@ -22,7 +22,10 @@ const K_WORLD_AXES: ViewBasis<f32> = ViewBasis {
 
 #[test]
 fn defaults_carry_no_offsets() {
-    let launcher = Launcher { eye_origin: v(1.0, 2.0, 3.0), ..Default::default() };
+    let launcher = Launcher {
+        eye_origin: v(1.0, 2.0, 3.0),
+        ..Default::default()
+    };
 
     assert!(launcher.muzzle_offset.is_zero());
     assert_eq!(launcher.world_offset, v(0.0, 0.0, 0.0));
@@ -34,7 +37,11 @@ fn defaults_carry_no_offsets() {
 fn launch_origin_adds_every_part() {
     let launcher = Launcher {
         eye_origin: v(1.0, 2.0, 3.0),
-        muzzle_offset: MuzzleOffset { forward: 10.0, right: 20.0, up: 30.0 },
+        muzzle_offset: MuzzleOffset {
+            forward: 10.0,
+            right: 20.0,
+            up: 30.0,
+        },
         world_offset: v(100.0, 200.0, 300.0),
         ..Default::default()
     };
@@ -46,10 +53,18 @@ fn launch_origin_adds_every_part() {
 fn muzzle_offset_follows_the_basis_and_world_offset_does_not() {
     // "16 ahead, 8 to the right, 6 down" is a different world position once the view has turned; the world part stays
     // where it was.
-    let turned = ViewBasis { forward: v(0.0, 1.0, 0.0), right: v(1.0, 0.0, 0.0), up: v(0.0, 0.0, 1.0) };
+    let turned = ViewBasis {
+        forward: v(0.0, 1.0, 0.0),
+        right: v(1.0, 0.0, 0.0),
+        up: v(0.0, 0.0, 1.0),
+    };
     let launcher = Launcher {
         eye_origin: v(0.0, 0.0, 64.0),
-        muzzle_offset: MuzzleOffset { forward: 16.0, right: 8.0, up: -6.0 },
+        muzzle_offset: MuzzleOffset {
+            forward: 16.0,
+            right: 8.0,
+            up: -6.0,
+        },
         world_offset: v(0.0, 0.0, -10.0),
         ..Default::default()
     };
@@ -63,22 +78,62 @@ fn pitch_offset_does_not_move_the_muzzle() {
     // It tilts the round, not the weapon: the launch origin only ever depends on the basis handed in
     let plain = Launcher {
         eye_origin: v(0.0, 0.0, 64.0),
-        muzzle_offset: MuzzleOffset { forward: 16.0, right: 8.0, up: -6.0 },
+        muzzle_offset: MuzzleOffset {
+            forward: 16.0,
+            right: 8.0,
+            up: -6.0,
+        },
         ..Default::default()
     };
-    let tilted = Launcher { launch_pitch_offset: 9.46, ..plain };
+    let tilted = Launcher {
+        launch_pitch_offset: 9.46,
+        ..plain
+    };
 
-    assert_eq!(plain.launch_origin(K_WORLD_AXES), tilted.launch_origin(K_WORLD_AXES));
+    assert_eq!(
+        plain.launch_origin(K_WORLD_AXES),
+        tilted.launch_origin(K_WORLD_AXES)
+    );
 }
 
 #[test]
 fn muzzle_offset_is_zero_only_when_every_component_is() {
     assert!(MuzzleOffset::<f32>::default().is_zero());
-    assert!(MuzzleOffset::<f32> { forward: -0.0, ..Default::default() }.is_zero());
-    assert!(!MuzzleOffset::<f32> { forward: 1e-6, ..Default::default() }.is_zero());
-    assert!(!MuzzleOffset::<f32> { right: -8.0, ..Default::default() }.is_zero());
-    assert!(!MuzzleOffset::<f32> { up: 0.5, ..Default::default() }.is_zero());
-    assert!(!MuzzleOffset::<f64> { up: 1e-300, ..Default::default() }.is_zero());
+    assert!(
+        MuzzleOffset::<f32> {
+            forward: -0.0,
+            ..Default::default()
+        }
+        .is_zero()
+    );
+    assert!(
+        !MuzzleOffset::<f32> {
+            forward: 1e-6,
+            ..Default::default()
+        }
+        .is_zero()
+    );
+    assert!(
+        !MuzzleOffset::<f32> {
+            right: -8.0,
+            ..Default::default()
+        }
+        .is_zero()
+    );
+    assert!(
+        !MuzzleOffset::<f32> {
+            up: 0.5,
+            ..Default::default()
+        }
+        .is_zero()
+    );
+    assert!(
+        !MuzzleOffset::<f64> {
+            up: 1e-300,
+            ..Default::default()
+        }
+        .is_zero()
+    );
 }
 
 #[test]
@@ -90,7 +145,11 @@ fn works_in_double_precision() {
     };
     let launcher = Launcher::<f64> {
         eye_origin: Vector3::new(0.5, 0.25, 0.125),
-        muzzle_offset: MuzzleOffset { forward: 1.0, right: 2.0, up: 4.0 },
+        muzzle_offset: MuzzleOffset {
+            forward: 1.0,
+            right: 2.0,
+            up: 4.0,
+        },
         ..Default::default()
     };
 
@@ -102,13 +161,24 @@ fn input_and_output_types_are_aggregates() {
     // Struct literals are the intended way to fill these in
     let _ = Launcher::<f32> {
         eye_origin: Vector3::default(),
-        muzzle_offset: MuzzleOffset { forward: 0.0, right: 0.0, up: 0.0 },
+        muzzle_offset: MuzzleOffset {
+            forward: 0.0,
+            right: 0.0,
+            up: 0.0,
+        },
         world_offset: Vector3::default(),
         launch_pitch_offset: 0.0,
     };
-    let _ = ViewBasis::<f32> { forward: Vector3::default(), right: Vector3::default(), up: Vector3::default() };
+    let _ = ViewBasis::<f32> {
+        forward: Vector3::default(),
+        right: Vector3::default(),
+        up: Vector3::default(),
+    };
     let _ = AimSolution::<f32> {
-        angles: AimAngles { pitch: 0.0, yaw: 0.0 },
+        angles: AimAngles {
+            pitch: 0.0,
+            yaw: 0.0,
+        },
         aim_point: Vector3::default(),
         predicted_target_position: Vector3::default(),
         time_of_flight: 0.0,
@@ -119,7 +189,11 @@ fn input_and_output_types_are_aggregates() {
 #[test]
 fn projectile_needs_only_its_physical_properties() {
     // New code describes the round and leaves the legacy origin fields alone.
-    let round = Projectile::<f32> { launch_speed: 1100.0, gravity_scale: 0.5, ..Default::default() };
+    let round = Projectile::<f32> {
+        launch_speed: 1100.0,
+        gravity_scale: 0.5,
+        ..Default::default()
+    };
 
     assert_eq!(round.origin, v(0.0, 0.0, 0.0));
     assert_eq!(round.launch_offset, v(0.0, 0.0, 0.0));
@@ -136,7 +210,11 @@ struct RecordingEngine {
 
 impl RecordingEngine {
     fn new(has_solution: bool) -> Self {
-        Self { last_launcher: RefCell::new(None), calls: Cell::new(0), has_solution }
+        Self {
+            last_launcher: RefCell::new(None),
+            calls: Cell::new(0),
+            has_solution,
+        }
     }
 }
 
@@ -151,7 +229,10 @@ impl ProjPredEngineInterface<f32> for RecordingEngine {
         self.calls.set(self.calls.get() + 1);
 
         self.has_solution.then_some(AimSolution {
-            angles: AimAngles { pitch: 11.0, yaw: 22.0 },
+            angles: AimAngles {
+                pitch: 11.0,
+                yaw: 22.0,
+            },
             aim_point: v(3.0, 4.0, 5.0),
             predicted_target_position: v(6.0, 7.0, 8.0),
             time_of_flight: 0.5,
@@ -170,7 +251,11 @@ fn k_legacy_projectile() -> Projectile<f32> {
 }
 
 fn k_target() -> Target<f32> {
-    Target { origin: v(100.0, 0.0, 0.0), velocity: Vector3::default(), is_airborne: false }
+    Target {
+        origin: v(100.0, 0.0, 0.0),
+        velocity: Vector3::default(),
+        is_airborne: false,
+    }
 }
 
 #[test]
@@ -196,7 +281,9 @@ fn wrappers_solve_through_a_launcher_built_from_the_legacy_fields() {
     assert!(last_launcher.muzzle_offset.is_zero());
     expect_float_eq(last_launcher.launch_pitch_offset, 0.0);
 
-    let angles = engine.maybe_calculate_aim_angles(&k_legacy_projectile(), &k_target()).unwrap();
+    let angles = engine
+        .maybe_calculate_aim_angles(&k_legacy_projectile(), &k_target())
+        .unwrap();
     expect_float_eq(angles.pitch, 11.0);
     expect_float_eq(angles.yaw, 22.0);
 
@@ -208,8 +295,16 @@ fn wrappers_solve_through_a_launcher_built_from_the_legacy_fields() {
 fn wrappers_pass_no_solution_through() {
     let engine = RecordingEngine::new(false);
 
-    assert!(engine.maybe_calculate_aim_point(&k_legacy_projectile(), &k_target()).is_none());
-    assert!(engine.maybe_calculate_aim_angles(&k_legacy_projectile(), &k_target()).is_none());
+    assert!(
+        engine
+            .maybe_calculate_aim_point(&k_legacy_projectile(), &k_target())
+            .is_none()
+    );
+    assert!(
+        engine
+            .maybe_calculate_aim_angles(&k_legacy_projectile(), &k_target())
+            .is_none()
+    );
     assert_eq!(engine.calls.get(), 2);
 }
 
@@ -226,19 +321,40 @@ fn cannot_be_sliced_through_a_base_reference() {
 
 #[test]
 fn legacy_engine_answers_the_same_through_the_interface() {
-    let engine = ProjPredEngineLegacy::<omath::engines::source::PredEngineTrait>::new(800.0, 1.0 / 1000.0, 10.0, 5.0);
+    let engine = ProjPredEngineLegacy::<omath::engines::source::PredEngineTrait>::new(
+        800.0,
+        1.0 / 1000.0,
+        10.0,
+        5.0,
+    );
     let through_base: &dyn ProjPredEngineInterface<f32> = &engine;
 
-    let round = Projectile { launch_speed: 1500.0, gravity_scale: 1.0, ..Default::default() };
-    let launcher = Launcher {
-        eye_origin: v(0.0, 0.0, 64.0),
-        muzzle_offset: MuzzleOffset { forward: 16.0, right: 8.0, up: -6.0 },
+    let round = Projectile {
+        launch_speed: 1500.0,
+        gravity_scale: 1.0,
         ..Default::default()
     };
-    let target = Target { origin: v(700.0, 120.0, 90.0), velocity: v(-60.0, 45.0, 0.0), is_airborne: false };
+    let launcher = Launcher {
+        eye_origin: v(0.0, 0.0, 64.0),
+        muzzle_offset: MuzzleOffset {
+            forward: 16.0,
+            right: 8.0,
+            up: -6.0,
+        },
+        ..Default::default()
+    };
+    let target = Target {
+        origin: v(700.0, 120.0, 90.0),
+        velocity: v(-60.0, 45.0, 0.0),
+        is_airborne: false,
+    };
 
-    let direct = engine.maybe_calculate_aim(&round, &launcher, &target).unwrap();
-    let dispatched = through_base.maybe_calculate_aim(&round, &launcher, &target).unwrap();
+    let direct = engine
+        .maybe_calculate_aim(&round, &launcher, &target)
+        .unwrap();
+    let dispatched = through_base
+        .maybe_calculate_aim(&round, &launcher, &target)
+        .unwrap();
 
     expect_float_eq(direct.angles.pitch, dispatched.angles.pitch);
     expect_float_eq(direct.angles.yaw, dispatched.angles.yaw);
@@ -247,6 +363,8 @@ fn legacy_engine_answers_the_same_through_the_interface() {
 
     // A copy is its own engine with the same settings
     let copy = engine;
-    let from_copy = copy.maybe_calculate_aim(&round, &launcher, &target).unwrap();
+    let from_copy = copy
+        .maybe_calculate_aim(&round, &launcher, &target)
+        .unwrap();
     expect_float_eq(from_copy.angles.pitch, direct.angles.pitch);
 }

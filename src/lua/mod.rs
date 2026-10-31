@@ -2,11 +2,12 @@
 //!
 //! [`register_lib`] publishes the `omath` global with the names, metamethods and error behaviour of the C++ sol2
 //! bindings. Types live under the same keys: `omath.Vec3`, `omath.primitives.Aabb`, `omath.source.Camera` and so on.
-//! Nothing that touches a live process is bound: there is no `scan_in_module` and no HUD.
+//! HUD callbacks and scans of modules in the current process are also available.
 
 mod collision;
 mod color;
 mod engines;
+mod hud;
 mod mat;
 mod pattern_scan;
 mod quaternion;
@@ -31,5 +32,6 @@ pub fn register_lib(lua: &Lua) -> Result<()> {
     collision::register_collision(lua, &omath)?;
     engines::register_shared_types(lua, &omath)?;
     engines::register_engines(lua, &omath)?;
-    pattern_scan::register(lua, &omath)
+    pattern_scan::register(lua, &omath)?;
+    hud::register(lua, &omath)
 }

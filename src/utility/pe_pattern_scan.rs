@@ -56,7 +56,9 @@ fn extract_section<'a>(data: &'a [u8], section_name: &str) -> Option<ExtractedSe
     read_bytes(data, optional_header_off, OPTIONAL_HEADER_X86_SIZE)?;
 
     let image_base = match read_u16(data, optional_header_off)? {
-        OPT_HDR32_MAGIC => ImageBase::X86(read_u32(data, optional_header_off + IMAGE_BASE_X86_OFFSET)?),
+        OPT_HDR32_MAGIC => {
+            ImageBase::X86(read_u32(data, optional_header_off + IMAGE_BASE_X86_OFFSET)?)
+        }
         OPT_HDR64_MAGIC => {
             read_bytes(data, optional_header_off, OPTIONAL_HEADER_X64_SIZE)?;
             ImageBase::X64(read_u64(data, optional_header_off + IMAGE_BASE_X64_OFFSET)?)
@@ -69,11 +71,16 @@ fn extract_section<'a>(data: &'a [u8], section_name: &str) -> Option<ExtractedSe
     }
 
     let num_sections = usize::from(read_u16(data, file_header_off + NUM_SECTIONS_OFFSET)?);
-    let size_optional_header = usize::from(read_u16(data, file_header_off + SIZE_OPTIONAL_HEADER_OFFSET)?);
+    let size_optional_header = usize::from(read_u16(
+        data,
+        file_header_off + SIZE_OPTIONAL_HEADER_OFFSET,
+    )?);
     let section_table_off = optional_header_off.checked_add(size_optional_header)?;
 
     for index in 0..num_sections {
-        let section_off = index.checked_mul(SECTION_HEADER_SIZE)?.checked_add(section_table_off)?;
+        let section_off = index
+            .checked_mul(SECTION_HEADER_SIZE)?
+            .checked_add(section_table_off)?;
         let section = read_bytes(data, section_off, SECTION_HEADER_SIZE)?;
 
         if until_nul(&section[..SECTION_NAME_SIZE]) != section_name.as_bytes() {
@@ -84,7 +91,8 @@ fn extract_section<'a>(data: &'a [u8], section_name: &str) -> Option<ExtractedSe
         let raw_off = read_u32(section, PTR_RAW_DATA_OFFSET)?;
 
         return Some(ExtractedSection {
-            virtual_base_addr: image_base.virtual_base_addr(read_u32(section, VIRTUAL_ADDRESS_OFFSET)?),
+            virtual_base_addr: image_base
+                .virtual_base_addr(read_u32(section, VIRTUAL_ADDRESS_OFFSET)?),
             raw_base_addr: u64::from(raw_off),
             data: read_bytes(data, usize::try_from(raw_off).ok()?, raw_size)?,
         });

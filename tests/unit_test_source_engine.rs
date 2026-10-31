@@ -151,9 +151,10 @@ fn up_vector() {
 
 #[test]
 fn forward_vector_rotation_yaw() {
-    let mut angles = source::ViewAngles::default();
-
-    angles.yaw = source::YawAngle::from_degrees(-90.0);
+    let angles = source::ViewAngles {
+        yaw: source::YawAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = source::forward_vector(angles);
     expect_near!(forward.x, source::K_ABS_RIGHT.x, 0.00001);
@@ -163,9 +164,10 @@ fn forward_vector_rotation_yaw() {
 
 #[test]
 fn forward_vector_rotation_pitch() {
-    let mut angles = source::ViewAngles::default();
-
-    angles.pitch = source::PitchAngle::from_degrees(-89.0);
+    let angles = source::ViewAngles {
+        pitch: source::PitchAngle::from_degrees(-89.0),
+        ..Default::default()
+    };
 
     let forward = source::forward_vector(angles);
     expect_near!(forward.x, source::K_ABS_UP.x, 0.02);
@@ -175,9 +177,10 @@ fn forward_vector_rotation_pitch() {
 
 #[test]
 fn forward_vector_rotation_roll() {
-    let mut angles = source::ViewAngles::default();
-
-    angles.roll = source::RollAngle::from_degrees(90.0);
+    let angles = source::ViewAngles {
+        roll: source::RollAngle::from_degrees(90.0),
+        ..Default::default()
+    };
 
     let forward = source::up_vector(angles);
     expect_near!(forward.x, source::K_ABS_RIGHT.x, 0.00001);
@@ -296,7 +299,8 @@ fn loook_at_random_all_axis() {
 
     let mut failed_points: usize = 0;
     for _i in 0..1000 {
-        let position_to_look = Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
+        let position_to_look =
+            Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
 
         if cam.get_origin().distance_to(position_to_look) < 10.0 {
             continue;
@@ -312,7 +316,9 @@ fn loook_at_random_all_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001
+        {
             failed_points += 1;
         }
     }
@@ -351,7 +357,9 @@ fn loook_at_random_x_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -390,7 +398,9 @@ fn loook_at_random_y_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -429,7 +439,9 @@ fn loook_at_random_z_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.025 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.025
+        {
             failed_points += 1;
         }
     }
@@ -442,7 +454,11 @@ fn look_at_forward() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = source::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(source::K_ABS_FORWARD.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(source::K_ABS_FORWARD.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -453,7 +469,11 @@ fn look_at_right() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = source::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(source::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(source::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -464,18 +484,27 @@ fn look_at_up() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = source::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(source::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(source::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_back() {
-    let angles = source::CameraTrait::calc_look_at_angle(Default::default(), -source::K_ABS_FORWARD);
+    let angles =
+        source::CameraTrait::calc_look_at_angle(Default::default(), -source::K_ABS_FORWARD);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = source::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-source::K_ABS_FORWARD).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-source::K_ABS_FORWARD).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -486,7 +515,11 @@ fn look_at_left() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = source::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-source::K_ABS_RIGHT).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-source::K_ABS_RIGHT).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }

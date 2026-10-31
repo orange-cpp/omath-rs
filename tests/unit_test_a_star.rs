@@ -11,7 +11,11 @@ fn v(x: f32, y: f32, z: f32) -> Vector3<f32> {
 fn make_linear_chain(length: i32) -> NavigationMesh {
     let mut nav = NavigationMesh::new();
     for i in 0..length {
-        let neighbors = if i + 1 < length { vec![v((i + 1) as f32, 0.0, 0.0)] } else { vec![] };
+        let neighbors = if i + 1 < length {
+            vec![v((i + 1) as f32, 0.0, 0.0)]
+        } else {
+            vec![]
+        };
         nav.set_neighbors(v(i as f32, 0.0, 0.0), neighbors);
     }
     nav

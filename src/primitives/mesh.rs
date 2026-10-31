@@ -47,7 +47,12 @@ impl<T: Copy> HasPosition<T> for Vector3<T> {
 ///
 /// `Vbo` and `Ebo` are any contiguous storage, so `Vec` or a fixed-size array. The transform is cached on first use and
 /// dropped by the setters; the cache sits in a [`Cell`] so that the getters can take `&self`.
-pub struct Mesh<E: MeshEngine, V = Vertex<Vector3<<E as MeshEngine>::Scalar>>, Vbo = Vec<V>, Ebo = Vec<Vector3<u32>>> {
+pub struct Mesh<
+    E: MeshEngine,
+    V = Vertex<Vector3<<E as MeshEngine>::Scalar>>,
+    Vbo = Vec<V>,
+    Ebo = Vec<Vector3<u32>>,
+> {
     pub vertex_buffer: Vbo,
     pub element_buffer_object: Ebo,
 
@@ -87,10 +92,18 @@ impl<E: MeshEngine, V, Vbo: fmt::Debug, Ebo: fmt::Debug> fmt::Debug for Mesh<E, 
 impl<E: MeshEngine, V, Vbo, Ebo> Mesh<E, V, Vbo, Ebo> {
     /// A mesh at the world origin, unrotated, with a scale of 1.
     pub fn new(vertex_buffer: Vbo, element_buffer_object: Ebo) -> Self {
-        Self::with_scale(vertex_buffer, element_buffer_object, Vector3::splat(E::Scalar::ONE))
+        Self::with_scale(
+            vertex_buffer,
+            element_buffer_object,
+            Vector3::splat(E::Scalar::ONE),
+        )
     }
 
-    pub fn with_scale(vertex_buffer: Vbo, element_buffer_object: Ebo, scale: Vector3<E::Scalar>) -> Self {
+    pub fn with_scale(
+        vertex_buffer: Vbo,
+        element_buffer_object: Ebo,
+        scale: Vector3<E::Scalar>,
+    ) -> Self {
         Self {
             vertex_buffer,
             element_buffer_object,
@@ -137,15 +150,19 @@ impl<E: MeshEngine, V, Vbo, Ebo> Mesh<E, V, Vbo, Ebo> {
             return to_world;
         }
 
-        let to_world =
-            Mat::translation(self.origin) * E::rotation_matrix(&self.rotation_angles) * Mat::scale(self.scale);
+        let to_world = Mat::translation(self.origin)
+            * E::rotation_matrix(&self.rotation_angles)
+            * Mat::scale(self.scale);
         self.to_world_matrix.set(Some(to_world));
         to_world
     }
 
-    pub fn vertex_position_to_world_space(&self, vertex_position: Vector3<E::Scalar>) -> Vector3<E::Scalar> {
-        let abs_vec =
-            self.get_to_world_matrix() * Mat::<4, 1, E::Scalar, E::Order>::column_from_vector(vertex_position);
+    pub fn vertex_position_to_world_space(
+        &self,
+        vertex_position: Vector3<E::Scalar>,
+    ) -> Vector3<E::Scalar> {
+        let abs_vec = self.get_to_world_matrix()
+            * Mat::<4, 1, E::Scalar, E::Order>::column_from_vector(vertex_position);
 
         Vector3::new(abs_vec.at(0, 0), abs_vec.at(1, 0), abs_vec.at(2, 0))
     }

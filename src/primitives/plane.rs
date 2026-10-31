@@ -2,8 +2,12 @@ use super::{Mesh, MeshEngine};
 use crate::linear_algebra::Vector3;
 
 /// A [`Mesh`] with the fixed-size buffers of [`create_plane`].
-pub type PlaneMesh<E> =
-    Mesh<E, Vector3<<E as MeshEngine>::Scalar>, [Vector3<<E as MeshEngine>::Scalar>; 4], [Vector3<u32>; 2]>;
+pub type PlaneMesh<E> = Mesh<
+    E,
+    Vector3<<E as MeshEngine>::Scalar>,
+    [Vector3<<E as MeshEngine>::Scalar>; 4],
+    [Vector3<u32>; 2],
+>;
 
 /// Builds a quad from the edge `vertex_a` to `vertex_b`, swept `size` along `direction`.
 ///

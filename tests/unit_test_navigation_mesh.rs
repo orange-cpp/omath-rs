@@ -147,7 +147,10 @@ fn vertex_with_no_neighbors_round_trip() {
 fn set_event_on_non_existent_vertex_throws() {
     let mut nav = NavigationMesh::new();
     let vertex = v(99.0, 99.0, 99.0);
-    assert_eq!(nav.set_event(vertex, "jump"), Err(Error::VertexNotFound(vertex)));
+    assert_eq!(
+        nav.set_event(vertex, "jump"),
+        Err(Error::VertexNotFound(vertex))
+    );
 }
 
 #[test]

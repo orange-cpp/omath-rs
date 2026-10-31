@@ -17,7 +17,10 @@ pub struct GjkSettings {
 
 impl Default for GjkSettings {
     fn default() -> Self {
-        Self { epsilon: 1e-6, max_iterations: 64 }
+        Self {
+            epsilon: 1e-6,
+            max_iterations: 64,
+        }
     }
 }
 
@@ -26,7 +29,8 @@ pub fn find_support_vertex<C: Collider + ?Sized>(
     collider_b: &C,
     direction: Vector3<C::Scalar>,
 ) -> Vector3<C::Scalar> {
-    collider_a.find_abs_furthest_vertex_position(direction) - collider_b.find_abs_furthest_vertex_position(-direction)
+    collider_a.find_abs_furthest_vertex_position(direction)
+        - collider_b.find_abs_furthest_vertex_position(-direction)
 }
 
 pub fn is_collide<C: Collider + ?Sized>(collider_a: &C, collider_b: &C) -> bool {
@@ -58,7 +62,10 @@ pub fn is_collide_with_simplex_info<C: Collider + ?Sized>(
         support = find_support_vertex(collider_a, collider_b, direction);
 
         if support.dot(direction) <= epsilon {
-            return GjkHitInfo { hit: false, simplex };
+            return GjkHitInfo {
+                hit: false,
+                simplex,
+            };
         }
 
         simplex.push_front(support);
@@ -67,5 +74,8 @@ pub fn is_collide_with_simplex_info<C: Collider + ?Sized>(
             return GjkHitInfo { hit: true, simplex };
         }
     }
-    GjkHitInfo { hit: false, simplex }
+    GjkHitInfo {
+        hit: false,
+        simplex,
+    }
 }

@@ -20,7 +20,8 @@ fn file_pattern_not_found_returns_null() {
     const E_LFANEW: usize = 0x80;
     const SIZE_OPTIONAL_HEADER: u16 = 0xE0;
     const FILE_HEADER_SIZE: usize = 20;
-    const OFFSET_TO_SEGMENT_TABLE: usize = E_LFANEW + 4 + FILE_HEADER_SIZE + SIZE_OPTIONAL_HEADER as usize;
+    const OFFSET_TO_SEGMENT_TABLE: usize =
+        E_LFANEW + 4 + FILE_HEADER_SIZE + SIZE_OPTIONAL_HEADER as usize;
 
     let mut data = vec![0u8; 512];
     data[0] = b'M';
@@ -41,7 +42,10 @@ fn file_pattern_not_found_returns_null() {
 
     let f = TempFile::create(&data);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "AA BB CC", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "AA BB CC", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -69,12 +73,18 @@ fn wildcard_matches() {
 fn pattern_longer_than_buffer() {
     let f = TempFile::create(&build_minimal_pe(&[0xAA, 0xBB]));
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "AA BB CC", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "AA BB CC", ".text"),
+        None
+    );
 }
 
 #[test]
 fn invalid_pattern_parse() {
     let f = TempFile::create(&build_minimal_pe(&[0x01, 0x02, 0x03]));
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "01 GG 03", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "01 GG 03", ".text"),
+        None
+    );
 }

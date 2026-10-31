@@ -3,9 +3,7 @@ use crate::trigonometry::AngleBetween;
 use std::cmp::Ordering;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
-};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Failure of `angle_between`: one of the vectors has zero length.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -401,7 +399,11 @@ impl<T: Real> Vector2<T> {
     #[must_use]
     pub fn normalized(self) -> Self {
         let length = self.length();
-        if length > T::ZERO { self / length } else { self }
+        if length > T::ZERO {
+            self / length
+        } else {
+            self
+        }
     }
 }
 
@@ -421,7 +423,11 @@ impl<T: Real> Vector3<T> {
     #[must_use]
     pub fn normalized(self) -> Self {
         let length = self.length();
-        if length != T::ZERO { self / length } else { self }
+        if length != T::ZERO {
+            self / length
+        } else {
+            self
+        }
     }
 
     /// Length of the `x`, `y` part.
@@ -447,7 +453,11 @@ impl<T: Real> Vector4<T> {
     #[must_use]
     pub fn normalized(self) -> Self {
         let length = self.length();
-        if length != T::ZERO { self / length } else { self }
+        if length != T::ZERO {
+            self / length
+        } else {
+            self
+        }
     }
 }
 
@@ -479,5 +489,26 @@ impl<T: Scalar> Vector4<T> {
     #[inline]
     pub fn xyz(self) -> Vector3<T> {
         Vector3::new(self.x, self.y, self.z)
+    }
+}
+
+#[cfg(feature = "imgui")]
+impl<T: Scalar> Vector2<T> {
+    pub fn to_im_vec2(&self) -> imgui::sys::ImVec2 {
+        imgui::sys::ImVec2 {
+            x: self.x.to_f64() as f32,
+            y: self.y.to_f64() as f32,
+        }
+    }
+}
+#[cfg(feature = "imgui")]
+impl<T: Scalar> Vector4<T> {
+    pub fn to_im_vec4(&self) -> imgui::sys::ImVec4 {
+        imgui::sys::ImVec4 {
+            x: self.x.to_f64() as f32,
+            y: self.y.to_f64() as f32,
+            z: self.z.to_f64() as f32,
+            w: self.w.to_f64() as f32,
+        }
     }
 }

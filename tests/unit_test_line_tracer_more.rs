@@ -16,7 +16,11 @@ fn tri() -> Triangle3 {
 }
 
 fn segment(start: Vec3, end: Vec3) -> Ray {
-    Ray { start, end, ..Default::default() }
+    Ray {
+        start,
+        end,
+        ..Default::default()
+    }
 }
 
 #[test]
@@ -90,7 +94,11 @@ fn t_hit_greater_than_one_returns_end() {
 fn infinite_length_with_small_t_hit_returns_end() {
     // Create triangle slightly behind so t_hit <= eps
     let tri = Triangle::new(v(0.0, 0.0, -1e-8), v(1.0, 0.0, -1e-8), v(0.0, 1.0, -1e-8));
-    let ray = Ray { start: v(0.0, 0.0, 0.0), end: v(0.0, 0.0, 1.0), infinite_length: true };
+    let ray = Ray {
+        start: v(0.0, 0.0, 0.0),
+        end: v(0.0, 0.0, 1.0),
+        infinite_length: true,
+    };
 
     let hit = get_ray_hit_point(&ray, &tri);
     assert_eq!(hit, ray.end);

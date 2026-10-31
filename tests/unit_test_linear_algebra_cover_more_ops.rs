@@ -5,7 +5,6 @@ use omath::{Mat, Vector3, Vector4};
 
 #[test]
 fn in_place_scalar_operators() {
-
     let mut v = Vector3::<f32>::new(1.0f32, 2.0f32, 3.0f32);
 
     v += 1.0f32;
@@ -22,12 +21,10 @@ fn in_place_scalar_operators() {
     expect_float_eq(v.x, 0.5f32);
     expect_float_eq(v.y, 1.0f32);
     expect_float_eq(v.z, 1.5f32);
-
 }
 
 #[test]
 fn element_wise_mul_div() {
-
     let a = Vector4::<f32>::new(2.0f32, 4.0f32, 6.0f32, 8.0f32);
     let b = Vector4::<f32>::new(1.0f32, 2.0f32, 3.0f32, 4.0f32);
 
@@ -42,7 +39,6 @@ fn element_wise_mul_div() {
     expect_float_eq(d.y, 2.0f32);
     expect_float_eq(d.z, 2.0f32);
     expect_float_eq(d.w, 2.0f32);
-
 }
 
 #[test]

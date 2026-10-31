@@ -42,20 +42,36 @@ macro_rules! expect_double_eq {
 
 fn biased_f32(value: f32) -> i64 {
     let bits = i64::from(value.abs().to_bits());
-    if value.is_sign_negative() { -bits } else { bits }
+    if value.is_sign_negative() {
+        -bits
+    } else {
+        bits
+    }
 }
 
 fn biased_f64(value: f64) -> i128 {
     let bits = i128::from(value.abs().to_bits());
-    if value.is_sign_negative() { -bits } else { bits }
+    if value.is_sign_negative() {
+        -bits
+    } else {
+        bits
+    }
 }
 
 pub fn ulps_f32(a: f32, b: f32) -> u64 {
-    if a.is_nan() || b.is_nan() { u64::MAX } else { biased_f32(a).abs_diff(biased_f32(b)) }
+    if a.is_nan() || b.is_nan() {
+        u64::MAX
+    } else {
+        biased_f32(a).abs_diff(biased_f32(b))
+    }
 }
 
 pub fn ulps_f64(a: f64, b: f64) -> u128 {
-    if a.is_nan() || b.is_nan() { u128::MAX } else { biased_f64(a).abs_diff(biased_f64(b)) }
+    if a.is_nan() || b.is_nan() {
+        u128::MAX
+    } else {
+        biased_f64(a).abs_diff(biased_f64(b))
+    }
 }
 
 /// `std::remainder`: the result lies in `[-divisor / 2, divisor / 2]`.

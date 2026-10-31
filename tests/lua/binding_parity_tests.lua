@@ -200,10 +200,10 @@ function Projection_error_texts()
 end
 
 function Scanners_have_no_module_surface()
-    assert(omath.PePatternScanner.scan_in_module == nil)
-    assert(omath.ElfPatternScanner.scan_in_module == nil)
-    assert(omath.MachOPatternScanner.scan_in_module == nil)
-    assert(omath.hud == nil)
+    assert(type(omath.PePatternScanner.scan_in_module) == 'function')
+    assert(type(omath.ElfPatternScanner.scan_in_module) == 'function')
+    assert(type(omath.MachOPatternScanner.scan_in_module) == 'function')
+    assert(omath.hud.Renderer ~= nil and omath.hud.EntityOverlay ~= nil)
     assert(omath.SectionScanResult.new == nil)
     assert(omath.collision.LineTracer.nope == nil)
 end

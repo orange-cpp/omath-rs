@@ -15,13 +15,19 @@ pub struct MeshCollider<
 
 impl<E: MeshEngine, V, Vbo: Clone, Ebo: Clone> Clone for MeshCollider<E, V, Vbo, Ebo> {
     fn clone(&self) -> Self {
-        Self { mesh: self.mesh.clone() }
+        Self {
+            mesh: self.mesh.clone(),
+        }
     }
 }
 
-impl<E: MeshEngine, V, Vbo: fmt::Debug, Ebo: fmt::Debug> fmt::Debug for MeshCollider<E, V, Vbo, Ebo> {
+impl<E: MeshEngine, V, Vbo: fmt::Debug, Ebo: fmt::Debug> fmt::Debug
+    for MeshCollider<E, V, Vbo, Ebo>
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("MeshCollider").field("mesh", &self.mesh).finish()
+        f.debug_struct("MeshCollider")
+            .field("mesh", &self.mesh)
+            .finish()
     }
 }
 
@@ -55,7 +61,12 @@ impl<E: MeshEngine, V: HasPosition<E::Scalar>, Vbo: AsRef<[V]>, Ebo> MeshCollide
             m.at(0, 2) * direction.x + m.at(1, 2) * direction.y + m.at(2, 2) * direction.z,
         );
 
-        let (first, rest) = self.mesh.vertex_buffer.as_ref().split_first().expect("the vertex buffer is empty");
+        let (first, rest) = self
+            .mesh
+            .vertex_buffer
+            .as_ref()
+            .split_first()
+            .expect("the vertex buffer is empty");
         let mut furthest = first;
         for vertex in rest {
             if furthest.position().dot(d_local) < vertex.position().dot(d_local) {
@@ -66,11 +77,17 @@ impl<E: MeshEngine, V: HasPosition<E::Scalar>, Vbo: AsRef<[V]>, Ebo> MeshCollide
     }
 }
 
-impl<E: MeshEngine, V: HasPosition<E::Scalar>, Vbo: AsRef<[V]>, Ebo> Collider for MeshCollider<E, V, Vbo, Ebo> {
+impl<E: MeshEngine, V: HasPosition<E::Scalar>, Vbo: AsRef<[V]>, Ebo> Collider
+    for MeshCollider<E, V, Vbo, Ebo>
+{
     type Scalar = E::Scalar;
 
-    fn find_abs_furthest_vertex_position(&self, direction: Vector3<E::Scalar>) -> Vector3<E::Scalar> {
-        self.mesh.vertex_position_to_world_space(self.find_furthest_vertex(direction).position())
+    fn find_abs_furthest_vertex_position(
+        &self,
+        direction: Vector3<E::Scalar>,
+    ) -> Vector3<E::Scalar> {
+        self.mesh
+            .vertex_position_to_world_space(self.find_furthest_vertex(direction).position())
     }
 
     #[inline]

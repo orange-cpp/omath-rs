@@ -146,9 +146,10 @@ fn up_vector() {
 
 #[test]
 fn forward_vector_rotation_yaw() {
-    let mut angles = opengl::ViewAngles::default();
-
-    angles.yaw = opengl::YawAngle::from_degrees(-90.0);
+    let angles = opengl::ViewAngles {
+        yaw: opengl::YawAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = opengl::forward_vector(angles);
     expect_near!(forward.x, opengl::K_ABS_RIGHT.x, 0.00001);
@@ -158,9 +159,10 @@ fn forward_vector_rotation_yaw() {
 
 #[test]
 fn forward_vector_rotation_pitch() {
-    let mut angles = opengl::ViewAngles::default();
-
-    angles.pitch = opengl::PitchAngle::from_degrees(90.0);
+    let angles = opengl::ViewAngles {
+        pitch: opengl::PitchAngle::from_degrees(90.0),
+        ..Default::default()
+    };
 
     let forward = opengl::forward_vector(angles);
     expect_near!(forward.x, opengl::K_ABS_UP.x, 0.00001);
@@ -170,9 +172,10 @@ fn forward_vector_rotation_pitch() {
 
 #[test]
 fn forward_vector_rotation_roll() {
-    let mut angles = opengl::ViewAngles::default();
-
-    angles.roll = opengl::RollAngle::from_degrees(-90.0);
+    let angles = opengl::ViewAngles {
+        roll: opengl::RollAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = opengl::up_vector(angles);
     expect_near!(forward.x, opengl::K_ABS_RIGHT.x, 0.00001);
@@ -261,7 +264,8 @@ fn loook_at_random_all_axis() {
 
     let mut failed_points: usize = 0;
     for _i in 0..1000 {
-        let position_to_look = Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
+        let position_to_look =
+            Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
 
         if cam.get_origin().distance_to(position_to_look) < 10.0 {
             continue;
@@ -277,7 +281,9 @@ fn loook_at_random_all_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001
+        {
             failed_points += 1;
         }
     }
@@ -316,7 +322,9 @@ fn loook_at_random_x_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -355,7 +363,9 @@ fn loook_at_random_y_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -393,7 +403,9 @@ fn loook_at_random_z_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -406,7 +418,11 @@ fn look_at_forward() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(opengl::K_ABS_FORWARD.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(opengl::K_ABS_FORWARD.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -417,7 +433,11 @@ fn look_at_right() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(opengl::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(opengl::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -428,18 +448,27 @@ fn look_at_up() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(opengl::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(opengl::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_back() {
-    let angles = opengl::CameraTrait::calc_look_at_angle(Default::default(), -opengl::K_ABS_FORWARD);
+    let angles =
+        opengl::CameraTrait::calc_look_at_angle(Default::default(), -opengl::K_ABS_FORWARD);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-opengl::K_ABS_FORWARD).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-opengl::K_ABS_FORWARD).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -450,7 +479,11 @@ fn look_at_left() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-opengl::K_ABS_RIGHT).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-opengl::K_ABS_RIGHT).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -461,7 +494,11 @@ fn look_at_down() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = opengl::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-opengl::K_ABS_UP).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-opengl::K_ABS_UP).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }

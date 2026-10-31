@@ -52,7 +52,12 @@ fn camera_can_calculate_matrices_all_engines() {
 }
 
 fn project_z_lh<T: Real, S: StoreOrder>(proj: &Mat<4, 4, T, S>, z: f32) -> f32 {
-    let clip = *proj * Mat::<4, 1, T, S>::column_from_vector(Vector3::new(T::ZERO, T::ZERO, T::from_f64(f64::from(z))));
+    let clip = *proj
+        * Mat::<4, 1, T, S>::column_from_vector(Vector3::new(
+            T::ZERO,
+            T::ZERO,
+            T::from_f64(f64::from(z)),
+        ));
     (clip.at(2, 0) / clip.at(3, 0)).to_f64() as f32
 }
 
@@ -65,7 +70,10 @@ fn frostbite_pred_and_mesh_and_camera() {
     expect_matrix_near(&m1, &m2, 1e-5);
 
     // CameraTrait look at should be callable
-    let _angles = frostbite::CameraTrait::calc_look_at_angle(Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 1.0));
+    let _angles = frostbite::CameraTrait::calc_look_at_angle(
+        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 1.0, 1.0),
+    );
     let proj = frostbite::CameraTrait::calc_projection_matrix(
         projection::FieldOfView::from_degrees(60.0),
         ViewPort::new(1280.0, 720.0),
@@ -89,8 +97,13 @@ fn frostbite_pred_and_mesh_and_camera() {
         1000.0,
         NdcDepthRange::ZeroToOne,
     );
-    let expected_zo =
-        frostbite::calc_perspective_projection_matrix(60.0, 1280.0 / 720.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let expected_zo = frostbite::calc_perspective_projection_matrix(
+        60.0,
+        1280.0 / 720.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
     expect_matrix_near(&proj_zo, &expected_zo, 1e-5);
     assert_ne!(proj, proj_zo);
 }
@@ -104,8 +117,13 @@ fn source_both_depth_ranges() {
         1000.0,
         NdcDepthRange::NegativeOneToOne,
     );
-    let expected_no =
-        source::calc_perspective_projection_matrix(90.0, 1920.0 / 1080.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let expected_no = source::calc_perspective_projection_matrix(
+        90.0,
+        1920.0 / 1080.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
     expect_matrix_near(&proj_no, &expected_no, 1e-5);
 
     let proj_zo = source::CameraTrait::calc_projection_matrix(
@@ -115,8 +133,13 @@ fn source_both_depth_ranges() {
         1000.0,
         NdcDepthRange::ZeroToOne,
     );
-    let expected_zo =
-        source::calc_perspective_projection_matrix(90.0, 1920.0 / 1080.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let expected_zo = source::calc_perspective_projection_matrix(
+        90.0,
+        1920.0 / 1080.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
     expect_matrix_near(&proj_zo, &expected_zo, 1e-5);
 
     assert_ne!(proj_no, proj_zo);
@@ -131,8 +154,13 @@ fn cry_engine_both_depth_ranges() {
         1000.0,
         NdcDepthRange::NegativeOneToOne,
     );
-    let expected_no =
-        cry::calc_perspective_projection_matrix(90.0, 1920.0 / 1080.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let expected_no = cry::calc_perspective_projection_matrix(
+        90.0,
+        1920.0 / 1080.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
     expect_matrix_near(&proj_no, &expected_no, 1e-5);
 
     let proj_zo = cry::CameraTrait::calc_projection_matrix(
@@ -142,8 +170,13 @@ fn cry_engine_both_depth_ranges() {
         1000.0,
         NdcDepthRange::ZeroToOne,
     );
-    let expected_zo =
-        cry::calc_perspective_projection_matrix(90.0, 1920.0 / 1080.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let expected_zo = cry::calc_perspective_projection_matrix(
+        90.0,
+        1920.0 / 1080.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
     expect_matrix_near(&proj_zo, &expected_zo, 1e-5);
 
     assert_ne!(proj_no, proj_zo);
@@ -152,7 +185,13 @@ fn cry_engine_both_depth_ranges() {
 #[test]
 fn source_zero_to_one_z_range() {
     // Source is left-handed
-    let proj = source::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = source::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), 0.0, 1e-4);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-4);
@@ -163,7 +202,13 @@ fn source_zero_to_one_z_range() {
 #[test]
 fn iw_zero_to_one_z_range() {
     // IW is left-handed
-    let proj = iw::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = iw::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), 0.0, 1e-4);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-4);
@@ -174,12 +219,19 @@ fn iw_zero_to_one_z_range() {
 #[test]
 fn opengl_zero_to_one_z_range() {
     // OpenGL is right-handed (negative z forward), column-major
-    let proj = opengl::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = opengl::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     // OpenGL engine uses column-major matrices, project manually
     let proj_z = |z: f32| {
-        let clip = proj * Mat::<4, 1, f32, ColumnMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
-        return clip.at(2, 0) / clip.at(3, 0);
+        let clip =
+            proj * Mat::<4, 1, f32, ColumnMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
+        clip.at(2, 0) / clip.at(3, 0)
     };
 
     expect_near!(proj_z(-0.1), 0.0, 1e-4);
@@ -190,7 +242,13 @@ fn opengl_zero_to_one_z_range() {
 
 #[test]
 fn frostbite_zero_to_one_z_range() {
-    let proj = frostbite::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = frostbite::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), 0.0, 1e-4);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-4);
@@ -201,11 +259,17 @@ fn frostbite_zero_to_one_z_range() {
 #[test]
 fn unity_zero_to_one_z_range() {
     // Unity is right-handed, row-major
-    let proj = unity::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = unity::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     let proj_z = |z: f32| {
         let clip = proj * Mat::<4, 1, f32, RowMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
-        return clip.at(2, 0) / clip.at(3, 0);
+        clip.at(2, 0) / clip.at(3, 0)
     };
 
     expect_near!(proj_z(-0.1), 0.0, 1e-4);
@@ -216,7 +280,13 @@ fn unity_zero_to_one_z_range() {
 
 #[test]
 fn unreal_zero_to_one_z_range() {
-    let proj = unreal::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = unreal::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), 0.0, 1e-4);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-4);
@@ -226,7 +296,13 @@ fn unreal_zero_to_one_z_range() {
 
 #[test]
 fn cry_engine_zero_to_one_z_range() {
-    let proj = cry::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let proj = cry::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), 0.0, 1e-4);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-4);
@@ -236,8 +312,13 @@ fn cry_engine_zero_to_one_z_range() {
 
 #[test]
 fn source_negative_one_to_one_z_range() {
-    let proj =
-        source::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = source::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), -1.0, 1e-3);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-3);
@@ -245,7 +326,13 @@ fn source_negative_one_to_one_z_range() {
 
 #[test]
 fn iw_negative_one_to_one_z_range() {
-    let proj = iw::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = iw::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), -1.0, 1e-3);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-3);
@@ -253,8 +340,13 @@ fn iw_negative_one_to_one_z_range() {
 
 #[test]
 fn frostbite_negative_one_to_one_z_range() {
-    let proj =
-        frostbite::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = frostbite::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), -1.0, 1e-3);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-3);
@@ -262,8 +354,13 @@ fn frostbite_negative_one_to_one_z_range() {
 
 #[test]
 fn unreal_negative_one_to_one_z_range() {
-    let proj =
-        unreal::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = unreal::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), -1.0, 1e-3);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-3);
@@ -271,7 +368,13 @@ fn unreal_negative_one_to_one_z_range() {
 
 #[test]
 fn cry_engine_negative_one_to_one_z_range() {
-    let proj = cry::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = cry::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     expect_near!(project_z_lh(&proj, 0.1), -1.0, 1e-3);
     expect_near!(project_z_lh(&proj, 1000.0), 1.0, 1e-3);
@@ -279,12 +382,18 @@ fn cry_engine_negative_one_to_one_z_range() {
 
 #[test]
 fn opengl_negative_one_to_one_z_range() {
-    let proj =
-        opengl::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = opengl::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let proj_z = |z: f32| {
-        let clip = proj * Mat::<4, 1, f32, ColumnMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
-        return clip.at(2, 0) / clip.at(3, 0);
+        let clip =
+            proj * Mat::<4, 1, f32, ColumnMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
+        clip.at(2, 0) / clip.at(3, 0)
     };
 
     expect_near!(proj_z(-0.1), -1.0, 1e-3);
@@ -293,12 +402,17 @@ fn opengl_negative_one_to_one_z_range() {
 
 #[test]
 fn unity_negative_one_to_one_z_range() {
-    let proj =
-        unity::calc_perspective_projection_matrix(90.0, 16.0 / 9.0, 0.1, 1000.0, NdcDepthRange::NegativeOneToOne);
+    let proj = unity::calc_perspective_projection_matrix(
+        90.0,
+        16.0 / 9.0,
+        0.1,
+        1000.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
     let proj_z = |z: f32| {
         let clip = proj * Mat::<4, 1, f32, RowMajor>::column_from_vector(Vector3::new(0.0, 0.0, z));
-        return clip.at(2, 0) / clip.at(3, 0);
+        clip.at(2, 0) / clip.at(3, 0)
     };
 
     expect_near!(proj_z(-0.1), -1.0, 1e-3);
@@ -312,7 +426,11 @@ macro_rules! mesh_and_camera_test {
         #[test]
         fn $name() {
             let va = $engine::ViewAngles::default();
-            expect_matrix_near(&$engine::MeshTrait::rotation_matrix(&va), &$engine::rotation_matrix(va), 1e-5);
+            expect_matrix_near(
+                &$engine::MeshTrait::rotation_matrix(&va),
+                &$engine::rotation_matrix(va),
+                1e-5,
+            );
 
             let fov = projection::FieldOfView::from_degrees($fov);
             let view_port = ViewPort::new($width, $height);
@@ -336,8 +454,13 @@ macro_rules! mesh_and_camera_test {
             );
             expect_matrix_near(&proj, &expected, 1e-5);
 
-            let proj_zo =
-                $engine::CameraTrait::calc_projection_matrix(fov, view_port, near, far, NdcDepthRange::ZeroToOne);
+            let proj_zo = $engine::CameraTrait::calc_projection_matrix(
+                fov,
+                view_port,
+                near,
+                far,
+                NdcDepthRange::ZeroToOne,
+            );
             let expected_zo = $engine::calc_perspective_projection_matrix(
                 $fov.into(),
                 aspect_ratio.into(),
@@ -351,7 +474,31 @@ macro_rules! mesh_and_camera_test {
     };
 }
 
-mesh_and_camera_test!(iw_pred_and_mesh_and_camera, iw, 45.0_f32, 1920.0_f32, 1080.0_f32);
-mesh_and_camera_test!(opengl_pred_and_mesh_and_camera, opengl, 60.0_f32, 1280.0_f32, 720.0_f32);
-mesh_and_camera_test!(unity_pred_and_mesh_and_camera, unity, 60.0_f32, 1280.0_f32, 720.0_f32);
-mesh_and_camera_test!(unreal_pred_and_mesh_and_camera, unreal, 60.0_f32, 1280.0_f32, 720.0_f32);
+mesh_and_camera_test!(
+    iw_pred_and_mesh_and_camera,
+    iw,
+    45.0_f32,
+    1920.0_f32,
+    1080.0_f32
+);
+mesh_and_camera_test!(
+    opengl_pred_and_mesh_and_camera,
+    opengl,
+    60.0_f32,
+    1280.0_f32,
+    720.0_f32
+);
+mesh_and_camera_test!(
+    unity_pred_and_mesh_and_camera,
+    unity,
+    60.0_f32,
+    1280.0_f32,
+    720.0_f32
+);
+mesh_and_camera_test!(
+    unreal_pred_and_mesh_and_camera,
+    unreal,
+    60.0_f32,
+    1280.0_f32,
+    720.0_f32
+);

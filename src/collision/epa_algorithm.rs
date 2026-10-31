@@ -24,7 +24,10 @@ pub struct EpaParams<T = f32> {
 
 impl<T: Real> Default for EpaParams<T> {
     fn default() -> Self {
-        Self { max_iterations: 64, tolerance: T::from_f64(1e-4f32 as f64) }
+        Self {
+            max_iterations: 64,
+            tolerance: T::from_f64(1e-4f32 as f64),
+        }
     }
 }
 
@@ -87,7 +90,11 @@ pub fn epa_solve<C: Collider + ?Sized>(
         make_face(&vertexes, 1, 3, 2),
     ];
 
-    let mut heap: BinaryHeap<_> = faces.iter().enumerate().map(|(idx, face)| HeapItem { d: face.d, idx }).collect();
+    let mut heap: BinaryHeap<_> = faces
+        .iter()
+        .enumerate()
+        .map(|(idx, face)| HeapItem { d: face.d, idx })
+        .collect();
 
     let mut iterations = 0;
     let mut boundary = Boundary::new();
@@ -116,7 +123,10 @@ pub fn epa_solve<C: Collider + ?Sized>(
         // Stitch new faces around the horizon and push them directly, with no heap rebuild.
         for &(edge_a, edge_b) in &boundary {
             let face = make_face(&vertexes, edge_a, edge_b, new_idx);
-            heap.push(HeapItem { d: face.d, idx: faces.len() });
+            heap.push(HeapItem {
+                d: face.d,
+                idx: faces.len(),
+            });
             faces.push(face);
         }
 
@@ -131,7 +141,12 @@ pub fn epa_solve<C: Collider + ?Sized>(
     Some(make_result(best, iterations, vertexes.len(), faces.len()))
 }
 
-fn make_result<T: Real>(face: &Face<T>, iterations: usize, num_vertices: usize, num_faces: usize) -> EpaResult<T> {
+fn make_result<T: Real>(
+    face: &Face<T>,
+    iterations: usize,
+    num_vertices: usize,
+    num_faces: usize,
+) -> EpaResult<T> {
     EpaResult {
         normal: face.n,
         penetration_vector: face.n * face.d,
@@ -171,10 +186,21 @@ fn make_face<T: Real>(vertexes: &[Vector3<T>], i0: usize, mut i1: usize, mut i2:
     }
     n = n * (T::ONE / n.dot(n).max_of(tiny).sqrt());
 
-    Face { i0, i1, i2, n, d: n.dot(a0), deleted: false }
+    Face {
+        i0,
+        i1,
+        i2,
+        n,
+        d: n.dot(a0),
+        deleted: false,
+    }
 }
 
-fn support_point<C: Collider + ?Sized>(a: &C, b: &C, dir: Vector3<C::Scalar>) -> Vector3<C::Scalar> {
+fn support_point<C: Collider + ?Sized>(
+    a: &C,
+    b: &C,
+    dir: Vector3<C::Scalar>,
+) -> Vector3<C::Scalar> {
     a.find_abs_furthest_vertex_position(dir) - b.find_abs_furthest_vertex_position(-dir)
 }
 
@@ -185,9 +211,16 @@ fn near_zero_vec<T: Real>(v: Vector3<T>) -> bool {
 
 fn any_perp_vec<T: Real>(v: Vector3<T>) -> Vector3<T> {
     let (zero, one) = (T::ZERO, T::ONE);
-    let axes = [Vector3::new(one, zero, zero), Vector3::new(zero, one, zero), Vector3::new(zero, zero, one)];
+    let axes = [
+        Vector3::new(one, zero, zero),
+        Vector3::new(zero, one, zero),
+        Vector3::new(zero, zero, one),
+    ];
 
-    axes.into_iter().map(|axis| v.cross(axis)).find(|d| !near_zero_vec(*d)).unwrap_or(axes[0])
+    axes.into_iter()
+        .map(|axis| v.cross(axis))
+        .find(|d| !near_zero_vec(*d))
+        .unwrap_or(axes[0])
 }
 
 fn find_best_surviving_face<T: Real>(faces: &[Face<T>]) -> Option<&Face<T>> {

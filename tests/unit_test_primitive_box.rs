@@ -19,7 +19,11 @@ fn test() {
     assert_eq!(result.vertex_buffer.len(), 8);
     assert_eq!(result.element_buffer_object.len(), 12);
 
-    let ray = Ray { start: Vector3::new(0.0, 0.0, 0.0), end: Vector3::new(-100.0, 0.0, 0.0), ..Default::default() };
+    let ray = Ray {
+        start: Vector3::new(0.0, 0.0, 0.0),
+        end: Vector3::new(-100.0, 0.0, 0.0),
+        ..Default::default()
+    };
     let _ = get_ray_hit_point(&ray, &result);
 }
 
@@ -75,7 +79,10 @@ fn mesh_transform_applies_scale_then_rotation_then_origin() {
 
     let face = mesh.make_face_in_world_space(mesh.element_buffer_object[0]);
     let local = mesh.make_face_in_local_space(mesh.element_buffer_object[0]);
-    assert_eq!(face.vertex1, mesh.vertex_position_to_world_space(local.vertex1));
+    assert_eq!(
+        face.vertex1,
+        mesh.vertex_position_to_world_space(local.vertex1)
+    );
 }
 
 #[test]
@@ -89,7 +96,10 @@ fn unreal_meshes_work_in_world_space() {
     );
 
     mesh.set_origin(Vector3::new(1.0, 2.0, 3.0));
-    assert_eq!(mesh.vertex_position_to_world_space(Vector3::default()), Vector3::new(1.0, 2.0, 3.0));
+    assert_eq!(
+        mesh.vertex_position_to_world_space(Vector3::default()),
+        Vector3::new(1.0, 2.0, 3.0)
+    );
 }
 
 #[test]
@@ -102,5 +112,8 @@ fn plane_keeps_the_cpp_indices() {
     );
 
     assert_eq!(mesh.vertex_buffer[3], Vector3::new(1.0, 2.0, 0.0));
-    assert_eq!(mesh.element_buffer_object, [Vector3::new(1, 1, 2), Vector3::new(0, 1, 3)]);
+    assert_eq!(
+        mesh.element_buffer_object,
+        [Vector3::new(1, 1, 2), Vector3::new(0, 1, 3)]
+    );
 }

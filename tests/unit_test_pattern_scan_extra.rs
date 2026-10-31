@@ -5,13 +5,19 @@ use std::collections::VecDeque;
 #[test]
 fn iterator_scan_found() {
     let buf = [0xDE, 0xAD, 0xBE, 0xEF, 0x00];
-    assert_eq!(PatternScanner::scan_for_pattern(&buf, "DE AD BE EF"), Some(0));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(&buf, "DE AD BE EF"),
+        Some(0)
+    );
 }
 
 #[test]
 fn consteval_iterator_scan() {
     let buf = [0x00, 0xDE, 0xAD, 0xBE, 0xEF, 0x11];
-    assert_eq!(PatternScanner::scan_for_parsed_pattern(&buf, &consteval_pattern!("DE ?? BE EF")), Some(1));
+    assert_eq!(
+        PatternScanner::scan_for_parsed_pattern(&buf, &consteval_pattern!("DE ?? BE EF")),
+        Some(1)
+    );
 }
 
 #[test]
@@ -36,7 +42,10 @@ fn finds_match_at_every_offset() {
         let mut buf = vec![0u8; BUFFER_SIZE];
         buf[offset..offset + SIGNATURE.len()].copy_from_slice(&SIGNATURE);
 
-        assert_eq!(PatternScanner::scan_for_pattern(&buf, "DE AD ? EF"), Some(offset));
+        assert_eq!(
+            PatternScanner::scan_for_pattern(&buf, "DE AD ? EF"),
+            Some(offset)
+        );
     }
 }
 
@@ -46,7 +55,10 @@ fn partial_matches_are_skipped() {
     let mut buf = vec![0xAAu8; 200];
     buf[150] = 0xBB;
 
-    assert_eq!(PatternScanner::scan_for_pattern(&buf, "AA AA BB AA"), Some(148));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(&buf, "AA AA BB AA"),
+        Some(148)
+    );
 }
 
 #[test]
@@ -55,7 +67,10 @@ fn same_first_and_last_byte() {
     let mut buf = vec![0xDEu8; 160];
     buf[66] = 0xAD;
 
-    assert_eq!(PatternScanner::scan_for_pattern(&buf, "DE ? AD ? DE"), Some(64));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(&buf, "DE ? AD ? DE"),
+        Some(64)
+    );
 }
 
 #[test]
@@ -84,7 +99,10 @@ fn surrounding_wildcards_need_room() {
     buf[40] = 0xDE;
     buf[41] = 0xAD;
 
-    assert_eq!(PatternScanner::scan_for_pattern(&buf, "? ? DE AD ?"), Some(38));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(&buf, "? ? DE AD ?"),
+        Some(38)
+    );
 }
 
 #[test]
@@ -103,7 +121,10 @@ fn non_contiguous_range() {
     buf[77] = 0xDE;
     buf[79] = 0xEF;
 
-    assert_eq!(PatternScanner::scan_for_pattern(buf.make_contiguous(), "DE ? EF"), Some(77));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(buf.make_contiguous(), "DE ? EF"),
+        Some(77)
+    );
 }
 
 // Not in the C++ file
@@ -121,5 +142,8 @@ fn empty_pattern_does_not_match_empty_range() {
 
 #[test]
 fn pattern_as_long_as_range_matches() {
-    assert_eq!(PatternScanner::scan_for_pattern(&[0xAA, 0xBB], "AA ?"), Some(0));
+    assert_eq!(
+        PatternScanner::scan_for_pattern(&[0xAA, 0xBB], "AA ?"),
+        Some(0)
+    );
 }

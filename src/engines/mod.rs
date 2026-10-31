@@ -17,8 +17,12 @@ macro_rules! engine_types {
         pub type PitchAngle = crate::Angle<$scalar, $pitch>;
         pub type YawAngle = crate::Angle<$scalar, crate::engines::Normalized180>;
         pub type RollAngle = crate::Angle<$scalar, crate::engines::Normalized180>;
-        pub type ViewAngles =
-            crate::ViewAngles<$scalar, $pitch, crate::engines::Normalized180, crate::engines::Normalized180>;
+        pub type ViewAngles = crate::ViewAngles<
+            $scalar,
+            $pitch,
+            crate::engines::Normalized180,
+            crate::engines::Normalized180,
+        >;
     };
 }
 
@@ -224,8 +228,8 @@ macro_rules! engine_pred_trait {
                 time: $scalar,
                 gravity: $scalar,
             ) -> Vector3<$scalar> {
-                let mut current_pos =
-                    launch_origin + forward_vector(view_angles(pitch, yaw)) * projectile.launch_speed * time;
+                let mut current_pos = launch_origin
+                    + forward_vector(view_angles(pitch, yaw)) * projectile.launch_speed * time;
                 current_pos.$height -= (gravity * projectile.gravity_scale) * (time * time) * 0.5;
 
                 current_pos
@@ -253,7 +257,10 @@ macro_rules! engine_pred_trait {
                 vec.$height
             }
 
-            fn calc_view_basis(pitch: $scalar, yaw: $scalar) -> crate::projectile_prediction::ViewBasis<$scalar> {
+            fn calc_view_basis(
+                pitch: $scalar,
+                yaw: $scalar,
+            ) -> crate::projectile_prediction::ViewBasis<$scalar> {
                 let rotation = rotation_matrix(view_angles(pitch, yaw));
 
                 crate::projectile_prediction::ViewBasis {
@@ -263,11 +270,17 @@ macro_rules! engine_pred_trait {
                 }
             }
 
-            fn calc_direct_pitch_angle($pitch_origin: Vector3<$scalar>, $pitch_view_to: Vector3<$scalar>) -> $scalar {
+            fn calc_direct_pitch_angle(
+                $pitch_origin: Vector3<$scalar>,
+                $pitch_view_to: Vector3<$scalar>,
+            ) -> $scalar {
                 $direct_pitch
             }
 
-            fn calc_direct_yaw_angle($yaw_origin: Vector3<$scalar>, $yaw_view_to: Vector3<$scalar>) -> $scalar {
+            fn calc_direct_yaw_angle(
+                $yaw_origin: Vector3<$scalar>,
+                $yaw_view_to: Vector3<$scalar>,
+            ) -> $scalar {
                 $direct_yaw
             }
         }

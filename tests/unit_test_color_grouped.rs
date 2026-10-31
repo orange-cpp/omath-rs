@@ -8,13 +8,11 @@ mod unit_test_color_grouped {
 
     #[test]
     fn constructor_float() {
-
         let color = Color::new(0.5f32, 0.5f32, 0.5f32, 1.0f32);
         expect_float_eq(color.value().x, 0.5f32);
         expect_float_eq(color.value().y, 0.5f32);
         expect_float_eq(color.value().z, 0.5f32);
         expect_float_eq(color.value().w, 1.0f32);
-
     }
 
     #[test]
@@ -29,30 +27,30 @@ mod unit_test_color_grouped {
 
     #[test]
     fn from_rgba() {
-
         let color = Color::from_rgba(128, 64, 32, 255);
         expect_float_eq(color.value().x, 128.0f32 / 255.0f32);
         expect_float_eq(color.value().y, 64.0f32 / 255.0f32);
         expect_float_eq(color.value().z, 32.0f32 / 255.0f32);
         expect_float_eq(color.value().w, 1.0f32);
-
     }
 
     #[test]
     fn from_hsv() {
-
         let color = Color::from_hsv(0.0f32, 1.0f32, 1.0f32);
         expect_float_eq(color.value().x, 1.0f32);
         expect_float_eq(color.value().y, 0.0f32);
         expect_float_eq(color.value().z, 0.0f32);
         expect_float_eq(color.value().w, 1.0f32);
-
     }
 
     #[test]
     fn to_hsv() {
         let color1 = Color::RED;
-        let Hsv { hue, saturation, value } = color1.to_hsv(); // Red color
+        let Hsv {
+            hue,
+            saturation,
+            value,
+        } = color1.to_hsv(); // Red color
         expect_float_eq(hue, 0.0f32);
         expect_float_eq(saturation, 1.0f32);
         expect_float_eq(value, 1.0f32);
@@ -70,7 +68,6 @@ mod unit_test_color_grouped {
 
     #[test]
     fn predefined_colors() {
-
         let red = Color::RED;
         let green = Color::GREEN;
         let blue = Color::BLUE;
@@ -89,7 +86,6 @@ mod unit_test_color_grouped {
         expect_float_eq(blue.value().y, 0.0f32);
         expect_float_eq(blue.value().z, 1.0f32);
         expect_float_eq(blue.value().w, 1.0f32);
-
     }
 
     #[test]
@@ -108,7 +104,6 @@ mod unit_test_color_grouped_extra {
 
     #[test]
     fn set_hue_saturation_value() {
-
         let mut c = Color::RED;
         let h1 = c.to_hsv();
         expect_float_eq(h1.hue, 0.0f32);
@@ -125,7 +120,6 @@ mod unit_test_color_grouped_extra {
         c.set_value(1.0f32);
         let h4 = c.to_hsv();
         expect_near(h4.value, 1.0f32, 1e-3f32);
-
     }
 
     #[test]
@@ -152,35 +146,29 @@ mod unit_test_color_grouped_more {
 
     #[test]
     fn default_ctor_is_zero() {
-
         let c = Color::default();
         expect_float_eq(c.value().x, 0.0f32);
         expect_float_eq(c.value().y, 0.0f32);
         expect_float_eq(c.value().z, 0.0f32);
         expect_float_eq(c.value().w, 0.0f32);
-
     }
 
     #[test]
     fn float_ctor_and_clamp_for_rgb() {
-
         let c = Color::new(1.2f32, -0.5f32, 0.5f32, 2.0f32);
         expect_float_eq(c.value().x, 1.0f32);
         expect_float_eq(c.value().y, 0.0f32);
         expect_float_eq(c.value().z, 0.5f32);
         expect_float_eq(c.value().w, 1.0f32);
-
     }
 
     #[test]
     fn from_rgba_produces_scaled_components() {
-
         let c = Color::from_rgba(25, 128, 230, 64);
         expect_near(c.value().x, 25.0f32 / 255.0f32, 1e-6f32);
         expect_near(c.value().y, 128.0f32 / 255.0f32, 1e-6f32);
         expect_near(c.value().z, 230.0f32 / 255.0f32, 1e-6f32);
         expect_near(c.value().w, 64.0f32 / 255.0f32, 1e-6f32);
-
     }
 
     #[test]
@@ -206,14 +194,12 @@ mod unit_test_color_grouped_more {
 
     #[test]
     fn to_string_contains_components() {
-
         let c = Color::from_rgba(10, 20, 30, 40);
         let s = c.to_string();
         assert!(s.contains("r:"));
         assert!(s.contains("g:"));
         assert!(s.contains("b:"));
         assert!(s.contains("a:"));
-
     }
 }
 
@@ -222,14 +208,12 @@ mod unit_test_color_grouped_more2 {
 
     #[test]
     fn from_rgba_and_to_string() {
-
         let c = Color::from_rgba(255, 128, 0, 64);
         let s = c.to_string();
         assert!(s.contains("r:255"));
         assert!(s.contains("g:128"));
         assert!(s.contains("b:0"));
         assert!(s.contains("a:64"));
-
     }
 
     #[test]
@@ -264,7 +248,6 @@ mod unit_test_color_grouped_more2 {
 
     #[test]
     fn to_hsv_and_setters() {
-
         let mut c = Color::new(0.2f32, 0.4f32, 0.6f32, 1.0f32);
         let hsv = c.to_hsv();
         expect_near(hsv.value, 0.6f32, 1e-6f32);
@@ -277,7 +260,6 @@ mod unit_test_color_grouped_more2 {
 
         c.set_value(0.5f32);
         assert!((c.value().z).is_finite());
-
     }
 
     #[test]
@@ -297,11 +279,9 @@ mod unit_test_color_grouped_more2 {
 
     #[test]
     fn formatter_uses_to_string() {
-
         let c = Color::from_rgba(10, 20, 30, 40);
         let formatted = format!("{}", c);
         assert!(formatted.contains("r:10"));
-
     }
 
     #[test]
@@ -344,7 +324,6 @@ mod unit_test_color_grouped_fixes {
 
     #[test]
     fn hsv_setters_preserve_alpha() {
-
         let mut c = Color::from_rgba(255, 0, 0, 128);
         let alpha: f32 = c.value().w;
 
@@ -356,12 +335,10 @@ mod unit_test_color_grouped_fixes {
 
         c.set_value(0.7f32);
         expect_float_eq(c.value().w, alpha);
-
     }
 
     #[test]
     fn from_hsv_wraps_hue() {
-
         let wrapped_up = Color::from_hsv(1.25f32, 1.0f32, 1.0f32);
         let wrapped_down = Color::from_hsv(-0.75f32, 1.0f32, 1.0f32);
         let expected = Color::from_hsv(0.25f32, 1.0f32, 1.0f32);
@@ -372,7 +349,6 @@ mod unit_test_color_grouped_fixes {
         expect_near(wrapped_down.value().x, expected.value().x, 1e-5f32);
         expect_near(wrapped_down.value().y, expected.value().y, 1e-5f32);
         expect_near(wrapped_down.value().z, expected.value().z, 1e-5f32);
-
     }
 
     #[test]
@@ -389,7 +365,6 @@ mod unit_test_color_grouped_fixes {
 
     #[test]
     fn equality() {
-
         let a = Color::new(0.1f32, 0.2f32, 0.3f32, 0.4f32);
         let b = Color::new(0.1f32, 0.2f32, 0.3f32, 0.4f32);
         let c = Color::new(0.1f32, 0.2f32, 0.3f32, 0.5f32);
@@ -397,7 +372,6 @@ mod unit_test_color_grouped_fixes {
         assert!(a == b);
         assert!(!(a == c));
         assert!(a != c);
-
     }
 
     #[test]

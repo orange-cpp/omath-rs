@@ -15,7 +15,11 @@ fn tri() -> Triangle<Vec3> {
 }
 
 fn segment(start: Vec3, end: Vec3) -> Ray {
-    Ray { start, end, ..Default::default() }
+    Ray {
+        start,
+        end,
+        ..Default::default()
+    }
 }
 
 #[test]

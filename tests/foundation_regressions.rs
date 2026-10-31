@@ -13,8 +13,18 @@ fn vector2_normalized_keeps_a_vector_of_nan_length() {
     assert!(normalized.x.is_nan());
     assert_eq!(normalized.y, 1.0f32);
 
-    assert!(Vector3::new(f32::NAN, 1.0f32, 0.0f32).normalized().y.is_nan());
-    assert!(Vector4::new(f32::NAN, 1.0f32, 0.0f32, 0.0f32).normalized().y.is_nan());
+    assert!(
+        Vector3::new(f32::NAN, 1.0f32, 0.0f32)
+            .normalized()
+            .y
+            .is_nan()
+    );
+    assert!(
+        Vector4::new(f32::NAN, 1.0f32, 0.0f32, 0.0f32)
+            .normalized()
+            .y
+            .is_nan()
+    );
 }
 
 #[test]
@@ -32,9 +42,16 @@ fn trait_length_and_distance_match_the_inherent_methods() {
     }
 
     let far = Vector3::new(3e19f32, 0.0f32, 0.0f32);
-    assert_eq!(generic(far, Vector3::default()), (far.length(), far.distance_to(Vector3::default())));
+    assert_eq!(
+        generic(far, Vector3::default()),
+        (far.length(), far.distance_to(Vector3::default()))
+    );
 
-    let triangle = Triangle::new(far, Vector3::default(), Vector3::new(0.0f32, 1.0f32, 0.0f32));
+    let triangle = Triangle::new(
+        far,
+        Vector3::default(),
+        Vector3::new(0.0f32, 1.0f32, 0.0f32),
+    );
     assert_eq!(triangle.side_a_length(), 3e19f32);
 }
 

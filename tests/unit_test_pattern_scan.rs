@@ -74,20 +74,38 @@ fn consteval_spacing_and_case() {
 
 #[test]
 fn lenient_parser_skips_long_tokens() {
-    assert_eq!(PatternScanner::parse_pattern("FFF AA ???"), Ok(vec![Some(0xAA)]));
+    assert_eq!(
+        PatternScanner::parse_pattern("FFF AA ???"),
+        Ok(vec![Some(0xAA)])
+    );
 }
 
 #[test]
 fn lenient_parser_reads_hex_prefix_of_token() {
-    assert_eq!(PatternScanner::parse_pattern("A 1G F?"), Ok(vec![Some(0x0A), Some(0x01), Some(0x0F)]));
-    assert_eq!(PatternScanner::parse_pattern("G1"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern("?A"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern("+1"), Err(PatternScanError::InvalidPatternString));
+    assert_eq!(
+        PatternScanner::parse_pattern("A 1G F?"),
+        Ok(vec![Some(0x0A), Some(0x01), Some(0x0F)])
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern("G1"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern("?A"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern("+1"),
+        Err(PatternScanError::InvalidPatternString)
+    );
 }
 
 #[test]
 fn lenient_parser_splits_on_space_only() {
-    assert_eq!(PatternScanner::parse_pattern("\tF"), Err(PatternScanError::InvalidPatternString));
+    assert_eq!(
+        PatternScanner::parse_pattern("\tF"),
+        Err(PatternScanError::InvalidPatternString)
+    );
     assert_eq!(PatternScanner::parse_pattern("AA\tBB"), Ok(vec![]));
 }
 
@@ -99,14 +117,32 @@ fn empty_pattern_parses_to_nothing() {
 
 #[test]
 fn strict_parser_rejects_what_the_lenient_one_accepts() {
-    assert_eq!(PatternScanner::parse_pattern_const::<1>("A"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern_const::<1>("1G"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern_const::<1>("FFF"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern_const::<1>("?A"), Err(PatternScanError::InvalidPatternString));
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<1>("A"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<1>("1G"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<1>("FFF"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<1>("?A"),
+        Err(PatternScanError::InvalidPatternString)
+    );
 }
 
 #[test]
 fn strict_parser_rejects_wrong_array_size() {
-    assert_eq!(PatternScanner::parse_pattern_const::<1>("AA BB"), Err(PatternScanError::InvalidPatternString));
-    assert_eq!(PatternScanner::parse_pattern_const::<3>("AA BB"), Err(PatternScanError::InvalidPatternString));
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<1>("AA BB"),
+        Err(PatternScanError::InvalidPatternString)
+    );
+    assert_eq!(
+        PatternScanner::parse_pattern_const::<3>("AA BB"),
+        Err(PatternScanError::InvalidPatternString)
+    );
 }

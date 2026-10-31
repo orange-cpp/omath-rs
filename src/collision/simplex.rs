@@ -42,7 +42,10 @@ impl<T> Simplex<T> {
 impl<T: Scalar> Simplex<T> {
     /// Replaces the contents, in place of the C++ `operator=(initializer_list)`. Panics on more than four points.
     pub fn assign(&mut self, points: &[Vector3<T>]) {
-        assert!(points.len() <= Self::CAPACITY, "Simplex can have at most 4 points");
+        assert!(
+            points.len() <= Self::CAPACITY,
+            "Simplex can have at most 4 points"
+        );
         self.points[..points.len()].copy_from_slice(points);
         self.size = points.len();
     }
@@ -112,9 +115,16 @@ impl<T: Real> Simplex<T> {
     /// the same helper in EPA.
     fn any_perp(v: Vector3<T>) -> Vector3<T> {
         let (zero, one) = (T::ZERO, T::ONE);
-        let axes = [Vector3::new(one, zero, zero), Vector3::new(zero, one, zero), Vector3::new(zero, zero, one)];
+        let axes = [
+            Vector3::new(one, zero, zero),
+            Vector3::new(zero, one, zero),
+            Vector3::new(zero, zero, one),
+        ];
 
-        axes.into_iter().map(|axis| v.cross(axis)).find(|d| !Self::near_zero(*d)).unwrap_or(axes[0])
+        axes.into_iter()
+            .map(|axis| v.cross(axis))
+            .find(|d| !Self::near_zero(*d))
+            .unwrap_or(axes[0])
     }
 
     fn handle_line(&mut self, direction: &mut Vector3<T>) -> bool {
@@ -126,7 +136,11 @@ impl<T: Real> Simplex<T> {
         if ab.point_to_same_direction(ao) {
             // Needed to validly handle a collision of colliders placed at the same origin.
             let n = ab.cross(ao);
-            *direction = if Self::near_zero(n) { Self::any_perp(ab) } else { n.cross(ab) };
+            *direction = if Self::near_zero(n) {
+                Self::any_perp(ab)
+            } else {
+                n.cross(ab)
+            };
             return false;
         }
         self.assign(&[a]);

@@ -10,7 +10,10 @@ fn invalid_dos_header() {
     data[1] = b'Z';
     let f = TempFile::create(&data);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "55 8B EC", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "55 8B EC", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -24,7 +27,10 @@ fn invalid_nt_signature() {
     data[E_LFANEW..E_LFANEW + 4].copy_from_slice(b"XYZW");
     let f = TempFile::create(&data);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "55 8B EC", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "55 8B EC", ".text"),
+        None
+    );
 }
 
 #[test]
@@ -33,5 +39,8 @@ fn section_not_found() {
     let buf = build_minimal_pe_with_section(&[0x00, 0x01, 0x02, 0x03], b".data\0\0\0");
     let f = TempFile::create(&buf);
 
-    assert_eq!(PePatternScanner::scan_for_pattern_in_file(f.path(), "00 01", ".text"), None);
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_file(f.path(), "00 01", ".text"),
+        None
+    );
 }

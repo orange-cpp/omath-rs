@@ -64,7 +64,9 @@ fn every_engine_projects() {
         ("unreal", "Mat4d"),
         ("cry", "Mat4"),
     ] {
-        check.call::<()>((engine, mat_type)).unwrap_or_else(|error| panic!("{engine}: {error}"));
+        check
+            .call::<()>((engine, mat_type))
+            .unwrap_or_else(|error| panic!("{engine}: {error}"));
     }
 }
 

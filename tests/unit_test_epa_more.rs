@@ -45,7 +45,10 @@ fn degenerate_face_handled() {
         Vector3f::new(0.0, 0.0, 0.01),
     ]);
 
-    let params = EpaParams { max_iterations: 4, tolerance: 1e-6 };
+    let params = EpaParams {
+        max_iterations: 4,
+        tolerance: 1e-6,
+    };
 
     // The algorithm should either return a valid result or gracefully exit (not crash)
     if let Some(result) = epa_solve(&DegenerateCollider, &DegenerateCollider, &s, params) {

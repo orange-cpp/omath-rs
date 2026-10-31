@@ -36,7 +36,11 @@ impl Default for WalkBot<'_> {
 impl<'a> WalkBot<'a> {
     /// The C++ default for `min_node_distance`, which [`WalkBot::default`] also uses, is `1.0`.
     pub fn new(mesh: &Arc<NavigationMesh>, min_node_distance: f32) -> Self {
-        Self { nav_mesh: Arc::downgrade(mesh), min_node_distance, ..Self::default() }
+        Self {
+            nav_mesh: Arc::downgrade(mesh),
+            min_node_distance,
+            ..Self::default()
+        }
     }
 
     pub fn set_nav_mesh(&mut self, mesh: &Arc<NavigationMesh>) {

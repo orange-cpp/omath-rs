@@ -90,7 +90,11 @@ fn extract_section_with_layout<'a>(
                     return Some(ExtractedSection {
                         virtual_base_addr: (layout.read_word)(section, SECTION_ADDR_OFFSET)?,
                         raw_base_addr: u64::from(raw_off),
-                        data: read_bytes(data, usize::try_from(raw_off).ok()?, usize::try_from(size).ok()?)?,
+                        data: read_bytes(
+                            data,
+                            usize::try_from(raw_off).ok()?,
+                            usize::try_from(size).ok()?,
+                        )?,
                     });
                 }
 
@@ -106,8 +110,12 @@ fn extract_section_with_layout<'a>(
 
 fn extract_section<'a>(data: &'a [u8], section_name: &str) -> Option<ExtractedSection<'a>> {
     match read_u32(data, 0)? {
-        MH_MAGIC_64 | MH_CIGAM_64 => extract_section_with_layout(data, section_name, &MACHO64_LAYOUT),
-        MH_MAGIC_32 | MH_CIGAM_32 => extract_section_with_layout(data, section_name, &MACHO32_LAYOUT),
+        MH_MAGIC_64 | MH_CIGAM_64 => {
+            extract_section_with_layout(data, section_name, &MACHO64_LAYOUT)
+        }
+        MH_MAGIC_32 | MH_CIGAM_32 => {
+            extract_section_with_layout(data, section_name, &MACHO32_LAYOUT)
+        }
         _ => None,
     }
 }

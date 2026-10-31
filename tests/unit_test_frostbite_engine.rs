@@ -2,7 +2,9 @@
 mod projection_support;
 
 use omath::engines::frostbite;
-use omath::projection::{self, CameraEngine, ProjectionParams, ScreenStart, ViewPort, ViewPortClipping};
+use omath::projection::{
+    self, CameraEngine, ProjectionParams, ScreenStart, ViewPort, ViewPortClipping,
+};
 use omath::{NdcDepthRange, Vector3};
 use projection_support::Rng;
 
@@ -138,9 +140,10 @@ fn forward_vector() {
 
 #[test]
 fn forward_vector_rotation_yaw() {
-    let mut angles = frostbite::ViewAngles::default();
-
-    angles.yaw = frostbite::YawAngle::from_degrees(90.0);
+    let angles = frostbite::ViewAngles {
+        yaw: frostbite::YawAngle::from_degrees(90.0),
+        ..Default::default()
+    };
 
     let forward = frostbite::forward_vector(angles);
     expect_near!(forward.x, frostbite::K_ABS_RIGHT.x, 0.00001);
@@ -150,9 +153,10 @@ fn forward_vector_rotation_yaw() {
 
 #[test]
 fn forward_vector_rotation_pitch() {
-    let mut angles = frostbite::ViewAngles::default();
-
-    angles.pitch = frostbite::PitchAngle::from_degrees(-90.0);
+    let angles = frostbite::ViewAngles {
+        pitch: frostbite::PitchAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = frostbite::forward_vector(angles);
     expect_near!(forward.x, frostbite::K_ABS_UP.x, 0.00001);
@@ -162,9 +166,10 @@ fn forward_vector_rotation_pitch() {
 
 #[test]
 fn forward_vector_rotation_roll() {
-    let mut angles = frostbite::ViewAngles::default();
-
-    angles.roll = frostbite::RollAngle::from_degrees(-90.0);
+    let angles = frostbite::ViewAngles {
+        roll: frostbite::RollAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = frostbite::up_vector(angles);
     expect_near!(forward.x, frostbite::K_ABS_RIGHT.x, 0.00001);
@@ -226,7 +231,8 @@ fn project() {
         0.03,
         1000.0,
     );
-    let proj = cam.world_to_screen_with(Vector3::new(10.0, 3.0, 10.0), ScreenStart::BottomLeftCorner);
+    let proj =
+        cam.world_to_screen_with(Vector3::new(10.0, 3.0, 10.0), ScreenStart::BottomLeftCorner);
 
     expect_near!(proj.unwrap().x, 1263.538, 0.001);
     expect_near!(proj.unwrap().y, 547.061, 0.001);
@@ -285,7 +291,8 @@ fn loook_at_random_all_axis() {
     let mut failed_points: usize = 0;
 
     for _i in 0..1000 {
-        let position_to_look = Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
+        let position_to_look =
+            Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
 
         if cam.get_origin().distance_to(position_to_look) < 10.0 {
             continue;
@@ -301,7 +308,9 @@ fn loook_at_random_all_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001
+        {
             failed_points += 1;
         }
     }
@@ -340,7 +349,9 @@ fn loook_at_random_x_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.001
+        {
             failed_points += 1;
         }
     }
@@ -379,7 +390,9 @@ fn loook_at_random_y_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -418,7 +431,9 @@ fn loook_at_random_z_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -427,55 +442,80 @@ fn loook_at_random_z_axis() {
 
 #[test]
 fn look_at_right() {
-    let angles = frostbite::CameraTrait::calc_look_at_angle(Default::default(), frostbite::K_ABS_RIGHT);
+    let angles =
+        frostbite::CameraTrait::calc_look_at_angle(Default::default(), frostbite::K_ABS_RIGHT);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = frostbite::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(frostbite::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(frostbite::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_up() {
-    let angles = frostbite::CameraTrait::calc_look_at_angle(Default::default(), frostbite::K_ABS_RIGHT);
+    let angles =
+        frostbite::CameraTrait::calc_look_at_angle(Default::default(), frostbite::K_ABS_RIGHT);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = frostbite::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(frostbite::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(frostbite::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_back() {
-    let angles = frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_FORWARD);
+    let angles =
+        frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_FORWARD);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = frostbite::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-frostbite::K_ABS_FORWARD).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-frostbite::K_ABS_FORWARD).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_left() {
-    let angles = frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_RIGHT);
+    let angles =
+        frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_RIGHT);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = frostbite::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-frostbite::K_ABS_RIGHT).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-frostbite::K_ABS_RIGHT).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
 
 #[test]
 fn look_at_down() {
-    let angles = frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_UP);
+    let angles =
+        frostbite::CameraTrait::calc_look_at_angle(Default::default(), -frostbite::K_ABS_UP);
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = frostbite::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-frostbite::K_ABS_UP).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-frostbite::K_ABS_UP).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -533,9 +573,18 @@ fn extract_projection_params_basic_round_trip() {
     // Build a matrix with known inputs and verify both outputs are recovered.
     let fov_deg: f32 = 60.0;
     let aspect: f32 = 16.0 / 9.0;
-    let mat = frostbite::calc_perspective_projection_matrix(fov_deg, aspect, 0.1, 1000.0, NdcDepthRange::ZeroToOne);
+    let mat = frostbite::calc_perspective_projection_matrix(
+        fov_deg,
+        aspect,
+        0.1,
+        1000.0,
+        NdcDepthRange::ZeroToOne,
+    );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -547,10 +596,18 @@ fn extract_projection_params_neg_one_to_one_depth_range() {
     // depth ranges, so extraction must work the same way.
     let fov_deg: f32 = 75.0;
     let aspect: f32 = 4.0 / 3.0;
-    let mat =
-        frostbite::calc_perspective_projection_matrix(fov_deg, aspect, 0.1, 500.0, NdcDepthRange::NegativeOneToOne);
+    let mat = frostbite::calc_perspective_projection_matrix(
+        fov_deg,
+        aspect,
+        0.1,
+        500.0,
+        NdcDepthRange::NegativeOneToOne,
+    );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -568,7 +625,10 @@ fn extract_projection_params_fov45() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -586,7 +646,10 @@ fn extract_projection_params_fov90() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -604,7 +667,10 @@ fn extract_projection_params_fov120() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -622,7 +688,10 @@ fn extract_projection_params_aspect_ratio_4by3() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -640,7 +709,10 @@ fn extract_projection_params_aspect_ratio_ultrawide() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -658,7 +730,10 @@ fn extract_projection_params_aspect_ratio_square() {
         frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
     );
 
-    let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&mat);
 
     expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -677,7 +752,10 @@ fn extract_projection_params_fov_and_aspect_are_independent() {
             1000.0,
             frostbite::K_DEFAULT_NDC_DEPTH_RANGE,
         );
-        let ProjectionParams { fov, aspect_ratio: ar } = frostbite::Camera::extract_projection_params(&mat);
+        let ProjectionParams {
+            fov,
+            aspect_ratio: ar,
+        } = frostbite::Camera::extract_projection_params(&mat);
 
         expect_near!(fov.as_degrees(), fov_deg, K_FOV_TOLERANCE_DEG);
         expect_near!(ar, aspect, K_ASPECT_TOLERANCE);
@@ -700,10 +778,16 @@ fn extract_projection_params_via_camera_round_trip() {
         1000.0,
     );
 
-    let ProjectionParams { fov: fov_out, aspect_ratio: ar_out } =
-        frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
+    let ProjectionParams {
+        fov: fov_out,
+        aspect_ratio: ar_out,
+    } = frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
 
-    expect_near!(fov_out.as_degrees(), fov_in.as_degrees(), K_FOV_TOLERANCE_DEG);
+    expect_near!(
+        fov_out.as_degrees(),
+        fov_in.as_degrees(),
+        K_FOV_TOLERANCE_DEG
+    );
     expect_near!(ar_out, aspect, K_ASPECT_TOLERANCE);
 }
 
@@ -721,8 +805,10 @@ fn extract_projection_params_via_camera_after_fov_change() {
 
     cam.set_field_of_view(projection::FieldOfView::from_degrees(110.0));
 
-    let ProjectionParams { fov, aspect_ratio: ar } =
-        frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
 
     expect_near!(fov.as_degrees(), 110.0, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, 1920.0 / 1080.0, K_ASPECT_TOLERANCE);
@@ -742,8 +828,10 @@ fn extract_projection_params_via_camera_after_viewport_change() {
 
     cam.set_view_port(ViewPort::new(1280.0, 720.0));
 
-    let ProjectionParams { fov, aspect_ratio: ar } =
-        frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
+    let ProjectionParams {
+        fov,
+        aspect_ratio: ar,
+    } = frostbite::Camera::extract_projection_params(&cam.get_projection_matrix());
 
     expect_near!(fov.as_degrees(), 90.0, K_FOV_TOLERANCE_DEG);
     expect_near!(ar, 1280.0 / 720.0, K_ASPECT_TOLERANCE);

@@ -9,7 +9,10 @@ use omath::primitives::Vertex;
 type Vec3 = Vector3<f32>;
 
 fn vertex(x: f32, y: f32, z: f32) -> Vertex {
-    Vertex { position: Vector3::new(x, y, z), ..Default::default() }
+    Vertex {
+        position: Vector3::new(x, y, z),
+        ..Default::default()
+    }
 }
 
 fn make_scaled_cube(x: f32, y: f32, z: f32, scale: f32) -> Collider {
@@ -38,7 +41,11 @@ fn collide_with_origin_cube(x: f32, y: f32, z: f32) -> bool {
 }
 
 fn simplex_info_with_origin_cube(x: f32, y: f32, z: f32) -> GjkHitInfo {
-    is_collide_with_simplex_info(&make_cube(0.0, 0.0, 0.0), &make_cube(x, y, z), &GjkSettings::default())
+    is_collide_with_simplex_info(
+        &make_cube(0.0, 0.0, 0.0),
+        &make_cube(x, y, z),
+        &GjkSettings::default(),
+    )
 }
 
 fn tet_vbo() -> Vec<Vertex> {
@@ -100,7 +107,10 @@ fn separated_large_distance() {
 #[test]
 fn separated_asymmetric_sizes() {
     // Big (scale 2, half-ext 2), small (scale 0.5, half-ext 0.5) at 2.6 → gap of 0.1
-    assert!(!is_collide(&make_scaled_cube(0.0, 0.0, 0.0, 2.0), &make_scaled_cube(2.6, 0.0, 0.0, 0.5)));
+    assert!(!is_collide(
+        &make_scaled_cube(0.0, 0.0, 0.0, 2.0),
+        &make_scaled_cube(2.6, 0.0, 0.0, 0.5)
+    ));
 }
 
 // ---------------------------------------------------------------------------
@@ -143,19 +153,28 @@ fn overlapping_along_diagonal_xyz() {
 #[test]
 fn fully_nested_small_inside_big() {
     // Small cube (half-ext 0.5) fully inside big cube (half-ext 2)
-    assert!(is_collide(&make_scaled_cube(0.0, 0.0, 0.0, 2.0), &make_scaled_cube(0.0, 0.0, 0.0, 0.5)));
+    assert!(is_collide(
+        &make_scaled_cube(0.0, 0.0, 0.0, 2.0),
+        &make_scaled_cube(0.0, 0.0, 0.0, 0.5)
+    ));
 }
 
 #[test]
 fn fully_nested_off_center() {
     // Small at (0.5, 0, 0) still fully inside big (half-ext 2)
-    assert!(is_collide(&make_scaled_cube(0.0, 0.0, 0.0, 2.0), &make_scaled_cube(0.5, 0.0, 0.0, 0.5)));
+    assert!(is_collide(
+        &make_scaled_cube(0.0, 0.0, 0.0, 2.0),
+        &make_scaled_cube(0.5, 0.0, 0.0, 0.5)
+    ));
 }
 
 #[test]
 fn overlapping_asymmetric_sizes() {
     // Big (scale 2, half-ext 2) and small (scale 0.5, half-ext 0.5) at 2.0 → overlap 0.5 in X
-    assert!(is_collide(&make_scaled_cube(0.0, 0.0, 0.0, 2.0), &make_scaled_cube(2.0, 0.0, 0.0, 0.5)));
+    assert!(is_collide(
+        &make_scaled_cube(0.0, 0.0, 0.0, 2.0),
+        &make_scaled_cube(2.0, 0.0, 0.0, 0.5)
+    ));
 }
 
 // ---------------------------------------------------------------------------

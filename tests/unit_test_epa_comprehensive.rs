@@ -6,18 +6,25 @@ mod common;
 use common::expect_near;
 use omath::Vector3;
 use omath::collision::{
-    EpaParams, EpaResult, GjkHitInfo, GjkSettings, epa_solve, is_collide, is_collide_with_simplex_info,
+    EpaParams, EpaResult, GjkHitInfo, GjkSettings, epa_solve, is_collide,
+    is_collide_with_simplex_info,
 };
 use omath::engines::source::{Mesh, MeshCollider as Collider};
 use omath::primitives::Vertex;
 
 type Vec3 = Vector3<f32>;
 
-const K_DEFAULT_PARAMS: EpaParams = EpaParams { max_iterations: 64, tolerance: 1e-4 };
+const K_DEFAULT_PARAMS: EpaParams = EpaParams {
+    max_iterations: 64,
+    tolerance: 1e-4,
+};
 const K_UNIT: Vec3 = Vec3::new(1.0, 1.0, 1.0);
 
 fn vertex(x: f32, y: f32, z: f32) -> Vertex {
-    Vertex { position: Vector3::new(x, y, z), ..Default::default() }
+    Vertex {
+        position: Vector3::new(x, y, z),
+        ..Default::default()
+    }
 }
 
 fn cube_vbo() -> Vec<Vertex> {
@@ -234,11 +241,17 @@ fn round_trip_along_x() {
 
     // Move B along the penetration vector; it should separate from A
     let mesh_sep = make_mesh(mesh_b.get_origin() + r.penetration_vector * margin, K_UNIT);
-    assert!(!is_collide(&a, &Collider::new(mesh_sep)), "Applying pen vector must separate");
+    assert!(
+        !is_collide(&a, &Collider::new(mesh_sep)),
+        "Applying pen vector must separate"
+    );
 
     // Moving the wrong way must still collide
     let mesh_wrong = make_mesh(mesh_b.get_origin() - r.penetration_vector * margin, K_UNIT);
-    assert!(is_collide(&a, &Collider::new(mesh_wrong)), "Opposite direction must still collide");
+    assert!(
+        is_collide(&a, &Collider::new(mesh_wrong)),
+        "Opposite direction must still collide"
+    );
 }
 
 #[test]
@@ -305,7 +318,10 @@ fn symmetry_normals_are_opposite() {
 fn large_vs_small_depth_correct() {
     // Big (half-ext 2) at origin, small (half-ext 0.5) at (2.0, 0, 0)
     // Minkowski diff closest face in X at distance 0.5
-    let r = solve(&make_scaled_cube(0.0, 0.0, 0.0, 2.0), &make_scaled_cube(2.0, 0.0, 0.0, 0.5));
+    let r = solve(
+        &make_scaled_cube(0.0, 0.0, 0.0, 2.0),
+        &make_scaled_cube(2.0, 0.0, 0.0, 0.5),
+    );
     expect_near(r.depth, 0.5f32, 1e-2f32);
     expect_near(r.normal.x.abs(), 1.0f32, 1e-3f32);
 }
@@ -381,8 +397,14 @@ fn tighter_tolerance_more_accurate_depth() {
     let GjkHitInfo { hit, simplex } = gjk(&a, &b);
     assert!(hit);
 
-    let loose = EpaParams { max_iterations: 64, tolerance: 1e-2 };
-    let tight = EpaParams { max_iterations: 64, tolerance: 1e-5 };
+    let loose = EpaParams {
+        max_iterations: 64,
+        tolerance: 1e-2,
+    };
+    let tight = EpaParams {
+        max_iterations: 64,
+        tolerance: 1e-5,
+    };
 
     let r_loose = epa_solve(&a, &b, &simplex, loose).unwrap();
     let r_tight = epa_solve(&a, &b, &simplex, tight).unwrap();
@@ -419,7 +441,10 @@ fn bookkeeping_max_iterations_respected() {
     let GjkHitInfo { hit, simplex } = gjk(&a, &b);
     assert!(hit);
 
-    let tight = EpaParams { max_iterations: 3, tolerance: 1e-10 };
+    let tight = EpaParams {
+        max_iterations: 3,
+        tolerance: 1e-10,
+    };
 
     // Must return something (fallback best-face path) and respect the cap
     if let Some(r) = epa_solve(&a, &b, &simplex, tight) {

@@ -12,7 +12,9 @@ mod target;
 
 pub use launcher::{Launcher, MuzzleOffset, ViewBasis};
 pub use pred_engine::PredEngine;
-pub use proj_pred_engine::{AimAngles, AimSolution, Arc, ProjPredEngineInterface, launcher_from_projectile};
+pub use proj_pred_engine::{
+    AimAngles, AimSolution, Arc, ProjPredEngineInterface, launcher_from_projectile,
+};
 pub use proj_pred_engine_batched::ProjPredEngineBatched;
 pub use proj_pred_engine_drag::ProjPredEngineDrag;
 pub use proj_pred_engine_legacy::ProjPredEngineLegacy;

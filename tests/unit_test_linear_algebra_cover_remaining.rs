@@ -5,7 +5,6 @@ use omath::{Mat, Vector4};
 
 #[test]
 fn subtraction() {
-
     let a = Vector4::<f32>::new(5.0f32, 6.0f32, 7.0f32, 8.0f32);
     let b = Vector4::<f32>::new(1.0f32, 2.0f32, 3.0f32, 4.0f32);
 
@@ -14,7 +13,6 @@ fn subtraction() {
     expect_float_eq(r.y, 4.0f32);
     expect_float_eq(r.z, 4.0f32);
     expect_float_eq(r.w, 4.0f32);
-
 }
 
 #[test]
@@ -25,15 +23,13 @@ fn forced_throw_lines() {
 }
 
 #[test]
-fn copy_and_move_self_assign() {
-    let mut m = Mat::<2, 2, f32>::from_rows([[1.0f32, 2.0f32], [3.0f32, 4.0f32]]);
-    // self copy-assignment. rustc warns on a literal `m = m`, so the value goes through a copy.
+fn copy_and_move_values_remain_usable() {
+    let m = Mat::<2, 2, f32>::from_rows([[1.0f32, 2.0f32], [3.0f32, 4.0f32]]);
+    // Copy the value and verify the copied matrix.
     let copy = m;
-    m = copy;
-    expect_float_eq(m.at(0, 0), 1.0f32);
+    expect_float_eq(copy.at(0, 0), 1.0f32);
 
-    // self move-assignment: a moved Copy value stays usable
+    // A moved Copy value stays usable.
     let moved = m;
-    m = moved;
-    expect_float_eq(m.at(0, 0), 1.0f32);
+    expect_float_eq(moved.at(0, 0), 1.0f32);
 }

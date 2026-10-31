@@ -135,9 +135,10 @@ fn forward_vector() {
 
 #[test]
 fn forward_vector_rotation_yaw() {
-    let mut angles = unity::ViewAngles::default();
-
-    angles.yaw = unity::YawAngle::from_degrees(90.0);
+    let angles = unity::ViewAngles {
+        yaw: unity::YawAngle::from_degrees(90.0),
+        ..Default::default()
+    };
 
     let forward = unity::forward_vector(angles);
     expect_near!(forward.x, unity::K_ABS_RIGHT.x, 0.00001);
@@ -147,9 +148,10 @@ fn forward_vector_rotation_yaw() {
 
 #[test]
 fn forward_vector_rotation_pitch() {
-    let mut angles = unity::ViewAngles::default();
-
-    angles.pitch = unity::PitchAngle::from_degrees(-90.0);
+    let angles = unity::ViewAngles {
+        pitch: unity::PitchAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = unity::forward_vector(angles);
     expect_near!(forward.x, unity::K_ABS_UP.x, 0.00001);
@@ -159,9 +161,10 @@ fn forward_vector_rotation_pitch() {
 
 #[test]
 fn forward_vector_rotation_roll() {
-    let mut angles = unity::ViewAngles::default();
-
-    angles.roll = unity::RollAngle::from_degrees(-90.0);
+    let angles = unity::ViewAngles {
+        roll: unity::RollAngle::from_degrees(-90.0),
+        ..Default::default()
+    };
 
     let forward = unity::up_vector(angles);
     expect_near!(forward.x, unity::K_ABS_RIGHT.x, 0.00001);
@@ -223,7 +226,8 @@ fn project() {
         0.03,
         1000.0,
     );
-    let proj = cam.world_to_screen_with(Vector3::new(10.0, 3.0, 10.0), ScreenStart::BottomLeftCorner);
+    let proj =
+        cam.world_to_screen_with(Vector3::new(10.0, 3.0, 10.0), ScreenStart::BottomLeftCorner);
 
     expect_near!(proj.unwrap().x, 1263.538, 0.001);
     expect_near!(proj.unwrap().y, 547.061, 0.001);
@@ -282,7 +286,8 @@ fn loook_at_random_all_axis() {
     let mut failed_points: usize = 0;
 
     for _i in 0..1000 {
-        let position_to_look = Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
+        let position_to_look =
+            Vector3::<f32>::new(rng.uniform(dist), rng.uniform(dist), rng.uniform(dist));
 
         if cam.get_origin().distance_to(position_to_look) < 10.0 {
             continue;
@@ -298,7 +303,9 @@ fn loook_at_random_all_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.0001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.0001
+        {
             failed_points += 1;
         }
     }
@@ -337,7 +344,9 @@ fn loook_at_random_x_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.001 || (projected_pos.unwrap().y - 0.0).abs() >= 0.001 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.001
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.001
+        {
             failed_points += 1;
         }
     }
@@ -376,7 +385,9 @@ fn loook_at_random_y_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -415,7 +426,9 @@ fn loook_at_random_z_axis() {
             continue;
         }
 
-        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01 || (projected_pos.unwrap().y - 0.0).abs() >= 0.01 {
+        if (projected_pos.unwrap().x - 0.0).abs() >= 0.01
+            || (projected_pos.unwrap().y - 0.0).abs() >= 0.01
+        {
             failed_points += 1;
         }
     }
@@ -428,7 +441,11 @@ fn look_at_forward() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(unity::K_ABS_FORWARD.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(unity::K_ABS_FORWARD.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -439,7 +456,11 @@ fn look_at_right() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(unity::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(unity::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -450,7 +471,11 @@ fn look_at_up() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip(unity::K_ABS_RIGHT.as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip(unity::K_ABS_RIGHT.as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -461,7 +486,11 @@ fn look_at_back() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-unity::K_ABS_FORWARD).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-unity::K_ABS_FORWARD).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -472,7 +501,11 @@ fn look_at_left() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-unity::K_ABS_RIGHT).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-unity::K_ABS_RIGHT).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }
@@ -483,7 +516,11 @@ fn look_at_down() {
 
     // ReSharper disable once CppTooWideScopeInitStatement
     let dir_vector = unity::forward_vector(angles);
-    for (result, etalon) in dir_vector.as_array().into_iter().zip((-unity::K_ABS_UP).as_array()) {
+    for (result, etalon) in dir_vector
+        .as_array()
+        .into_iter()
+        .zip((-unity::K_ABS_UP).as_array())
+    {
         expect_near!(result, etalon, 0.0001);
     }
 }

@@ -7,13 +7,24 @@ use std::hash::{Hash, Hasher};
 
 /// Distance in units in the last place, the way gtest's `FloatingPoint::AlmostEquals` measures it.
 fn ulps_f32(a: f32, b: f32) -> u32 {
-    let biased = |bits: u32| if bits & 0x8000_0000 != 0 { (!bits).wrapping_add(1) } else { bits | 0x8000_0000 };
+    let biased = |bits: u32| {
+        if bits & 0x8000_0000 != 0 {
+            (!bits).wrapping_add(1)
+        } else {
+            bits | 0x8000_0000
+        }
+    };
     biased(a.to_bits()).abs_diff(biased(b.to_bits()))
 }
 
 fn ulps_f64(a: f64, b: f64) -> u64 {
-    let biased =
-        |bits: u64| if bits & (1 << 63) != 0 { (!bits).wrapping_add(1) } else { bits | (1 << 63) };
+    let biased = |bits: u64| {
+        if bits & (1 << 63) != 0 {
+            (!bits).wrapping_add(1)
+        } else {
+            bits | (1 << 63)
+        }
+    };
     biased(a.to_bits()).abs_diff(biased(b.to_bits()))
 }
 
@@ -39,7 +50,10 @@ pub fn expect_double_eq(actual: f64, expected: f64) {
 #[track_caller]
 pub fn expect_near(actual: impl Into<f64>, expected: impl Into<f64>, tolerance: impl Into<f64>) {
     let (actual, expected, tolerance) = (actual.into(), expected.into(), tolerance.into());
-    assert!((actual - expected).abs() <= tolerance, "|{actual} - {expected}| > {tolerance}");
+    assert!(
+        (actual - expected).abs() <= tolerance,
+        "|{actual} - {expected}| > {tolerance}"
+    );
 }
 
 pub fn hash_of<T: Hash>(value: &T) -> u64 {
@@ -48,10 +62,14 @@ pub fn hash_of<T: Hash>(value: &T) -> u64 {
     hasher.finish()
 }
 
-pub fn row_count<const R: usize, const C: usize, T: Copy, S: StoreOrder>(_: &Mat<R, C, T, S>) -> usize {
+pub fn row_count<const R: usize, const C: usize, T: Copy, S: StoreOrder>(
+    _: &Mat<R, C, T, S>,
+) -> usize {
     R
 }
 
-pub fn columns_count<const R: usize, const C: usize, T: Copy, S: StoreOrder>(_: &Mat<R, C, T, S>) -> usize {
+pub fn columns_count<const R: usize, const C: usize, T: Copy, S: StoreOrder>(
+    _: &Mat<R, C, T, S>,
+) -> usize {
     C
 }

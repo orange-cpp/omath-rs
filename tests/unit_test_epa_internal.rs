@@ -32,7 +32,10 @@ fn solve_handles_small_polytope() {
         Vector3f::new(-0.01, -0.01, -0.01),
     ]);
 
-    let params = EpaParams { max_iterations: 16, tolerance: 1e-6 };
+    let params = EpaParams {
+        max_iterations: 16,
+        tolerance: 1e-6,
+    };
 
     // Should either return a valid result or gracefully return None
     if let Some(result) = epa_solve(&DummyCollider, &DummyCollider, &s, params) {

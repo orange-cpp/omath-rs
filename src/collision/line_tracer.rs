@@ -66,14 +66,18 @@ impl<T: Real> RayTraceable for Triangle<Vector3<T>> {
         let t = ray.start - self.vertex2;
         let u = t.dot(p) * inv_det;
 
-        if (u < T::ZERO && u.abs_value() > k_epsilon) || (u > T::ONE && (u - T::ONE).abs_value() > k_epsilon) {
+        if (u < T::ZERO && u.abs_value() > k_epsilon)
+            || (u > T::ONE && (u - T::ONE).abs_value() > k_epsilon)
+        {
             return ray.end;
         }
 
         let q = t.cross(side_a);
         let v = ray_dir.dot(q) * inv_det;
 
-        if (v < T::ZERO && v.abs_value() > k_epsilon) || (u + v > T::ONE && (u + v - T::ONE).abs_value() > k_epsilon) {
+        if (v < T::ZERO && v.abs_value() > k_epsilon)
+            || (u + v > T::ONE && (u + v - T::ONE).abs_value() > k_epsilon)
+        {
             return ray.end;
         }
 
@@ -99,7 +103,13 @@ fn slab_hit<T: Real>(ray: &Ray<T>, slabs: [Slab<T>; 3]) -> Vector3<T> {
     let mut t_min = -T::INFINITY;
     let mut t_max = T::INFINITY;
 
-    for Slab { d, origin, min, max } in slabs {
+    for Slab {
+        d,
+        origin,
+        min,
+        max,
+    } in slabs
+    {
         if d.abs_value() < T::EPSILON {
             if origin >= min && origin <= max {
                 continue;
@@ -144,9 +154,24 @@ impl<T: Real, U> RayTraceable for Aabb<T, U> {
         slab_hit(
             ray,
             [
-                Slab { d: dir.x, origin: ray.start.x, min: self.min.x, max: self.max.x },
-                Slab { d: dir.y, origin: ray.start.y, min: self.min.y, max: self.max.y },
-                Slab { d: dir.z, origin: ray.start.z, min: self.min.z, max: self.max.z },
+                Slab {
+                    d: dir.x,
+                    origin: ray.start.x,
+                    min: self.min.x,
+                    max: self.max.x,
+                },
+                Slab {
+                    d: dir.y,
+                    origin: ray.start.y,
+                    min: self.min.y,
+                    max: self.max.y,
+                },
+                Slab {
+                    d: dir.z,
+                    origin: ray.start.z,
+                    min: self.min.z,
+                    max: self.max.z,
+                },
             ],
         )
     }
@@ -184,7 +209,10 @@ fn to_local_space<E: MeshEngine>(
     point: Vector3<E::Scalar>,
 ) -> Vector3<E::Scalar> {
     let row = |i| {
-        inverse.at(i, 0) * point.x + inverse.at(i, 1) * point.y + inverse.at(i, 2) * point.z + inverse.at(i, 3)
+        inverse.at(i, 0) * point.x
+            + inverse.at(i, 1) * point.y
+            + inverse.at(i, 2) * point.z
+            + inverse.at(i, 3)
     };
     Vector3::new(row(0), row(1), row(2))
 }

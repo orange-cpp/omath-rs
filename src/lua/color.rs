@@ -1,7 +1,8 @@
 //! `omath.Color` and `omath.Hsv`.
 
 use super::support::{
-    CppInt, add_eq, expect_args, float_fields, from_lua_userdata, no_matching_overload, number, userdata,
+    CppInt, add_eq, expect_args, float_fields, from_lua_userdata, no_matching_overload, number,
+    userdata,
 };
 use crate::{Color, Hsv};
 use mlua::{Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods};
@@ -25,11 +26,16 @@ impl UserData for Color {
             let (r, g, b, a) = lua.unpack_multi(args)?;
             Ok(Color::new(r, g, b, a))
         });
-        methods.add_function("from_rgba", |_, (r, g, b, a): (CppInt, CppInt, CppInt, CppInt)| {
-            Ok(Color::from_rgba(r.0 as u8, g.0 as u8, b.0 as u8, a.0 as u8))
-        });
+        methods.add_function(
+            "from_rgba",
+            |_, (r, g, b, a): (CppInt, CppInt, CppInt, CppInt)| {
+                Ok(Color::from_rgba(r.0 as u8, g.0 as u8, b.0 as u8, a.0 as u8))
+            },
+        );
         methods.add_function("from_hsv", |_, args: MultiValue| match args.len() {
-            1 => userdata::<Hsv>(&args[0]).map(Color::from).ok_or_else(no_matching_overload),
+            1 => userdata::<Hsv>(&args[0])
+                .map(Color::from)
+                .ok_or_else(no_matching_overload),
             3 => match (number(&args[0]), number(&args[1]), number(&args[2])) {
                 (Some(hue), Some(saturation), Some(value)) => {
                     Ok(Color::from_hsv(hue as f32, saturation as f32, value as f32))
@@ -55,7 +61,9 @@ impl UserData for Color {
             this.set_value(value);
             Ok(())
         });
-        methods.add_method("blend", |_, this, (other, ratio): (Color, f32)| Ok(this.blend(&other, ratio)));
+        methods.add_method("blend", |_, this, (other, ratio): (Color, f32)| {
+            Ok(this.blend(&other, ratio))
+        });
 
         add_eq(methods);
         methods.add_meta_method(MetaMethod::ToString, |_, this, ()| Ok(this.to_string()));

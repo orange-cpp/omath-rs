@@ -46,7 +46,11 @@ fn vector3_and_vector4_and_mat_coverage() {
     let _ = m2.as_slice();
     let inv2 = m2.inverted();
 
-    let m3 = Mat::<3, 3>::from_rows([[1.0f32, 2.0f32, 3.0f32], [4.0f32, 5.0f32, 6.0f32], [7.0f32, 8.0f32, 9.0f32]]);
+    let m3 = Mat::<3, 3>::from_rows([
+        [1.0f32, 2.0f32, 3.0f32],
+        [4.0f32, 5.0f32, 6.0f32],
+        [7.0f32, 8.0f32, 9.0f32],
+    ]);
     let _ = m3.determinant();
     let _: Mat<2, 2> = m3.strip(0, 0);
     let _ = m3.minor(2, 2);

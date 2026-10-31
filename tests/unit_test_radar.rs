@@ -108,13 +108,15 @@ fn verify_world_to_radar_uses_custom_distance<E: CameraEngine>(world_forward: Ve
 
     let forward_position = origin + world_forward * world_distance;
     let custom_distance_called = Cell::new(false);
-    let calc_distance = |distance_origin: Vector3<E::Scalar>, distance_position: Vector3<E::Scalar>| {
+    let calc_distance = |distance_origin: Vector3<E::Scalar>,
+                         distance_position: Vector3<E::Scalar>| {
         custom_distance_called.set(true);
         assert_eq!(distance_origin, origin);
         assert_eq!(distance_position, forward_position);
         custom_distance
     };
-    let forward_radar = algorithm::world_to_radar(&camera, forward_position, scale, Some(&calc_distance));
+    let forward_radar =
+        algorithm::world_to_radar(&camera, forward_position, scale, Some(&calc_distance));
 
     assert!(custom_distance_called.get());
     expect_near!(forward_radar.x, 0.0_f32, 1e-4_f32);
@@ -123,7 +125,10 @@ fn verify_world_to_radar_uses_custom_distance<E: CameraEngine>(world_forward: Ve
 
 #[test]
 fn source_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<source::CameraTrait>(source::K_ABS_FORWARD, source::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<source::CameraTrait>(
+        source::K_ABS_FORWARD,
+        source::K_ABS_RIGHT,
+    );
     verify_world_to_radar_uses_changed_camera_yaw::<source::CameraTrait>(
         -90.0,
         source::K_ABS_FORWARD,
@@ -135,8 +140,15 @@ fn source_engine_camera() {
 
 #[test]
 fn iw_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<iw::CameraTrait>(iw::K_ABS_FORWARD, iw::K_ABS_RIGHT);
-    verify_world_to_radar_uses_changed_camera_yaw::<iw::CameraTrait>(-90.0, iw::K_ABS_FORWARD, iw::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<iw::CameraTrait>(
+        iw::K_ABS_FORWARD,
+        iw::K_ABS_RIGHT,
+    );
+    verify_world_to_radar_uses_changed_camera_yaw::<iw::CameraTrait>(
+        -90.0,
+        iw::K_ABS_FORWARD,
+        iw::K_ABS_RIGHT,
+    );
     verify_world_to_radar_ignores_camera_pitch::<iw::CameraTrait>(iw::K_ABS_FORWARD);
     verify_world_to_radar_uses_custom_distance::<iw::CameraTrait>(iw::K_ABS_FORWARD);
 }
@@ -158,7 +170,10 @@ fn frostbite_engine_camera() {
 
 #[test]
 fn opengl_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<opengl::CameraTrait>(opengl::K_ABS_FORWARD, opengl::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<opengl::CameraTrait>(
+        opengl::K_ABS_FORWARD,
+        opengl::K_ABS_RIGHT,
+    );
     verify_world_to_radar_uses_changed_camera_yaw::<opengl::CameraTrait>(
         -90.0,
         opengl::K_ABS_FORWARD,
@@ -170,31 +185,55 @@ fn opengl_engine_camera() {
 
 #[test]
 fn unity_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<unity::CameraTrait>(unity::K_ABS_FORWARD, unity::K_ABS_RIGHT);
-    verify_world_to_radar_uses_changed_camera_yaw::<unity::CameraTrait>(90.0, unity::K_ABS_FORWARD, unity::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<unity::CameraTrait>(
+        unity::K_ABS_FORWARD,
+        unity::K_ABS_RIGHT,
+    );
+    verify_world_to_radar_uses_changed_camera_yaw::<unity::CameraTrait>(
+        90.0,
+        unity::K_ABS_FORWARD,
+        unity::K_ABS_RIGHT,
+    );
     verify_world_to_radar_ignores_camera_pitch::<unity::CameraTrait>(unity::K_ABS_FORWARD);
     verify_world_to_radar_uses_custom_distance::<unity::CameraTrait>(unity::K_ABS_FORWARD);
 }
 
 #[test]
 fn cry_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<cry::CameraTrait>(cry::K_ABS_FORWARD, cry::K_ABS_RIGHT);
-    verify_world_to_radar_uses_changed_camera_yaw::<cry::CameraTrait>(-90.0, cry::K_ABS_FORWARD, cry::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<cry::CameraTrait>(
+        cry::K_ABS_FORWARD,
+        cry::K_ABS_RIGHT,
+    );
+    verify_world_to_radar_uses_changed_camera_yaw::<cry::CameraTrait>(
+        -90.0,
+        cry::K_ABS_FORWARD,
+        cry::K_ABS_RIGHT,
+    );
     verify_world_to_radar_ignores_camera_pitch::<cry::CameraTrait>(cry::K_ABS_FORWARD);
     verify_world_to_radar_uses_custom_distance::<cry::CameraTrait>(cry::K_ABS_FORWARD);
 }
 
 #[test]
 fn rage_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<rage::CameraTrait>(rage::K_ABS_FORWARD, rage::K_ABS_RIGHT);
-    verify_world_to_radar_uses_changed_camera_yaw::<rage::CameraTrait>(-90.0, rage::K_ABS_FORWARD, rage::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<rage::CameraTrait>(
+        rage::K_ABS_FORWARD,
+        rage::K_ABS_RIGHT,
+    );
+    verify_world_to_radar_uses_changed_camera_yaw::<rage::CameraTrait>(
+        -90.0,
+        rage::K_ABS_FORWARD,
+        rage::K_ABS_RIGHT,
+    );
     verify_world_to_radar_ignores_camera_pitch::<rage::CameraTrait>(rage::K_ABS_FORWARD);
     verify_world_to_radar_uses_custom_distance::<rage::CameraTrait>(rage::K_ABS_FORWARD);
 }
 
 #[test]
 fn unreal_engine_camera() {
-    verify_world_to_radar_uses_engine_world_axes::<unreal::CameraTrait>(unreal::K_ABS_FORWARD, unreal::K_ABS_RIGHT);
+    verify_world_to_radar_uses_engine_world_axes::<unreal::CameraTrait>(
+        unreal::K_ABS_FORWARD,
+        unreal::K_ABS_RIGHT,
+    );
     verify_world_to_radar_uses_changed_camera_yaw::<unreal::CameraTrait>(
         90.0,
         unreal::K_ABS_FORWARD,

@@ -37,9 +37,16 @@ pub fn calc_perspective_projection_matrix(
     far_plane: f32,
     ndc_depth_range: NdcDepthRange,
 ) -> Mat4X4 {
-    let vertical_fov = angles::horizontal_fov_to_vertical(field_of_view, K_FOV_REFERENCE_ASPECT_RATIO);
+    let vertical_fov =
+        angles::horizontal_fov_to_vertical(field_of_view, K_FOV_REFERENCE_ASPECT_RATIO);
 
-    Mat4X4::perspective_left_handed_vertical_fov(vertical_fov, aspect_ratio, near_plane, far_plane, ndc_depth_range)
+    Mat4X4::perspective_left_handed_vertical_fov(
+        vertical_fov,
+        aspect_ratio,
+        near_plane,
+        far_plane,
+        ndc_depth_range,
+    )
 }
 
 engine_units!(inch);

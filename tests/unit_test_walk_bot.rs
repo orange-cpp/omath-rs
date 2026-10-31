@@ -444,8 +444,16 @@ struct WalkSimulator {
 }
 
 impl WalkSimulator {
-    fn new(mesh: &Arc<NavigationMesh>, start: Vector3<f32>, goal: Vector3<f32>, threshold: f32) -> Self {
-        let state = Rc::new(RefCell::new(WalkState { position: start, ..WalkState::default() }));
+    fn new(
+        mesh: &Arc<NavigationMesh>,
+        start: Vector3<f32>,
+        goal: Vector3<f32>,
+        threshold: f32,
+    ) -> Self {
+        let state = Rc::new(RefCell::new(WalkState {
+            position: start,
+            ..WalkState::default()
+        }));
 
         let mut bot = WalkBot::new(mesh, threshold);
         bot.set_target(goal);
@@ -505,7 +513,11 @@ fn status_transition_sequence_is_correct() {
     let (last, before) = state.status_history.split_last().unwrap();
 
     // All entries before the last must be Pathing
-    assert!(before.iter().all(|&status| status == WalkBotStatus::Pathing));
+    assert!(
+        before
+            .iter()
+            .all(|&status| status == WalkBotStatus::Pathing)
+    );
 
     assert_eq!(*last, WalkBotStatus::Finished);
 }
@@ -538,7 +550,12 @@ fn two_node_path_reaches_goal() {
 fn long_chain_eventually_finishes() {
     const K_LENGTH: i32 = 20;
     let mesh = make_linear_mesh(K_LENGTH);
-    let mut sim = WalkSimulator::new(&mesh, v(0.0, 0.0, 0.0), v((K_LENGTH - 1) as f32, 0.0, 0.0), 0.5);
+    let mut sim = WalkSimulator::new(
+        &mesh,
+        v(0.0, 0.0, 0.0),
+        v((K_LENGTH - 1) as f32, 0.0, 0.0),
+        0.5,
+    );
     sim.run(200);
 
     assert!(sim.finished());
@@ -560,7 +577,12 @@ fn no_idle_emitted_during_successful_walk() {
     let mut sim = WalkSimulator::new(&mesh, v(0.0, 0.0, 0.0), v(3.0, 0.0, 0.0), 0.5);
     sim.run(50);
 
-    assert!(!sim.state.borrow().status_history.contains(&WalkBotStatus::Idle));
+    assert!(
+        !sim.state
+            .borrow()
+            .status_history
+            .contains(&WalkBotStatus::Idle)
+    );
 }
 
 // Walk simulation on a branching mesh

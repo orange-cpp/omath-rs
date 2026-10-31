@@ -43,7 +43,11 @@ pub const fn crc32(value: &[u8]) -> u32 {
 
         let mut bit = 0;
         while bit < 8 {
-            crc = if crc & 1 != 0 { (crc >> 1) ^ 0xEDB8_8320 } else { crc >> 1 };
+            crc = if crc & 1 != 0 {
+                (crc >> 1) ^ 0xEDB8_8320
+            } else {
+                crc >> 1
+            };
             bit += 1;
         }
         index += 1;
@@ -98,7 +102,9 @@ pub fn base64_decode(value: &str) -> Result<Vec<u8>, Base64Error> {
         let is_last_chunk = index + 1 == chunk_count;
         let decode_or_padding = |character: u8| match character {
             b'=' => Ok(None),
-            _ => decode_character(character).map(Some).ok_or(Base64Error::InvalidCharacter),
+            _ => decode_character(character)
+                .map(Some)
+                .ok_or(Base64Error::InvalidCharacter),
         };
 
         let first = decode_character(chunk[0]).ok_or(Base64Error::InvalidCharacter)?;

@@ -15,15 +15,31 @@ fn zero() -> Vector3<f32> {
 }
 
 fn projectile(origin: Vector3<f32>, launch_speed: f32, gravity_scale: f32) -> Projectile<f32> {
-    Projectile { origin, launch_speed, gravity_scale, ..Default::default() }
+    Projectile {
+        origin,
+        launch_speed,
+        gravity_scale,
+        ..Default::default()
+    }
 }
 
 fn target(origin: Vector3<f32>, velocity: Vector3<f32>, is_airborne: bool) -> Target<f32> {
-    Target { origin, velocity, is_airborne }
+    Target {
+        origin,
+        velocity,
+        is_airborne,
+    }
 }
 
 fn predict(p: &Projectile<f32>, time: f32, gravity: f32) -> Vector3<f32> {
-    PredEngineTrait::predict_projectile_position(p.origin + p.launch_offset, p, 0.0, 0.0, time, gravity)
+    PredEngineTrait::predict_projectile_position(
+        p.origin + p.launch_offset,
+        p,
+        0.0,
+        0.0,
+        time,
+        gravity,
+    )
 }
 
 // predict_projectile_position
@@ -134,12 +150,20 @@ fn predict_target_position_airborne_moving_with_gravity() {
 
 #[test]
 fn calc_vector_2d_distance_3_4_5() {
-    expect_near(PredEngineTrait::calc_vector_2d_distance(v(3.0, 4.0, 999.0)), 5.0_f32, 1e-5_f32);
+    expect_near(
+        PredEngineTrait::calc_vector_2d_distance(v(3.0, 4.0, 999.0)),
+        5.0_f32,
+        1e-5_f32,
+    );
 }
 
 #[test]
 fn calc_vector_2d_distance_zero_vector() {
-    expect_near(PredEngineTrait::calc_vector_2d_distance(zero()), 0.0_f32, 1e-6_f32);
+    expect_near(
+        PredEngineTrait::calc_vector_2d_distance(zero()),
+        0.0_f32,
+        1e-6_f32,
+    );
 }
 
 #[test]
@@ -157,7 +181,10 @@ fn calc_vector_2d_distance_z_ignored() {
 #[test]
 fn get_vector_height_coordinate_returns_z() {
     // Cry engine up = +Z
-    expect_float_eq(PredEngineTrait::get_vector_height_coordinate(v(1.0, 2.0, 7.0)), 7.0);
+    expect_float_eq(
+        PredEngineTrait::get_vector_height_coordinate(v(1.0, 2.0, 7.0)),
+        7.0,
+    );
 }
 
 // calc_direct_pitch_angle
@@ -165,25 +192,41 @@ fn get_vector_height_coordinate_returns_z() {
 #[test]
 fn calc_direct_pitch_angle_flat() {
     // Target at same height -> pitch = 0
-    expect_near(PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 100.0, 0.0)), 0.0_f32, 1e-4_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 100.0, 0.0)),
+        0.0_f32,
+        1e-4_f32,
+    );
 }
 
 #[test]
 fn calc_direct_pitch_angle_looking_up() {
     // Target at 45 degrees above (equal XY distance and Z height)
     // direction to {0, 1, 1} normalized = {0, 0.707, 0.707}, asin(0.707) = 45 degrees
-    expect_near(PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 1.0, 1.0)), 45.0_f32, 1e-3_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 1.0, 1.0)),
+        45.0_f32,
+        1e-3_f32,
+    );
 }
 
 #[test]
 fn calc_direct_pitch_angle_looking_down() {
     // Target directly below
-    expect_near(PredEngineTrait::calc_direct_pitch_angle(v(0.0, 0.0, 10.0), zero()), -90.0_f32, 1e-3_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_pitch_angle(v(0.0, 0.0, 10.0), zero()),
+        -90.0_f32,
+        1e-3_f32,
+    );
 }
 
 #[test]
 fn calc_direct_pitch_angle_looking_directly_up() {
-    expect_near(PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 0.0, 100.0)), 90.0_f32, 1e-3_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_pitch_angle(zero(), v(0.0, 0.0, 100.0)),
+        90.0_f32,
+        1e-3_f32,
+    );
 }
 
 // calc_direct_yaw_angle
@@ -191,19 +234,31 @@ fn calc_direct_pitch_angle_looking_directly_up() {
 #[test]
 fn calc_direct_yaw_angle_forward_along_y() {
     // Cry engine forward = +Y -> yaw = 0
-    expect_near(PredEngineTrait::calc_direct_yaw_angle(zero(), v(0.0, 100.0, 0.0)), 0.0_f32, 1e-4_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_yaw_angle(zero(), v(0.0, 100.0, 0.0)),
+        0.0_f32,
+        1e-4_f32,
+    );
 }
 
 #[test]
 fn calc_direct_yaw_angle_along_positive_x() {
     // direction = {1, 0, 0}, yaw = -atan2(1, 0) = -90 degrees
-    expect_near(PredEngineTrait::calc_direct_yaw_angle(zero(), v(100.0, 0.0, 0.0)), -90.0_f32, 1e-3_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_yaw_angle(zero(), v(100.0, 0.0, 0.0)),
+        -90.0_f32,
+        1e-3_f32,
+    );
 }
 
 #[test]
 fn calc_direct_yaw_angle_along_negative_x() {
     // direction = {-1, 0, 0}, yaw = -atan2(-1, 0) = 90 degrees
-    expect_near(PredEngineTrait::calc_direct_yaw_angle(zero(), v(-100.0, 0.0, 0.0)), 90.0_f32, 1e-3_f32);
+    expect_near(
+        PredEngineTrait::calc_direct_yaw_angle(zero(), v(-100.0, 0.0, 0.0)),
+        90.0_f32,
+        1e-3_f32,
+    );
 }
 
 #[test]
@@ -239,7 +294,11 @@ fn calc_view_basis_positive_pitch_looks_up() {
     // Trait pitch is positive upwards: forward gains height, the frame stays orthonormal
     let basis = PredEngineTrait::calc_view_basis(45.0, 0.0);
 
-    expect_near(basis.forward.z, angles::degrees_to_radians(45.0_f32).sin(), 1e-5_f32);
+    expect_near(
+        basis.forward.z,
+        angles::degrees_to_radians(45.0_f32).sin(),
+        1e-5_f32,
+    );
     expect_near(basis.forward.length(), 1.0_f32, 1e-5_f32);
     expect_near(basis.forward.dot(basis.right), 0.0_f32, 1e-5_f32);
     expect_near(basis.forward.dot(basis.up), 0.0_f32, 1e-5_f32);

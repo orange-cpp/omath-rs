@@ -20,8 +20,8 @@ fn init_list_columns_mismatch_throws() {
 #[test]
 fn determinant_fallback_is_callable() {
     // Call determinant for 1x1 and 2x2 matrices to cover determinant paths
-    let m1 = Mat::<1, 1>::from_rows([[3.14f32]]);
-    expect_float_eq(m1.determinant(), 3.14f32);
+    let m1 = Mat::<1, 1>::from_rows([[3.25f32]]);
+    expect_float_eq(m1.determinant(), 3.25f32);
 
     let m2 = Mat::<2, 2>::from_rows([[1.0f32, 2.0f32], [3.0f32, 4.0f32]]);
     expect_float_eq(m2.determinant(), -2.0f32);

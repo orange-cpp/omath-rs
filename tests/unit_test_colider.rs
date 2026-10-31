@@ -4,12 +4,18 @@ use omath::engines::source;
 use omath::primitives::Vertex;
 
 fn vertex(x: f32, y: f32, z: f32) -> Vertex {
-    Vertex { position: Vector3::new(x, y, z), ..Default::default() }
+    Vertex {
+        position: Vector3::new(x, y, z),
+        ..Default::default()
+    }
 }
 
 #[test]
 fn check_to_world() {
-    let mut mesh = source::Mesh::new(vec![vertex(1.0, 1.0, 1.0), vertex(-1.0, -1.0, -1.0)], vec![]);
+    let mut mesh = source::Mesh::new(
+        vec![vertex(1.0, 1.0, 1.0), vertex(-1.0, -1.0, -1.0)],
+        vec![],
+    );
     mesh.set_origin(Vector3::new(0.0, 2.0, 0.0));
     let collider = source::MeshCollider::new(mesh);
 
@@ -20,10 +26,15 @@ fn check_to_world() {
 
 #[test]
 fn find_furthest_vertex() {
-    let mesh = source::Mesh::new(vec![vertex(1.0, 1.0, 1.0), vertex(-1.0, -1.0, -1.0)], vec![]);
+    let mesh = source::Mesh::new(
+        vec![vertex(1.0, 1.0, 1.0), vertex(-1.0, -1.0, -1.0)],
+        vec![],
+    );
     let collider = source::MeshCollider::new(mesh);
 
-    let vertex = collider.find_furthest_vertex(Vector3::new(1.0, 0.0, 0.0)).position;
+    let vertex = collider
+        .find_furthest_vertex(Vector3::new(1.0, 0.0, 0.0))
+        .position;
 
     assert_eq!(vertex, Vector3::new(1.0, 1.0, 1.0));
 }

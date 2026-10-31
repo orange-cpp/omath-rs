@@ -2,12 +2,17 @@ mod common;
 
 use common::expect_near;
 use omath::Vector3;
-use omath::collision::{EpaParams, GjkSettings, epa_solve, is_collide, is_collide_with_simplex_info};
+use omath::collision::{
+    EpaParams, GjkSettings, epa_solve, is_collide, is_collide_with_simplex_info,
+};
 use omath::engines::source::{Mesh, MeshCollider as Collider};
 use omath::primitives::Vertex;
 
 fn vertex(x: f32, y: f32, z: f32) -> Vertex {
-    Vertex { position: Vector3::new(x, y, z), ..Default::default() }
+    Vertex {
+        position: Vector3::new(x, y, z),
+        ..Default::default()
+    }
 }
 
 // Unit cube [-1,1]^3
@@ -44,8 +49,12 @@ fn test_collision_true() {
     assert!(gjk.hit, "GJK should report collision");
 
     // EPA
-    let params = EpaParams { max_iterations: 64, tolerance: 1e-4 };
-    let epa = epa_solve(&collider_a, &collider_b, &gjk.simplex, params).expect("EPA should converge");
+    let params = EpaParams {
+        max_iterations: 64,
+        tolerance: 1e-4,
+    };
+    let epa =
+        epa_solve(&collider_a, &collider_b, &gjk.simplex, params).expect("EPA should converge");
 
     // Normal is unit
     expect_near(epa.normal.dot(epa.normal), 1.0f32, 1e-5f32);
@@ -71,14 +80,24 @@ fn test_collision_true() {
     let sep_minus = !collide(&collider_a, &b_minus);
 
     // Exactly one direction should separate
-    assert_ne!(sep_plus, sep_minus, "Exactly one of ±penetration must separate");
+    assert_ne!(
+        sep_plus, sep_minus,
+        "Exactly one of ±penetration must separate"
+    );
 
     // Optional: pick the resolving direction and assert round-trip
-    let resolve = if sep_plus { pen * margin } else { -pen * margin };
+    let resolve = if sep_plus {
+        pen * margin
+    } else {
+        -pen * margin
+    };
 
     let mut b_resolved = b.clone();
     b_resolved.set_origin(b_resolved.get_origin() + resolve);
-    assert!(!collide(&collider_a, &b_resolved), "Resolved position should be non-colliding");
+    assert!(
+        !collide(&collider_a, &b_resolved),
+        "Resolved position should be non-colliding"
+    );
 
     // Moving the other way should still collide
     let mut b_wrong = b.clone();
@@ -102,8 +121,12 @@ fn test_collision_true2() {
     assert!(gjk.hit, "GJK should report collision for overlapping cubes");
 
     // --- EPA penetration ---
-    let params = EpaParams { max_iterations: 64, tolerance: 1e-4 };
-    let epa = epa_solve(&collider_a, &collider_b, &gjk.simplex, params).expect("EPA should converge");
+    let params = EpaParams {
+        max_iterations: 64,
+        tolerance: 1e-4,
+    };
+    let epa =
+        epa_solve(&collider_a, &collider_b, &gjk.simplex, params).expect("EPA should converge");
 
     // Normal is unit-length
     expect_near(epa.normal.dot(epa.normal), 1.0f32, 1e-5f32);
@@ -122,11 +145,17 @@ fn test_collision_true2() {
     // Apply once: B + pen must separate; the opposite must still collide
     let mut b_resolved = b.clone();
     b_resolved.set_origin(b_resolved.get_origin() + pen * margin);
-    assert!(!collide(&collider_a, &b_resolved), "Applying penetration should separate");
+    assert!(
+        !collide(&collider_a, &b_resolved),
+        "Applying penetration should separate"
+    );
 
     let mut b_wrong = b.clone();
     b_wrong.set_origin(b_wrong.get_origin() - pen * margin);
-    assert!(collide(&collider_a, &b_wrong), "Opposite direction should still intersect");
+    assert!(
+        collide(&collider_a, &b_wrong),
+        "Opposite direction should still intersect"
+    );
 
     // Some book-keeping sanity
     assert!(epa.iterations > 0);

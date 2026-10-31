@@ -45,9 +45,15 @@ impl Astar {
     ///
     /// A neighbor that is not itself a vertex of the mesh counts as a dead end.
     #[must_use]
-    pub fn find_path(start: Vector3<f32>, end: Vector3<f32>, nav_mesh: &NavigationMesh) -> Vec<Vector3<f32>> {
-        let (Ok(start_vertex), Ok(end_vertex)) = (nav_mesh.get_closest_vertex(start), nav_mesh.get_closest_vertex(end))
-        else {
+    pub fn find_path(
+        start: Vector3<f32>,
+        end: Vector3<f32>,
+        nav_mesh: &NavigationMesh,
+    ) -> Vec<Vector3<f32>> {
+        let (Ok(start_vertex), Ok(end_vertex)) = (
+            nav_mesh.get_closest_vertex(start),
+            nav_mesh.get_closest_vertex(end),
+        ) else {
             return Vec::new();
         };
 
@@ -55,10 +61,22 @@ impl Astar {
         let mut node_data = HashMap::<VertexKey, PathNode>::new();
         let mut open_list = BinaryHeap::new();
 
-        node_data.insert(start_vertex.into(), PathNode { came_from: None, g_cost: 0.0 });
-        open_list.push(OpenListNode { position: start_vertex, f_cost: start_vertex.distance_to(end_vertex) });
+        node_data.insert(
+            start_vertex.into(),
+            PathNode {
+                came_from: None,
+                g_cost: 0.0,
+            },
+        );
+        open_list.push(OpenListNode {
+            position: start_vertex,
+            f_cost: start_vertex.distance_to(end_vertex),
+        });
 
-        while let Some(OpenListNode { position: current, .. }) = open_list.pop() {
+        while let Some(OpenListNode {
+            position: current, ..
+        }) = open_list.pop()
+        {
             let current_key = VertexKey::from(current);
 
             if closed_list.contains_key(&current_key) {
@@ -84,8 +102,17 @@ impl Astar {
 
                 let tentative_g_cost = current_node.g_cost + neighbor.distance_to(current);
 
-                if node_data.get(&neighbor_key).is_none_or(|node| tentative_g_cost < node.g_cost) {
-                    node_data.insert(neighbor_key, PathNode { came_from: Some(current), g_cost: tentative_g_cost });
+                if node_data
+                    .get(&neighbor_key)
+                    .is_none_or(|node| tentative_g_cost < node.g_cost)
+                {
+                    node_data.insert(
+                        neighbor_key,
+                        PathNode {
+                            came_from: Some(current),
+                            g_cost: tentative_g_cost,
+                        },
+                    );
                     open_list.push(OpenListNode {
                         position: neighbor,
                         f_cost: tentative_g_cost + neighbor.distance_to(end_vertex),
@@ -97,13 +124,18 @@ impl Astar {
         Vec::new()
     }
 
-    fn reconstruct_final_path(closed_list: &HashMap<VertexKey, PathNode>, current: Vector3<f32>) -> Vec<Vector3<f32>> {
+    fn reconstruct_final_path(
+        closed_list: &HashMap<VertexKey, PathNode>,
+        current: Vector3<f32>,
+    ) -> Vec<Vector3<f32>> {
         let mut path = Vec::new();
         let mut next = Some(current);
 
         while let Some(vertex) = next {
             path.push(vertex);
-            next = closed_list.get(&vertex.into()).and_then(|node| node.came_from);
+            next = closed_list
+                .get(&vertex.into())
+                .and_then(|node| node.came_from);
         }
 
         path.reverse();

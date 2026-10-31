@@ -19,6 +19,10 @@ impl<T: Real, P: AngleRange, Y: AngleRange, R: AngleRange> ViewAngles<T, P, Y, R
     /// `(pitch, yaw, roll)` in degrees.
     #[inline]
     pub fn as_vector3(&self) -> Vector3<T> {
-        Vector3::new(self.pitch.as_degrees(), self.yaw.as_degrees(), self.roll.as_degrees())
+        Vector3::new(
+            self.pitch.as_degrees(),
+            self.yaw.as_degrees(),
+            self.roll.as_degrees(),
+        )
     }
 }

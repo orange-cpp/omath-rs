@@ -2,8 +2,12 @@ use super::{Mesh, MeshEngine};
 use crate::linear_algebra::Vector3;
 
 /// A [`Mesh`] with the fixed-size buffers of [`create_box`].
-pub type BoxMesh<E> =
-    Mesh<E, Vector3<<E as MeshEngine>::Scalar>, [Vector3<<E as MeshEngine>::Scalar>; 8], [Vector3<u32>; 12]>;
+pub type BoxMesh<E> = Mesh<
+    E,
+    Vector3<<E as MeshEngine>::Scalar>,
+    [Vector3<<E as MeshEngine>::Scalar>; 8],
+    [Vector3<u32>; 12],
+>;
 
 /// Builds a box around the `bottom` to `top` line. `ratio` is its height over half its side length, and the C++ default
 /// is `4`.
@@ -19,14 +23,14 @@ pub fn create_box<E: MeshEngine>(
 
     // corner layout (0-3 bottom, 4-7 top)
     let p = [
-        bottom + (dir_forward + dir_right) * side_size,  // front-right-bottom
-        bottom + (dir_forward - dir_right) * side_size,  // front-left-bottom
+        bottom + (dir_forward + dir_right) * side_size, // front-right-bottom
+        bottom + (dir_forward - dir_right) * side_size, // front-left-bottom
         bottom + (-dir_forward + dir_right) * side_size, // back-right-bottom
         bottom + (-dir_forward - dir_right) * side_size, // back-left-bottom
-        top + (dir_forward + dir_right) * side_size,     // front-right-top
-        top + (dir_forward - dir_right) * side_size,     // front-left-top
-        top + (-dir_forward + dir_right) * side_size,    // back-right-top
-        top + (-dir_forward - dir_right) * side_size,    // back-left-top
+        top + (dir_forward + dir_right) * side_size,    // front-right-top
+        top + (dir_forward - dir_right) * side_size,    // front-left-top
+        top + (-dir_forward + dir_right) * side_size,   // back-right-top
+        top + (-dir_forward - dir_right) * side_size,   // back-left-top
     ];
 
     let poly = [

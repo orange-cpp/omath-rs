@@ -39,7 +39,11 @@ pub struct Aabb<T, U = UpY> {
 impl<T, U> Aabb<T, U> {
     #[inline]
     pub const fn new(min: Vector3<T>, max: Vector3<T>) -> Self {
-        Self { min, max, up_axis: PhantomData }
+        Self {
+            min,
+            max,
+            up_axis: PhantomData,
+        }
     }
 }
 

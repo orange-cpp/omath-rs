@@ -27,17 +27,33 @@ fn serialize_writes_the_cpp_line_format() {
 
 #[test]
 fn serialize_writes_numbers_the_way_ostream_does() {
-    assert_eq!(serialized_vertex(0.1, 100000.0, 999999.0), "0.1 100000 999999 0 -\n");
-    assert_eq!(serialized_vertex(1000000.0, 999999.5, 1234567.0), "1e+06 1e+06 1.23457e+06 0 -\n");
-    assert_eq!(serialized_vertex(0.0001, 0.00001, -0.000012345), "0.0001 1e-05 -1.2345e-05 0 -\n");
-    assert_eq!(serialized_vertex(3.1415927, 1.5e30, 1e-30), "3.14159 1.5e+30 1e-30 0 -\n");
-    assert_eq!(serialized_vertex(f32::MAX, f32::INFINITY, -f32::INFINITY), "3.40282e+38 inf -inf 0 -\n");
+    assert_eq!(
+        serialized_vertex(0.1, 100000.0, 999999.0),
+        "0.1 100000 999999 0 -\n"
+    );
+    assert_eq!(
+        serialized_vertex(1000000.0, 999999.5, 1234567.0),
+        "1e+06 1e+06 1.23457e+06 0 -\n"
+    );
+    assert_eq!(
+        serialized_vertex(0.0001, 0.00001, -0.000012345),
+        "0.0001 1e-05 -1.2345e-05 0 -\n"
+    );
+    assert_eq!(
+        serialized_vertex(std::f32::consts::PI, 1.5e30, 1e-30),
+        "3.14159 1.5e+30 1e-30 0 -\n"
+    );
+    assert_eq!(
+        serialized_vertex(f32::MAX, f32::INFINITY, -f32::INFINITY),
+        "3.40282e+38 inf -inf 0 -\n"
+    );
 }
 
 #[test]
 fn deserialize_reads_cpp_output() {
     let mut nav = NavigationMesh::new();
-    nav.deserialize("1e+06 2.5 -3 1 jump\n0.1 1.5e+30 -0\n").unwrap();
+    nav.deserialize("1e+06 2.5 -3 1 jump\n0.1 1.5e+30 -0\n")
+        .unwrap();
 
     let vertex = v(1e6, 2.5, -3.0);
     assert_eq!(nav.get_neighbors(vertex), Some(&[v(0.1, 1.5e30, 0.0)][..]));
@@ -48,8 +64,14 @@ fn deserialize_reads_cpp_output() {
 fn deserialize_fails_on_missing_neighbors() {
     let mut nav = NavigationMesh::new();
 
-    assert_eq!(nav.deserialize("1 2 3 2 -\n4 5 6\n7 8\n"), Err(Error::UnexpectedEndOfData));
-    assert_eq!(nav.deserialize("1 2 3 18446744073709551615 -\n"), Err(Error::UnexpectedEndOfData));
+    assert_eq!(
+        nav.deserialize("1 2 3 2 -\n4 5 6\n7 8\n"),
+        Err(Error::UnexpectedEndOfData)
+    );
+    assert_eq!(
+        nav.deserialize("1 2 3 18446744073709551615 -\n"),
+        Err(Error::UnexpectedEndOfData)
+    );
 }
 
 #[test]
@@ -57,7 +79,8 @@ fn deserialize_stops_at_a_vertex_line_it_cannot_read() {
     let mut nav = NavigationMesh::new();
 
     // Stream extraction does not read inf, and a number out of float range fails it too
-    nav.deserialize("1 2 3 0 -\ninf 0 0 0 -\n7 8 9 0 -\n").unwrap();
+    nav.deserialize("1 2 3 0 -\ninf 0 0 0 -\n7 8 9 0 -\n")
+        .unwrap();
     assert_eq!(nav.vertex_count(), 1);
 
     nav.deserialize("1 2 3 0 -\n1e50 0 0 0 -\n").unwrap();

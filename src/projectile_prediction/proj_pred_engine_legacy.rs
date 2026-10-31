@@ -1,4 +1,6 @@
-use super::{AimAngles, AimSolution, Arc, Launcher, PredEngine, ProjPredEngineInterface, Projectile, Target};
+use super::{
+    AimAngles, AimSolution, Arc, Launcher, PredEngine, ProjPredEngineInterface, Projectile, Target,
+};
 use crate::Vector3;
 use crate::engines::source;
 use crate::scalar::{Real, Scalar, Signed};
@@ -66,7 +68,11 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
         target: &Target<E::Scalar>,
     ) -> Option<Solution<E::Scalar>> {
         // A non-positive step or horizon has no scan to run.
-        if !(self.simulation_time_step > E::Scalar::ZERO) || !(self.maximum_simulation_time > E::Scalar::ZERO) {
+        if self.simulation_time_step.partial_cmp(&E::Scalar::ZERO)
+            != Some(std::cmp::Ordering::Greater)
+            || self.maximum_simulation_time.partial_cmp(&E::Scalar::ZERO)
+                != Some(std::cmp::Ordering::Greater)
+        {
             return None;
         }
 
@@ -103,25 +109,31 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
     ) -> Option<Solution<E::Scalar>> {
         // time = step * index rather than time += step: repeated addition drifts (a 1 ms step over 50 s lands 16 steps
         // and 16 ms off), and the count below is exactly what the parameters say.
-        let step_count = (self.maximum_simulation_time / self.simulation_time_step).ceil().to_f64() as usize;
+        let step_count = (self.maximum_simulation_time / self.simulation_time_step)
+            .ceil()
+            .to_f64() as usize;
         let launcher = launch.launcher;
         let pitch_offset = launcher.launch_pitch_offset;
 
         for step in 0..step_count {
             let time = self.simulation_time_step * E::Scalar::from_f64(step as f64);
-            let predicted_target_position = E::predict_target_position(target, time, self.gravity_constant);
+            let predicted_target_position =
+                E::predict_target_position(target, time, self.gravity_constant);
 
             let mut origin = launch.fixed_origin;
             if MUZZLE_ROTATES {
                 origin = launcher.launch_origin(E::calc_view_basis(
-                    E::calc_direct_pitch_angle(launcher.eye_origin, predicted_target_position) - pitch_offset,
+                    E::calc_direct_pitch_angle(launcher.eye_origin, predicted_target_position)
+                        - pitch_offset,
                     E::calc_direct_yaw_angle(launcher.eye_origin, predicted_target_position),
                 ));
             }
 
-            let Some(mut pitch) =
-                self.maybe_calculate_projectile_launch_pitch_angle(launch, origin, predicted_target_position)
-            else {
+            let Some(mut pitch) = self.maybe_calculate_projectile_launch_pitch_angle(
+                launch,
+                origin,
+                predicted_target_position,
+            ) else {
                 continue;
             };
 
@@ -130,9 +142,11 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
             if MUZZLE_ROTATES {
                 origin = launcher.launch_origin(E::calc_view_basis(pitch - pitch_offset, yaw));
 
-                let Some(refined_pitch) =
-                    self.maybe_calculate_projectile_launch_pitch_angle(launch, origin, predicted_target_position)
-                else {
+                let Some(refined_pitch) = self.maybe_calculate_projectile_launch_pitch_angle(
+                    launch,
+                    origin,
+                    predicted_target_position,
+                ) else {
                     continue;
                 };
 
@@ -140,7 +154,14 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
                 yaw = E::calc_direct_yaw_angle(origin, predicted_target_position);
             }
 
-            if !self.is_projectile_reached_target(origin, predicted_target_position, projectile, pitch, yaw, time) {
+            if !self.is_projectile_reached_target(
+                origin,
+                predicted_target_position,
+                projectile,
+                pitch,
+                yaw,
+                time,
+            ) {
                 continue;
             }
 
@@ -149,7 +170,12 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
                 continue;
             }
 
-            return Some(Solution { predicted_target_position, pitch: view_pitch, yaw, time });
+            return Some(Solution {
+                predicted_target_position,
+                pitch: view_pitch,
+                yaw,
+                time,
+            });
         }
 
         None
@@ -189,7 +215,9 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
         let root = launch.speed_pow4
             - launch.gravity
                 * (launch.gravity * distance2d_sqr
-                    + E::Scalar::from_f64(2.0) * E::get_vector_height_coordinate(delta) * launch.speed_sqr);
+                    + E::Scalar::from_f64(2.0)
+                        * E::get_vector_height_coordinate(delta)
+                        * launch.speed_sqr);
 
         if root < E::Scalar::ZERO {
             return None;
@@ -200,7 +228,11 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
             return Some(E::calc_direct_pitch_angle(launch_origin, target_position));
         }
 
-        let root = if self.arc == Arc::High { -root.sqrt() } else { root.sqrt() };
+        let root = if self.arc == Arc::High {
+            -root.sqrt()
+        } else {
+            root.sqrt()
+        };
         let angle = ((launch.speed_sqr - root) / (launch.gravity * distance2d)).atan();
 
         Some(angles::radians_to_degrees(angle))
@@ -215,11 +247,18 @@ impl<E: PredEngine> ProjPredEngineLegacy<E> {
         yaw: E::Scalar,
         time: E::Scalar,
     ) -> bool {
-        let projectile_position =
-            E::predict_projectile_position(launch_origin, projectile, pitch, yaw, time, self.gravity_constant);
+        let projectile_position = E::predict_projectile_position(
+            launch_origin,
+            projectile,
+            pitch,
+            yaw,
+            time,
+            self.gravity_constant,
+        );
 
         // Squared compare keeps the per step square root out of the scan
-        projectile_position.distance_to_sqr(target_position) <= self.distance_tolerance * self.distance_tolerance
+        projectile_position.distance_to_sqr(target_position)
+            <= self.distance_tolerance * self.distance_tolerance
     }
 }
 
@@ -235,10 +274,15 @@ impl<E: PredEngine> ProjPredEngineInterface<E::Scalar> for ProjPredEngineLegacy<
         // Every point on the eye's aim ray lands on the same pixel; the target's distance keeps the point at a sensible
         // depth for anything that uses it in 3D.
         let forward = E::calc_view_basis(solution.pitch, solution.yaw).forward;
-        let distance = launcher.eye_origin.distance_to(solution.predicted_target_position);
+        let distance = launcher
+            .eye_origin
+            .distance_to(solution.predicted_target_position);
 
         Some(AimSolution {
-            angles: AimAngles { pitch: solution.pitch, yaw: solution.yaw },
+            angles: AimAngles {
+                pitch: solution.pitch,
+                yaw: solution.yaw,
+            },
             aim_point: launcher.eye_origin + forward * distance,
             predicted_target_position: solution.predicted_target_position,
             time_of_flight: solution.time,

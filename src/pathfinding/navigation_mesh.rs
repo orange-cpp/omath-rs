@@ -21,7 +21,11 @@ impl fmt::Display for Error {
         match self {
             Self::NoClosestVertex => f.write_str("failed to get closest point"),
             Self::VertexNotFound(vertex) => {
-                write!(f, "vertex [{}, {}, {}] not found", vertex.x, vertex.y, vertex.z)
+                write!(
+                    f,
+                    "vertex [{}, {}, {}] not found",
+                    vertex.x, vertex.y, vertex.z
+                )
             }
             Self::UnexpectedEndOfData => f.write_str("deserialize: unexpected end of data"),
         }
@@ -36,7 +40,11 @@ pub(super) struct VertexKey(u64, u64, u64);
 
 impl From<Vector3<f32>> for VertexKey {
     fn from(vertex: Vector3<f32>) -> Self {
-        Self(vertex.x.hash_bits(), vertex.y.hash_bits(), vertex.z.hash_bits())
+        Self(
+            vertex.x.hash_bits(),
+            vertex.y.hash_bits(),
+            vertex.z.hash_bits(),
+        )
     }
 }
 
@@ -60,12 +68,15 @@ impl NavigationMesh {
 
     /// Adds `vertex`, or replaces the neighbors it already has.
     pub fn set_neighbors(&mut self, vertex: Vector3<f32>, neighbors: Vec<Vector3<f32>>) {
-        self.vertex_map.insert(vertex.into(), VertexEntry { vertex, neighbors });
+        self.vertex_map
+            .insert(vertex.into(), VertexEntry { vertex, neighbors });
     }
 
     /// Every vertex with its neighbors, in no particular order.
     pub fn iter(&self) -> impl Iterator<Item = (Vector3<f32>, &[Vector3<f32>])> {
-        self.vertex_map.values().map(|entry| (entry.vertex, entry.neighbors.as_slice()))
+        self.vertex_map
+            .values()
+            .map(|entry| (entry.vertex, entry.neighbors.as_slice()))
     }
 
     pub fn contains_vertex(&self, vertex: Vector3<f32>) -> bool {
@@ -94,7 +105,9 @@ impl NavigationMesh {
 
     /// `None` when `vertex` is not in the mesh.
     pub fn get_neighbors(&self, vertex: Vector3<f32>) -> Option<&[Vector3<f32>]> {
-        self.vertex_map.get(&vertex.into()).map(|entry| entry.neighbors.as_slice())
+        self.vertex_map
+            .get(&vertex.into())
+            .map(|entry| entry.neighbors.as_slice())
     }
 
     pub fn empty(&self) -> bool {
@@ -106,7 +119,8 @@ impl NavigationMesh {
             return Err(Error::VertexNotFound(vertex));
         }
 
-        self.vertex_events.insert(vertex.into(), event_id.to_owned());
+        self.vertex_events
+            .insert(vertex.into(), event_id.to_owned());
         Ok(())
     }
 
@@ -128,7 +142,8 @@ impl NavigationMesh {
             let event = self.vertex_events.get(key).map_or("-", String::as_str);
 
             write_vector(&mut out, entry.vertex);
-            writeln!(out, " {} {event}", entry.neighbors.len()).expect("writing to a String cannot fail");
+            writeln!(out, " {} {event}", entry.neighbors.len())
+                .expect("writing to a String cannot fail");
 
             for &neighbor in &entry.neighbors {
                 write_vector(&mut out, neighbor);
@@ -156,10 +171,14 @@ impl NavigationMesh {
                 neighbors.push(read_vector(&mut tokens).ok_or(Error::UnexpectedEndOfData)?);
             }
 
-            self.vertex_map.entry(vertex.into()).or_insert(VertexEntry { vertex, neighbors });
+            self.vertex_map
+                .entry(vertex.into())
+                .or_insert(VertexEntry { vertex, neighbors });
 
             if event != "-" {
-                self.vertex_events.entry(vertex.into()).or_insert_with(|| event.to_owned());
+                self.vertex_events
+                    .entry(vertex.into())
+                    .or_insert_with(|| event.to_owned());
             }
         }
 
@@ -167,7 +186,9 @@ impl NavigationMesh {
     }
 }
 
-fn read_vertex_line<'a>(tokens: &mut SplitAsciiWhitespace<'a>) -> Option<(Vector3<f32>, usize, &'a str)> {
+fn read_vertex_line<'a>(
+    tokens: &mut SplitAsciiWhitespace<'a>,
+) -> Option<(Vector3<f32>, usize, &'a str)> {
     let vertex = read_vector(tokens)?;
     let neighbors_count = tokens.next()?.parse().ok()?;
     let event = tokens.next()?;
@@ -176,14 +197,21 @@ fn read_vertex_line<'a>(tokens: &mut SplitAsciiWhitespace<'a>) -> Option<(Vector
 }
 
 fn read_vector(tokens: &mut SplitAsciiWhitespace<'_>) -> Option<Vector3<f32>> {
-    Some(Vector3::new(read_float(tokens)?, read_float(tokens)?, read_float(tokens)?))
+    Some(Vector3::new(
+        read_float(tokens)?,
+        read_float(tokens)?,
+        read_float(tokens)?,
+    ))
 }
 
 /// `str::parse` also takes `inf` and `nan`, which C++ stream extraction fails on, and saturates where it fails.
 fn read_float(tokens: &mut SplitAsciiWhitespace<'_>) -> Option<f32> {
     let token = tokens.next()?;
 
-    if !token.bytes().all(|byte| byte.is_ascii_digit() || matches!(byte, b'+' | b'-' | b'.' | b'e' | b'E')) {
+    if !token
+        .bytes()
+        .all(|byte| byte.is_ascii_digit() || matches!(byte, b'+' | b'-' | b'.' | b'e' | b'E'))
+    {
         return None;
     }
 
@@ -191,8 +219,14 @@ fn read_float(tokens: &mut SplitAsciiWhitespace<'_>) -> Option<f32> {
 }
 
 fn write_vector(out: &mut String, vector: Vector3<f32>) {
-    write!(out, "{} {} {}", ostream_float(vector.x), ostream_float(vector.y), ostream_float(vector.z))
-        .expect("writing to a String cannot fail");
+    write!(
+        out,
+        "{} {} {}",
+        ostream_float(vector.x),
+        ostream_float(vector.y),
+        ostream_float(vector.z)
+    )
+    .expect("writing to a String cannot fail");
 }
 
 /// What `std::ostream << float` writes with default settings, which is `printf("%g")`: six significant digits, no
@@ -212,8 +246,12 @@ fn ostream_float(value: f32) -> String {
 
     // The exponent has to be the one after rounding to six digits: 999999.5 is 1e+06
     let scientific = format!("{:.*e}", (PRECISION - 1) as usize, value);
-    let (mantissa, exponent) = scientific.split_once('e').expect("LowerExp always writes an exponent");
-    let exponent: i32 = exponent.parse().expect("LowerExp writes the exponent as an integer");
+    let (mantissa, exponent) = scientific
+        .split_once('e')
+        .expect("LowerExp always writes an exponent");
+    let exponent: i32 = exponent
+        .parse()
+        .expect("LowerExp writes the exponent as an integer");
 
     if (-4..PRECISION).contains(&exponent) {
         let fixed = format!("{:.*}", (PRECISION - 1 - exponent) as usize, value);
@@ -225,5 +263,9 @@ fn ostream_float(value: f32) -> String {
 }
 
 fn trim_fraction(number: &str) -> &str {
-    if number.contains('.') { number.trim_end_matches('0').trim_end_matches('.') } else { number }
+    if number.contains('.') {
+        number.trim_end_matches('0').trim_end_matches('.')
+    } else {
+        number
+    }
 }

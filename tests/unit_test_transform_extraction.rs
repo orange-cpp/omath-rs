@@ -12,7 +12,13 @@ fn expect_vector_near<T: Real>(actual: Vector3<T>, expected: Vector3<T>, epsilon
     expect_near!(actual.z.to_f64(), expected.z.to_f64(), epsilon);
 }
 
-fn verify_transform_extractors<T: Real, S: StoreOrder, P: AngleRange, Y: AngleRange, R: AngleRange>(
+fn verify_transform_extractors<
+    T: Real,
+    S: StoreOrder,
+    P: AngleRange,
+    Y: AngleRange,
+    R: AngleRange,
+>(
     origin: Vector3<T>,
     scale: Vector3<T>,
     angles: ViewAngles<T, P, Y, R>,
@@ -25,7 +31,11 @@ fn verify_transform_extractors<T: Real, S: StoreOrder, P: AngleRange, Y: AngleRa
 
     expect_vector_near(extract_origin(&transform), origin, 1e-4);
     expect_vector_near(extract_scale(&transform), scale, 1e-4);
-    expect_vector_near(extract_rotation_angles(&transform).as_vector3(), angles.as_vector3(), 1e-3);
+    expect_vector_near(
+        extract_rotation_angles(&transform).as_vector3(),
+        angles.as_vector3(),
+        1e-3,
+    );
 }
 
 #[test]

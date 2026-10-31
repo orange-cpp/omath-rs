@@ -1,4 +1,6 @@
-use super::{AimAngles, AimSolution, Launcher, PredEngine, ProjPredEngineInterface, Projectile, Target};
+use super::{
+    AimAngles, AimSolution, Launcher, PredEngine, ProjPredEngineInterface, Projectile, Target,
+};
 use crate::Vector3;
 use crate::engines::source::PredEngineTrait as Trait;
 use crate::trigonometry::angles;
@@ -25,8 +27,16 @@ struct Candidate {
 }
 
 impl ProjPredEngineBatched {
-    pub fn new(gravity_constant: f32, simulation_time_step: f32, maximum_simulation_time: f32) -> Self {
-        Self { gravity_constant, simulation_time_step, maximum_simulation_time }
+    pub fn new(
+        gravity_constant: f32,
+        simulation_time_step: f32,
+        maximum_simulation_time: f32,
+    ) -> Self {
+        Self {
+            gravity_constant,
+            simulation_time_step,
+            maximum_simulation_time,
+        }
     }
 
     /// First flight time at which the projectile can reach the predicted target from `launch_origin`.
@@ -38,7 +48,11 @@ impl ProjPredEngineBatched {
         launch_speed: f32,
     ) -> Option<Candidate> {
         let step = self.simulation_time_step;
-        let target_gravity = if target.is_airborne { 0.5 * self.gravity_constant } else { 0.0 };
+        let target_gravity = if target.is_airborne {
+            0.5 * self.gravity_constant
+        } else {
+            0.0
+        };
         let launch_speed_sqr = launch_speed * launch_speed + 1e-3;
 
         // Speed the projectile would need to be at the predicted target exactly at each of eight candidate times.
@@ -52,18 +66,23 @@ impl ProjPredEngineBatched {
             let mut times = [0.0; LANES];
             let mut required_speed_sqr = [0.0; LANES];
 
-            for (lane, (time, required)) in times.iter_mut().zip(&mut required_speed_sqr).enumerate() {
+            for (lane, (time, required)) in
+                times.iter_mut().zip(&mut required_speed_sqr).enumerate()
+            {
                 *time = block_time + step * lane as f32;
 
                 let times_sq = *time * *time;
                 let delta_x = target.velocity.x * *time + target.origin.x - launch_origin.x;
                 let delta_y = target.velocity.y * *time + target.origin.y - launch_origin.y;
-                let delta_z = target.velocity.z * *time + target.origin.z - target_gravity * times_sq - launch_origin.z;
+                let delta_z = target.velocity.z * *time + target.origin.z
+                    - target_gravity * times_sq
+                    - launch_origin.z;
 
                 let term = delta_z + 0.5 * (bullet_gravity * times_sq);
 
                 // Avoid division by zero
-                *required = (delta_x * delta_x + delta_y * delta_y + term * term) / (times_sq + 1e-8);
+                *required =
+                    (delta_x * delta_x + delta_y * delta_y + term * term) / (times_sq + 1e-8);
             }
 
             let mut valid_mask = 0u8;
@@ -87,12 +106,21 @@ impl ProjPredEngineBatched {
                         continue;
                     }
 
-                    let target_position = Trait::predict_target_position(target, fine_time, self.gravity_constant);
+                    let target_position =
+                        Trait::predict_target_position(target, fine_time, self.gravity_constant);
 
-                    if let Some(pitch) =
-                        Self::calculate_pitch(launch_origin, target_position, bullet_gravity, launch_speed, fine_time)
-                    {
-                        return Some(Candidate { time: fine_time, target_position, pitch });
+                    if let Some(pitch) = Self::calculate_pitch(
+                        launch_origin,
+                        target_position,
+                        bullet_gravity,
+                        launch_speed,
+                        fine_time,
+                    ) {
+                        return Some(Candidate {
+                            time: fine_time,
+                            target_position,
+                            pitch,
+                        });
                     }
                 }
             }
@@ -138,7 +166,9 @@ impl ProjPredEngineInterface<f32> for ProjPredEngineBatched {
         launcher: &Launcher<f32>,
         target: &Target<f32>,
     ) -> Option<AimSolution<f32>> {
-        if !(self.simulation_time_step > 0.0) || !(self.maximum_simulation_time > 0.0) {
+        if self.simulation_time_step.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater)
+            || self.maximum_simulation_time.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater)
+        {
             return None;
         }
 
@@ -167,7 +197,8 @@ impl ProjPredEngineInterface<f32> for ProjPredEngineBatched {
         let mut yaw = Trait::calc_direct_yaw_angle(launch_origin, candidate.target_position);
 
         if muzzle_rotates {
-            launch_origin = launcher.launch_origin(Trait::calc_view_basis(pitch - pitch_offset, yaw));
+            launch_origin =
+                launcher.launch_origin(Trait::calc_view_basis(pitch - pitch_offset, yaw));
 
             pitch = Self::calculate_pitch(
                 launch_origin,
@@ -185,7 +216,9 @@ impl ProjPredEngineInterface<f32> for ProjPredEngineBatched {
         // With an offset the view pitch can land outside what the engine lets a player look at. calc_view_basis clamps
         // the way the engine does, so a forward vector without the requested pitch means the shot cannot be set up.
         // This engine only solves the first feasible time, so that is the end of it.
-        if pitch_offset != 0.0 && (Trait::calc_direct_pitch_angle(Vector3::default(), forward) - view_pitch).abs() > 0.1
+        if pitch_offset != 0.0
+            && (Trait::calc_direct_pitch_angle(Vector3::default(), forward) - view_pitch).abs()
+                > 0.1
         {
             return None;
         }
@@ -193,7 +226,10 @@ impl ProjPredEngineInterface<f32> for ProjPredEngineBatched {
         let distance = launcher.eye_origin.distance_to(candidate.target_position);
 
         Some(AimSolution {
-            angles: AimAngles { pitch: view_pitch, yaw },
+            angles: AimAngles {
+                pitch: view_pitch,
+                yaw,
+            },
             aim_point: launcher.eye_origin + forward * distance,
             predicted_target_position: candidate.target_position,
             time_of_flight: candidate.time,

@@ -22,7 +22,11 @@ pub struct Triangle<V> {
 impl<V> Triangle<V> {
     #[inline]
     pub const fn new(vertex1: V, vertex2: V, vertex3: V) -> Self {
-        Self { vertex1, vertex2, vertex3 }
+        Self {
+            vertex1,
+            vertex2,
+            vertex3,
+        }
     }
 }
 
@@ -50,7 +54,8 @@ where
         let side_b = self.side_b_length();
         let hypot = self.hypot();
 
-        (side_a * side_a + side_b * side_b - hypot * hypot).abs_value() <= V::Scalar::from_f64(0.0001f32 as f64)
+        (side_a * side_a + side_b * side_b - hypot * hypot).abs_value()
+            <= V::Scalar::from_f64(0.0001f32 as f64)
     }
 }
 
@@ -74,6 +79,8 @@ impl<V: Vector> Triangle<V> {
 impl<T: Real> Triangle<Vector3<T>> {
     #[inline]
     pub fn calculate_normal(&self) -> Vector3<T> {
-        self.side_b_vector().cross(self.side_a_vector()).normalized()
+        self.side_b_vector()
+            .cross(self.side_a_vector())
+            .normalized()
     }
 }

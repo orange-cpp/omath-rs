@@ -80,5 +80,8 @@ fn mesh_trait_forwards_rotation_matrix() {
         rage::RollAngle::from_degrees(15.0),
     );
 
-    assert_eq!(rage::MeshTrait::rotation_matrix(&angles), rage::rotation_matrix(angles));
+    assert_eq!(
+        rage::MeshTrait::rotation_matrix(&angles),
+        rage::rotation_matrix(angles)
+    );
 }

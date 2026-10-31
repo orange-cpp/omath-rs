@@ -76,7 +76,10 @@ impl<T: Real, R: AngleRange> Angle<T, R> {
 
     #[inline]
     pub fn from_degrees(degrees: T) -> Self {
-        Self { degrees: Self::fit(degrees), range: PhantomData }
+        Self {
+            degrees: Self::fit(degrees),
+            range: PhantomData,
+        }
     }
 
     #[inline]

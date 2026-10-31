@@ -7,18 +7,22 @@ use omath::primitives::{Aabb, Obb};
 use std::f32::consts::{PI, SQRT_2};
 
 type Vec3 = Vector3<f32>;
-type OBB = Obb<f32>;
+type OrientedBounds = Obb<f32>;
 
 fn v(x: f32, y: f32, z: f32) -> Vec3 {
     Vec3::new(x, y, z)
 }
 
 fn make_ray(start: Vec3, end: Vec3) -> Ray {
-    Ray { start, end, infinite_length: false }
+    Ray {
+        start,
+        end,
+        infinite_length: false,
+    }
 }
 
-const fn axis_aligned_obb(center: Vec3, half_extents: Vec3) -> OBB {
-    OBB {
+const fn axis_aligned_obb(center: Vec3, half_extents: Vec3) -> OrientedBounds {
+    OrientedBounds {
         center,
         axis_x: Vec3::new(1.0, 0.0, 0.0),
         axis_y: Vec3::new(0.0, 1.0, 0.0),
@@ -27,20 +31,32 @@ const fn axis_aligned_obb(center: Vec3, half_extents: Vec3) -> OBB {
     }
 }
 
-fn rotated_around_z(center: Vec3, half_extents: Vec3, radians: f32) -> OBB {
+fn rotated_around_z(center: Vec3, half_extents: Vec3, radians: f32) -> OrientedBounds {
     let (c, s) = (radians.cos(), radians.sin());
-    OBB { center, axis_x: v(c, s, 0.0), axis_y: v(-s, c, 0.0), axis_z: v(0.0, 0.0, 1.0), half_extents }
+    OrientedBounds {
+        center,
+        axis_x: v(c, s, 0.0),
+        axis_y: v(-s, c, 0.0),
+        axis_z: v(0.0, 0.0, 1.0),
+        half_extents,
+    }
 }
 
-fn rotated_around_y(center: Vec3, half_extents: Vec3, radians: f32) -> OBB {
+fn rotated_around_y(center: Vec3, half_extents: Vec3, radians: f32) -> OrientedBounds {
     let (c, s) = (radians.cos(), radians.sin());
-    OBB { center, axis_x: v(c, 0.0, -s), axis_y: v(0.0, 1.0, 0.0), axis_z: v(s, 0.0, c), half_extents }
+    OrientedBounds {
+        center,
+        axis_x: v(c, 0.0, -s),
+        axis_y: v(0.0, 1.0, 0.0),
+        axis_z: v(s, 0.0, c),
+        half_extents,
+    }
 }
 
 const K_ZERO: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 const K_ONE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
 
-// --- axis-aligned OBB behaves like AABB ---
+// --- axis-aligned OrientedBounds behaves like Bounds ---
 
 #[test]
 fn axis_aligned_hit_along_z() {
@@ -85,7 +101,11 @@ fn ray_too_short_returns_end() {
 #[test]
 fn infinite_ray_hits() {
     let box_ = axis_aligned_obb(v(4.0, 0.0, 0.0), K_ONE);
-    let ray = Ray { start: K_ZERO, end: v(2.0, 0.0, 0.0), infinite_length: true };
+    let ray = Ray {
+        start: K_ZERO,
+        end: v(2.0, 0.0, 0.0),
+        infinite_length: true,
+    };
 
     let hit = get_ray_hit_point(&ray, &box_);
     assert_ne!(hit, ray.end);
@@ -113,7 +133,7 @@ fn ray_behind_box_returns_end() {
     assert_eq!(hit, ray.end);
 }
 
-// --- rotated OBB ---
+// --- rotated OrientedBounds ---
 
 #[test]
 fn rotated_box_hit_on_rotated_face() {
@@ -144,9 +164,9 @@ fn rotated_around_y_box_hit_on_rotated_face() {
 
 #[test]
 fn rotated_box_misses_where_aabb_would_hit() {
-    // A unit cube rotated 45° around Z has an XY footprint that is a diamond reaching (±√2, 0) and (0, ±√2). The AABB
+    // A unit cube rotated 45° around Z has an XY footprint that is a diamond reaching (±√2, 0) and (0, ±√2). The Bounds
     // envelope spans x,y ∈ [-√2, √2], but at y just below √2 the diamond is essentially a point. A ray at y = 1.43 is
-    // outside the diamond entirely (|x| + |y| ≤ √2 ⇒ |x| ≤ √2 - 1.43 < 0), yet it would still pass through the AABB
+    // outside the diamond entirely (|x| + |y| ≤ √2 ⇒ |x| ≤ √2 - 1.43 < 0), yet it would still pass through the Bounds
     // envelope of the rotated box.
     let box_ = rotated_around_z(K_ZERO, K_ONE, PI / 4.0);
     let ray = make_ray(v(-5.0, 1.43, 0.0), v(5.0, 1.43, 0.0));
@@ -248,7 +268,12 @@ fn matches_aabb_for_axis_aligned_box() {
         (K_ZERO, K_ONE, v(0.0, -5.0, 0.0), v(0.0, 5.0, 0.0)),
         (v(4.0, 0.0, 0.0), K_ONE, K_ZERO, v(2.0, 0.0, 0.0)), // too short
         (K_ZERO, K_ONE, v(-5.0, 5.0, 0.0), v(5.0, 5.0, 0.0)), // miss
-        (v(2.0, 3.0, -1.0), Vec3::splat(0.5), K_ZERO, v(10.0, 15.0, -5.0)), // diagonal
+        (
+            v(2.0, 3.0, -1.0),
+            Vec3::splat(0.5),
+            K_ZERO,
+            v(10.0, 15.0, -5.0),
+        ), // diagonal
     ];
 
     for (center, half, start, end) in cases {

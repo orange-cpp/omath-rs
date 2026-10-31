@@ -59,5 +59,9 @@ fn vector4_clamp_and_comparisons() {
 
     let a = Vector4::<f32>::new(1.0f32, 2.0f32, 3.0f32, 4.0f32);
     let b = Vector4::<f32>::new(2.0f32, 2.0f32, 2.0f32, 2.0f32);
-    assert!(a.cmp_length(b).is_some_and(Ordering::is_lt) || a.cmp_length(b).is_some_and(Ordering::is_gt) || a == b); // just exercise comparisons
+    assert!(
+        a.cmp_length(b).is_some_and(Ordering::is_lt)
+            || a.cmp_length(b).is_some_and(Ordering::is_gt)
+            || a == b
+    ); // just exercise comparisons
 }

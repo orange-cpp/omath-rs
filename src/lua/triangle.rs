@@ -34,7 +34,10 @@ impl UserData for Triangle3f {
             Ok(Triangle3f::new(vertex1, vertex2, vertex3))
         });
 
-        methods.add_method("calculate_normal", |_, this, ()| Ok(this.calculate_normal()));
+        methods.add_method(
+            "calculate_normal",
+            |_, this, ()| Ok(this.calculate_normal()),
+        );
         methods.add_method("side_a_length", |_, this, ()| Ok(this.side_a_length()));
         methods.add_method("side_b_length", |_, this, ()| Ok(this.side_b_length()));
         methods.add_method("side_a_vector", |_, this, ()| Ok(this.side_a_vector()));

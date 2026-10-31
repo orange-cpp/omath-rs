@@ -57,14 +57,17 @@ fn extract_section_with_layout<'a>(
         return None;
     }
 
-    let read_offset = |bytes: &[u8], offset: usize| usize::try_from((layout.read_word)(bytes, offset)?).ok();
+    let read_offset =
+        |bytes: &[u8], offset: usize| usize::try_from((layout.read_word)(bytes, offset)?).ok();
 
     let shoff = read_offset(data, layout.e_shoff)?;
     let shnum = usize::from(read_u16(data, layout.e_shnum)?);
     let shstrndx = usize::from(read_u16(data, layout.e_shstrndx)?);
 
     let section_header = |index: usize| {
-        let offset = index.checked_mul(layout.section_header_size)?.checked_add(shoff)?;
+        let offset = index
+            .checked_mul(layout.section_header_size)?
+            .checked_add(shoff)?;
 
         read_bytes(data, offset, layout.section_header_size)
     };
@@ -89,14 +92,21 @@ fn extract_section_with_layout<'a>(
         return Some(ExtractedSection {
             virtual_base_addr: (layout.read_word)(section, layout.sh_addr)?,
             raw_base_addr: raw_off,
-            data: read_bytes(data, usize::try_from(raw_off).ok()?, read_offset(section, layout.sh_size)?)?,
+            data: read_bytes(
+                data,
+                usize::try_from(raw_off).ok()?,
+                read_offset(section, layout.sh_size)?,
+            )?,
         });
     }
 
     None
 }
 
-fn extract_section<'a>(data: &'a [u8], section_name: &str) -> Option<ExtractedSection<'a>> {
+pub(super) fn extract_section<'a>(
+    data: &'a [u8],
+    section_name: &str,
+) -> Option<ExtractedSection<'a>> {
     if data.len() < EI_NIDENT || !data.starts_with(ELF_SIGNATURE) {
         return None;
     }

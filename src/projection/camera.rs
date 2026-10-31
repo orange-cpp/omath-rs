@@ -72,11 +72,20 @@ pub trait CameraEngine: 'static {
 
     /// Depth range of the engine's normalized device coordinates. The C++ default is `NegativeOneToOne`.
     const DEPTH_RANGE: NdcDepthRange = NdcDepthRange::NegativeOneToOne;
-    const AXES: CameraAxes = CameraAxes { inverted_forward: false, inverted_right: false };
+    const AXES: CameraAxes = CameraAxes {
+        inverted_forward: false,
+        inverted_right: false,
+    };
 
-    fn calc_look_at_angle(cam_origin: Vector3<Self::Scalar>, look_at: Vector3<Self::Scalar>) -> ViewAnglesOf<Self>;
+    fn calc_look_at_angle(
+        cam_origin: Vector3<Self::Scalar>,
+        look_at: Vector3<Self::Scalar>,
+    ) -> ViewAnglesOf<Self>;
 
-    fn calc_view_matrix(angles: ViewAnglesOf<Self>, cam_origin: Vector3<Self::Scalar>) -> Mat4X4Of<Self>;
+    fn calc_view_matrix(
+        angles: ViewAnglesOf<Self>,
+        cam_origin: Vector3<Self::Scalar>,
+    ) -> Mat4X4Of<Self>;
 
     fn calc_projection_matrix(
         fov: FieldOfView,
@@ -217,14 +226,17 @@ impl<E: CameraEngine> Camera<E> {
         }
         *rotation.at_mut(3, 3) = E::Scalar::ONE;
 
-        E::extract_rotation_angles(&rotation).unwrap_or_else(|| Self::calc_view_angles_by_look_at(view_matrix))
+        E::extract_rotation_angles(&rotation)
+            .unwrap_or_else(|| Self::calc_view_angles_by_look_at(view_matrix))
     }
 
     pub fn calc_origin_from_view_matrix(view_matrix: &Mat4X4Of<E>) -> Vector3<E::Scalar> {
         // The view matrix is R * T(-origin), so the last column stores t = -R * origin.
         // Recovering origin: origin = -R^T * t
         let m = |row: usize, column: usize| view_matrix.at(row, column);
-        let component = |column: usize| -(m(0, column) * m(0, 3) + m(1, column) * m(1, 3) + m(2, column) * m(2, 3));
+        let component = |column: usize| {
+            -(m(0, column) * m(0, 3) + m(1, column) * m(1, 3) + m(2, column) * m(2, 3))
+        };
         Vector3::new(component(0), component(1), component(2))
     }
 
@@ -233,11 +245,19 @@ impl<E: CameraEngine> Camera<E> {
     /// the others roll is left at 0 and only the viewing direction is recovered.
     fn calc_view_angles_by_look_at(view_matrix: &Mat4X4Of<E>) -> ViewAnglesOf<E> {
         let row = |matrix: &Mat4X4Of<E>, index: usize| {
-            Vector3::new(matrix.at(index, 0), matrix.at(index, 1), matrix.at(index, 2))
+            Vector3::new(
+                matrix.at(index, 0),
+                matrix.at(index, 1),
+                matrix.at(index, 2),
+            )
         };
 
         let forward_row = row(view_matrix, 2);
-        let forward_vector = if E::AXES.inverted_forward { -forward_row } else { forward_row };
+        let forward_vector = if E::AXES.inverted_forward {
+            -forward_row
+        } else {
+            forward_row
+        };
         let mut angles = E::calc_look_at_angle(Vector3::default(), forward_vector);
 
         // Look-at only pins the forward axis and leaves roll at 0. Roll is the angle, around forward, between the
@@ -265,7 +285,11 @@ impl<E: CameraEngine> Camera<E> {
             return angles;
         }
 
-        angles.roll = Angle::from_radians(if positive_wins { roll_radians } else { -roll_radians });
+        angles.roll = Angle::from_radians(if positive_wins {
+            roll_radians
+        } else {
+            -roll_radians
+        });
         angles
     }
 
@@ -295,11 +319,19 @@ impl<E: CameraEngine> Camera<E> {
     }
 
     pub fn get_abs_forward(&self) -> Vector3<E::Scalar> {
-        if E::AXES.inverted_forward { -self.get_forward() } else { self.get_forward() }
+        if E::AXES.inverted_forward {
+            -self.get_forward()
+        } else {
+            self.get_forward()
+        }
     }
 
     pub fn get_abs_right(&self) -> Vector3<E::Scalar> {
-        if E::AXES.inverted_right { -self.get_right() } else { self.get_right() }
+        if E::AXES.inverted_right {
+            -self.get_right()
+        } else {
+            self.get_right()
+        }
     }
 
     #[inline]
@@ -344,7 +376,8 @@ impl<E: CameraEngine> Camera<E> {
         let view_projection = self.get_view_projection_matrix();
 
         if self.inv_view_projection_matrix.get().is_none() {
-            self.inv_view_projection_matrix.set(view_projection.inverted());
+            self.inv_view_projection_matrix
+                .set(view_projection.inverted());
         }
 
         self.inv_view_projection_matrix.get()
@@ -427,7 +460,10 @@ impl<E: CameraEngine> Camera<E> {
 
     /// Same as [`Camera::world_to_screen_with`] from the top left corner.
     #[inline]
-    pub fn world_to_screen(&self, world_position: Vector3<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
+    pub fn world_to_screen(
+        &self,
+        world_position: Vector3<E::Scalar>,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         self.world_to_screen_with(world_position, ScreenStart::TopLeftCorner)
     }
 
@@ -441,7 +477,10 @@ impl<E: CameraEngine> Camera<E> {
 
     /// Same as [`Camera::world_to_screen_unclipped_with`] from the top left corner.
     #[inline]
-    pub fn world_to_screen_unclipped(&self, world_position: Vector3<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
+    pub fn world_to_screen_unclipped(
+        &self,
+        world_position: Vector3<E::Scalar>,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         self.world_to_screen_unclipped_with(world_position, ScreenStart::TopLeftCorner)
     }
 
@@ -467,8 +506,10 @@ impl<E: CameraEngine> Camera<E> {
             return true;
         }
 
-        let beyond_positive = |axis: usize| c0[axis] > c0[3] && c1[axis] > c1[3] && c2[axis] > c2[3];
-        let beyond_negative = |axis: usize| c0[axis] < -c0[3] && c1[axis] < -c1[3] && c2[axis] < -c2[3];
+        let beyond_positive =
+            |axis: usize| c0[axis] > c0[3] && c1[axis] > c1[3] && c2[axis] > c2[3];
+        let beyond_negative =
+            |axis: usize| c0[axis] < -c0[3] && c1[axis] < -c1[3] && c2[axis] < -c2[3];
 
         // Clip volume in clip space:
         // -w <= x <= w
@@ -489,31 +530,38 @@ impl<E: CameraEngine> Camera<E> {
 
         // For each plane, find the AABB corner most in the direction of the plane normal (the "positive vertex"). If
         // it is outside, the entire AABB is outside.
-        self.extract_frustum_planes().iter().any(|&FrustumPlane { a, b, c, d }| {
-            let px = if a >= zero { aabb.max.x } else { aabb.min.x };
-            let py = if b >= zero { aabb.max.y } else { aabb.min.y };
-            let pz = if c >= zero { aabb.max.z } else { aabb.min.z };
+        self.extract_frustum_planes()
+            .iter()
+            .any(|&FrustumPlane { a, b, c, d }| {
+                let px = if a >= zero { aabb.max.x } else { aabb.min.x };
+                let py = if b >= zero { aabb.max.y } else { aabb.min.y };
+                let pz = if c >= zero { aabb.max.z } else { aabb.min.z };
 
-            a * px + b * py + c * pz + d < zero
-        })
+                a * px + b * py + c * pz + d < zero
+            })
     }
 
     pub fn is_obb_culled_by_frustum(&self, obb: &Obb<E::Scalar>) -> bool {
         // For each plane, project the OBB extents onto the plane normal to get the effective radius, then test the
         // center's signed distance against it.
-        self.extract_frustum_planes().iter().any(|&FrustumPlane { a, b, c, d }| {
-            let normal = Vector3::new(a, b, c);
+        self.extract_frustum_planes()
+            .iter()
+            .any(|&FrustumPlane { a, b, c, d }| {
+                let normal = Vector3::new(a, b, c);
 
-            let center_distance = normal.dot(obb.center) + d;
-            let radius = obb.half_extents.x * normal.dot(obb.axis_x).abs_value()
-                + obb.half_extents.y * normal.dot(obb.axis_y).abs_value()
-                + obb.half_extents.z * normal.dot(obb.axis_z).abs_value();
+                let center_distance = normal.dot(obb.center) + d;
+                let radius = obb.half_extents.x * normal.dot(obb.axis_x).abs_value()
+                    + obb.half_extents.y * normal.dot(obb.axis_y).abs_value()
+                    + obb.half_extents.z * normal.dot(obb.axis_z).abs_value();
 
-            center_distance + radius < E::Scalar::ZERO
-        })
+                center_distance + radius < E::Scalar::ZERO
+            })
     }
 
-    pub fn world_to_view_coordinates(&self, world_coordinates: Vector3<E::Scalar>) -> Vector3<E::Scalar> {
+    pub fn world_to_view_coordinates(
+        &self,
+        world_coordinates: Vector3<E::Scalar>,
+    ) -> Vector3<E::Scalar> {
         let [x, y, z, _] = Self::transform_point(&self.get_view_matrix(), world_coordinates);
         Vector3::new(x, y, z)
     }
@@ -524,17 +572,25 @@ impl<E: CameraEngine> Camera<E> {
         world_position: Vector3<E::Scalar>,
         clipping: ViewPortClipping,
     ) -> Result<Vector3<E::Scalar>, Error> {
-        Self::clip_to_view_port(Self::transform_point(&self.get_view_projection_matrix(), world_position), clipping)
+        Self::clip_to_view_port(
+            Self::transform_point(&self.get_view_projection_matrix(), world_position),
+            clipping,
+        )
     }
 
     pub fn view_port_to_world(&self, ndc: Vector3<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
-        let inv_view_proj = self.get_inv_view_projection_matrix().ok_or(Error::InvViewProjMatDetEqZero)?;
+        let inv_view_proj = self
+            .get_inv_view_projection_matrix()
+            .ok_or(Error::InvViewProjMatDetEqZero)?;
         Self::unproject(&inv_view_proj, ndc)
     }
 
     /// Same as [`Camera::screen_to_world_with`] from the top left corner.
     #[inline]
-    pub fn screen_to_world(&self, screen_pos: Vector3<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
+    pub fn screen_to_world(
+        &self,
+        screen_pos: Vector3<E::Scalar>,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         self.screen_to_world_with(screen_pos, ScreenStart::TopLeftCorner)
     }
 
@@ -548,7 +604,10 @@ impl<E: CameraEngine> Camera<E> {
 
     /// [`Camera::screen_to_world`] for a position without depth, which is taken to be at `z = 1`.
     #[inline]
-    pub fn screen_to_world_2d(&self, screen_pos: Vector2<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
+    pub fn screen_to_world_2d(
+        &self,
+        screen_pos: Vector2<E::Scalar>,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         self.screen_to_world_2d_with(screen_pos, ScreenStart::TopLeftCorner)
     }
 
@@ -557,7 +616,10 @@ impl<E: CameraEngine> Camera<E> {
         screen_pos: Vector2<E::Scalar>,
         screen_start: ScreenStart,
     ) -> Result<Vector3<E::Scalar>, Error> {
-        self.screen_to_world_with(Vector3::new(screen_pos.x, screen_pos.y, E::Scalar::ONE), screen_start)
+        self.screen_to_world_with(
+            Vector3::new(screen_pos.x, screen_pos.y, E::Scalar::ONE),
+            screen_start,
+        )
     }
 
     /// NDC have `x` to the right and `y` up, both in `[-1, 1]`.
@@ -568,7 +630,10 @@ impl<E: CameraEngine> Camera<E> {
     /// |
     /// v
     /// ```
-    pub fn ndc_to_screen_position_from_top_left_corner(&self, ndc: Vector3<E::Scalar>) -> Vector3<E::Scalar> {
+    pub fn ndc_to_screen_position_from_top_left_corner(
+        &self,
+        ndc: Vector3<E::Scalar>,
+    ) -> Vector3<E::Scalar> {
         let (one, two) = (E::Scalar::ONE, E::Scalar::from_f64(2.0));
         Vector3::new(
             (ndc.x + one) / two * self.width(),
@@ -583,7 +648,10 @@ impl<E: CameraEngine> Camera<E> {
     /// | (0, 0)
     /// +------------------------>
     /// ```
-    pub fn ndc_to_screen_position_from_bottom_left_corner(&self, ndc: Vector3<E::Scalar>) -> Vector3<E::Scalar> {
+    pub fn ndc_to_screen_position_from_bottom_left_corner(
+        &self,
+        ndc: Vector3<E::Scalar>,
+    ) -> Vector3<E::Scalar> {
         let (one, two) = (E::Scalar::ONE, E::Scalar::from_f64(2.0));
         Vector3::new(
             (ndc.x + one) / two * self.width(),
@@ -593,12 +661,18 @@ impl<E: CameraEngine> Camera<E> {
     }
 
     /// The C++ default for `screen_start` is [`ScreenStart::TopLeftCorner`].
-    pub fn screen_to_ndc(&self, screen_pos: Vector3<E::Scalar>, screen_start: ScreenStart) -> Vector3<E::Scalar> {
+    pub fn screen_to_ndc(
+        &self,
+        screen_pos: Vector3<E::Scalar>,
+        screen_start: ScreenStart,
+    ) -> Vector3<E::Scalar> {
         let (one, two) = (E::Scalar::ONE, E::Scalar::from_f64(2.0));
         let ndc_x = screen_pos.x / self.width() * two - one;
         let ndc_y = match screen_start {
             ScreenStart::TopLeftCorner => one - screen_pos.y / self.height() * two,
-            ScreenStart::BottomLeftCorner => (screen_pos.y / self.height() - E::Scalar::from_f64(0.5)) * two,
+            ScreenStart::BottomLeftCorner => {
+                (screen_pos.y / self.height() - E::Scalar::from_f64(0.5)) * two
+            }
         };
         Vector3::new(ndc_x, ndc_y, screen_pos.z)
     }
@@ -627,12 +701,22 @@ impl<E: CameraEngine> Camera<E> {
         let m = self.get_view_projection_matrix();
         let extract_plane = |sign: E::Scalar, row: usize| {
             let element = |column: usize| m.at(3, column) + sign * m.at(row, column);
-            FrustumPlane { a: element(0), b: element(1), c: element(2), d: element(3) }
+            FrustumPlane {
+                a: element(0),
+                b: element(1),
+                c: element(2),
+                d: element(3),
+            }
         };
         let (plus, minus) = (E::Scalar::ONE, -E::Scalar::ONE);
 
         let near = match E::DEPTH_RANGE {
-            NdcDepthRange::ZeroToOne => FrustumPlane { a: m.at(2, 0), b: m.at(2, 1), c: m.at(2, 2), d: m.at(2, 3) },
+            NdcDepthRange::ZeroToOne => FrustumPlane {
+                a: m.at(2, 0),
+                b: m.at(2, 1),
+                c: m.at(2, 2),
+                d: m.at(2, 3),
+            },
             NdcDepthRange::NegativeOneToOne => extract_plane(plus, 2),
         };
 
@@ -672,12 +756,18 @@ impl<E: CameraEngine> Camera<E> {
     #[inline]
     fn transform_point(matrix: &Mat4X4Of<E>, point: Vector3<E::Scalar>) -> [E::Scalar; 4] {
         std::array::from_fn(|row| {
-            matrix.at(row, 0) * point.x + matrix.at(row, 1) * point.y + matrix.at(row, 2) * point.z + matrix.at(row, 3)
+            matrix.at(row, 0) * point.x
+                + matrix.at(row, 1) * point.y
+                + matrix.at(row, 2) * point.z
+                + matrix.at(row, 3)
         })
     }
 
     /// Perspective divide plus clipping of a clip-space point produced by `transform_point`.
-    fn clip_to_view_port(clip: [E::Scalar; 4], clipping: ViewPortClipping) -> Result<Vector3<E::Scalar>, Error> {
+    fn clip_to_view_port(
+        clip: [E::Scalar; 4],
+        clipping: ViewPortClipping,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         let w = clip[3];
         if w <= E::Scalar::EPSILON {
             return Err(Error::PerspectiveDividerLessEqZero);
@@ -690,10 +780,17 @@ impl<E: CameraEngine> Camera<E> {
             ViewPortClipping::Manual => Self::is_ndc_z_value_out_of_bounds(ndc.z),
         };
 
-        if clipped { Err(Error::WorldPositionIsOutOfScreenBounds) } else { Ok(ndc) }
+        if clipped {
+            Err(Error::WorldPositionIsOutOfScreenBounds)
+        } else {
+            Ok(ndc)
+        }
     }
 
-    fn unproject(inv_view_proj: &Mat4X4Of<E>, ndc: Vector3<E::Scalar>) -> Result<Vector3<E::Scalar>, Error> {
+    fn unproject(
+        inv_view_proj: &Mat4X4Of<E>,
+        ndc: Vector3<E::Scalar>,
+    ) -> Result<Vector3<E::Scalar>, Error> {
         let world = Self::transform_point(inv_view_proj, ndc);
         let w = world[3];
 
@@ -714,14 +811,20 @@ impl<E: CameraEngine> Camera<E> {
 
         Ok(match screen_start {
             ScreenStart::TopLeftCorner => self.ndc_to_screen_position_from_top_left_corner(ndc),
-            ScreenStart::BottomLeftCorner => self.ndc_to_screen_position_from_bottom_left_corner(ndc),
+            ScreenStart::BottomLeftCorner => {
+                self.ndc_to_screen_position_from_bottom_left_corner(ndc)
+            }
         })
     }
 
     /// Row of the view matrix's rotation block: 0 = right, 1 = up, 2 = forward.
     fn view_basis_row(&self, row: usize) -> Vector3<E::Scalar> {
         let view_matrix = self.get_view_matrix();
-        Vector3::new(view_matrix.at(row, 0), view_matrix.at(row, 1), view_matrix.at(row, 2))
+        Vector3::new(
+            view_matrix.at(row, 0),
+            view_matrix.at(row, 1),
+            view_matrix.at(row, 2),
+        )
     }
 
     /// Dropping the view-projection matrix is enough for its inverse: `get_view_projection_matrix` clears the inverse

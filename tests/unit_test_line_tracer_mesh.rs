@@ -10,7 +10,11 @@ use std::f32::consts::PI;
 type Vec3 = Vector3<f32>;
 
 fn make_ray(start: Vec3, end: Vec3) -> Ray {
-    Ray { start, end, infinite_length: false }
+    Ray {
+        start,
+        end,
+        infinite_length: false,
+    }
 }
 
 fn v(x: f32, y: f32, z: f32) -> Vec3 {
@@ -30,7 +34,10 @@ fn make_cube() -> Mesh {
         v(1.0, 1.0, 1.0),
         v(-1.0, 1.0, 1.0),
     ]
-    .map(|position| Vertex { position, ..Default::default() })
+    .map(|position| Vertex {
+        position,
+        ..Default::default()
+    })
     .to_vec();
 
     let ebo = vec![

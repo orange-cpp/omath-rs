@@ -3,7 +3,9 @@ mod common;
 use common::{expect_float_eq, expect_near};
 use omath::Vector3;
 use omath::engines::source::{CameraTrait, PredEngineTrait as Trait};
-use omath::projectile_prediction::{Arc, MuzzleOffset, PredEngine, ProjPredEngineInterface, ProjPredEngineLegacy};
+use omath::projectile_prediction::{
+    Arc, MuzzleOffset, PredEngine, ProjPredEngineInterface, ProjPredEngineLegacy,
+};
 use omath::projection::CameraEngine;
 use omath::trigonometry::angles;
 
@@ -17,7 +19,11 @@ fn v(x: f32, y: f32, z: f32) -> Vector3<f32> {
 }
 
 fn target(origin: [f32; 3], velocity: [f32; 3], is_airborne: bool) -> Target {
-    Target { origin: origin.into_v(), velocity: velocity.into_v(), is_airborne }
+    Target {
+        origin: origin.into_v(),
+        velocity: velocity.into_v(),
+        is_airborne,
+    }
 }
 
 trait IntoV {
@@ -31,22 +37,40 @@ impl IntoV for [f32; 3] {
 }
 
 fn proj(origin: [f32; 3], launch_speed: f32, gravity_scale: f32) -> Projectile {
-    Projectile { origin: origin.into_v(), launch_speed, gravity_scale, ..Default::default() }
+    Projectile {
+        origin: origin.into_v(),
+        launch_speed,
+        gravity_scale,
+        ..Default::default()
+    }
 }
 
-fn proj_offset(origin: [f32; 3], offset: [f32; 3], launch_speed: f32, gravity_scale: f32) -> Projectile {
-    Projectile { launch_offset: offset.into_v(), ..proj(origin, launch_speed, gravity_scale) }
+fn proj_offset(
+    origin: [f32; 3],
+    offset: [f32; 3],
+    launch_speed: f32,
+    gravity_scale: f32,
+) -> Projectile {
+    Projectile {
+        launch_offset: offset.into_v(),
+        ..proj(origin, launch_speed, gravity_scale)
+    }
 }
 
 fn round(launch_speed: f32, gravity_scale: f32) -> Projectile {
-    Projectile { launch_speed, gravity_scale, ..Default::default() }
+    Projectile {
+        launch_speed,
+        gravity_scale,
+        ..Default::default()
+    }
 }
 
 #[test]
 fn prediction_test() {
     let target = target([100.0, 0.0, 90.0], [0.0, 0.0, 0.0], false);
     let proj = proj([3.0, 2.0, 1.0], 5000.0, 0.4);
-    let view_point = Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0).maybe_calculate_aim_point(&proj, &target);
+    let view_point =
+        Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0).maybe_calculate_aim_point(&proj, &target);
 
     let angles = CameraTrait::calc_look_at_angle(proj.origin, view_point.unwrap());
 
@@ -66,8 +90,12 @@ fn expect_angles_match_aim_point(
     let angle_eps = 0.01_f32;
     let engine = Engine::new(gravity, step, max_time, tolerance);
 
-    let aim_point = engine.maybe_calculate_aim_point(proj, target).expect("aim_point should have a solution");
-    let aim_angles = engine.maybe_calculate_aim_angles(proj, target).expect("aim_angles should have a solution");
+    let aim_point = engine
+        .maybe_calculate_aim_point(proj, target)
+        .expect("aim_point should have a solution");
+    let aim_angles = engine
+        .maybe_calculate_aim_angles(proj, target)
+        .expect("aim_angles should have a solution");
 
     // Source engine CameraTrait: pitch = -asin(dir.z), yaw = atan2(dir.y, dir.x)
     // PredEngineTrait: pitch = asin(delta.z / dist), yaw = atan2(delta.y, delta.x)
@@ -81,33 +109,68 @@ fn expect_angles_match_aim_point(
 #[test]
 fn aim_angles_match_aim_point_static_target() {
     let target = target([100.0, 0.0, 90.0], [0.0, 0.0, 0.0], false);
-    expect_angles_match_aim_point(&proj([3.0, 2.0, 1.0], 5000.0, 0.4), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0);
+    expect_angles_match_aim_point(
+        &proj([3.0, 2.0, 1.0], 5000.0, 0.4),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+    );
 }
 
 #[test]
 fn aim_angles_match_aim_point_moving_target() {
     let target = target([500.0, 100.0, 0.0], [-50.0, 20.0, 0.0], false);
-    expect_angles_match_aim_point(&proj([0.0, 0.0, 0.0], 3000.0, 1.0), &target, 800.0, 1.0 / 500.0, 30.0, 10.0);
+    expect_angles_match_aim_point(
+        &proj([0.0, 0.0, 0.0], 3000.0, 1.0),
+        &target,
+        800.0,
+        1.0 / 500.0,
+        30.0,
+        10.0,
+    );
 }
 
 #[test]
 fn aim_angles_match_aim_point_airborne_target() {
     let target = target([200.0, 50.0, 300.0], [10.0, -5.0, -20.0], true);
-    expect_angles_match_aim_point(&proj([0.0, 0.0, 0.0], 4000.0, 0.5), &target, 400.0, 1.0 / 1000.0, 50.0, 10.0);
+    expect_angles_match_aim_point(
+        &proj([0.0, 0.0, 0.0], 4000.0, 0.5),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        10.0,
+    );
 }
 
 #[test]
 fn aim_angles_match_aim_point_high_arc() {
     // Target nearly directly above: high pitch angle
     let target = target([10.0, 0.0, 500.0], [0.0, 0.0, 0.0], false);
-    expect_angles_match_aim_point(&proj([0.0, 0.0, 0.0], 5000.0, 0.3), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0);
+    expect_angles_match_aim_point(
+        &proj([0.0, 0.0, 0.0], 5000.0, 0.3),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+    );
 }
 
 #[test]
 fn aim_angles_match_aim_point_negative_yaw() {
     // Target behind and to the left: negative yaw quadrant
     let target = target([-200.0, -150.0, 10.0], [0.0, 0.0, 0.0], false);
-    expect_angles_match_aim_point(&proj([0.0, 0.0, 0.0], 5000.0, 0.4), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0);
+    expect_angles_match_aim_point(
+        &proj([0.0, 0.0, 0.0], 5000.0, 0.4),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+    );
 }
 
 #[test]
@@ -131,7 +194,9 @@ fn expect_projectile_hits_target(
     let sim_step = 1.0_f32 / 2000.0;
     let engine = Engine::new(gravity, engine_step, max_time, engine_tolerance);
 
-    let aim_angles = engine.maybe_calculate_aim_angles(proj, target).expect("engine must find a solution");
+    let aim_angles = engine
+        .maybe_calculate_aim_angles(proj, target)
+        .expect("engine must find a solution");
 
     let mut min_dist = f32::MAX;
     let mut best_time = 0.0;
@@ -162,7 +227,10 @@ fn expect_projectile_hits_target(
         t += sim_step;
     }
 
-    assert!(min_dist <= hit_tolerance, "Projectile must reach target. Closest approach: {min_dist} at t={best_time}");
+    assert!(
+        min_dist <= hit_tolerance,
+        "Projectile must reach target. Closest approach: {min_dist} at t={best_time}"
+    );
 }
 
 // Simulation hit tests: no launch offset
@@ -170,31 +238,71 @@ fn expect_projectile_hits_target(
 #[test]
 fn hits_static_target_no_offset() {
     let target = target([100.0, 0.0, 90.0], [0.0, 0.0, 0.0], false);
-    expect_projectile_hits_target(&proj([3.0, 2.0, 1.0], 5000.0, 0.4), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0, 10.0);
+    expect_projectile_hits_target(
+        &proj([3.0, 2.0, 1.0], 5000.0, 0.4),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+        10.0,
+    );
 }
 
 #[test]
 fn hits_moving_target_no_offset() {
     let target = target([500.0, 100.0, 0.0], [-50.0, 20.0, 0.0], false);
-    expect_projectile_hits_target(&proj([0.0, 0.0, 0.0], 3000.0, 1.0), &target, 800.0, 1.0 / 500.0, 30.0, 10.0, 15.0);
+    expect_projectile_hits_target(
+        &proj([0.0, 0.0, 0.0], 3000.0, 1.0),
+        &target,
+        800.0,
+        1.0 / 500.0,
+        30.0,
+        10.0,
+        15.0,
+    );
 }
 
 #[test]
 fn hits_airborne_target_no_offset() {
     let target = target([200.0, 50.0, 300.0], [10.0, -5.0, -20.0], true);
-    expect_projectile_hits_target(&proj([0.0, 0.0, 0.0], 4000.0, 0.5), &target, 400.0, 1.0 / 1000.0, 50.0, 10.0, 15.0);
+    expect_projectile_hits_target(
+        &proj([0.0, 0.0, 0.0], 4000.0, 0.5),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        10.0,
+        15.0,
+    );
 }
 
 #[test]
 fn hits_high_target_no_offset() {
     let target = target([10.0, 0.0, 500.0], [0.0, 0.0, 0.0], false);
-    expect_projectile_hits_target(&proj([0.0, 0.0, 0.0], 5000.0, 0.3), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0, 10.0);
+    expect_projectile_hits_target(
+        &proj([0.0, 0.0, 0.0], 5000.0, 0.3),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+        10.0,
+    );
 }
 
 #[test]
 fn hits_negative_yaw_target_no_offset() {
     let target = target([-200.0, -150.0, 10.0], [0.0, 0.0, 0.0], false);
-    expect_projectile_hits_target(&proj([0.0, 0.0, 0.0], 5000.0, 0.4), &target, 400.0, 1.0 / 1000.0, 50.0, 5.0, 10.0);
+    expect_projectile_hits_target(
+        &proj([0.0, 0.0, 0.0], 5000.0, 0.4),
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+        10.0,
+    );
 }
 
 // Simulation hit tests: with launch offset
@@ -273,9 +381,21 @@ fn zero_time_step_returns_nullopt_instead_of_hanging() {
     let target = target([100.0, 0.0, 90.0], [0.0, 0.0, 0.0], false);
     let proj = proj([3.0, 2.0, 1.0], 5000.0, 0.4);
 
-    assert!(Engine::new(400.0, 0.0, 50.0, 5.0).maybe_calculate_aim_point(&proj, &target).is_none());
-    assert!(Engine::new(400.0, -1.0, 50.0, 5.0).maybe_calculate_aim_angles(&proj, &target).is_none());
-    assert!(Engine::new(400.0, 1.0 / 1000.0, 0.0, 5.0).maybe_calculate_aim_point(&proj, &target).is_none());
+    assert!(
+        Engine::new(400.0, 0.0, 50.0, 5.0)
+            .maybe_calculate_aim_point(&proj, &target)
+            .is_none()
+    );
+    assert!(
+        Engine::new(400.0, -1.0, 50.0, 5.0)
+            .maybe_calculate_aim_angles(&proj, &target)
+            .is_none()
+    );
+    assert!(
+        Engine::new(400.0, 1.0 / 1000.0, 0.0, 5.0)
+            .maybe_calculate_aim_point(&proj, &target)
+            .is_none()
+    );
 }
 
 #[test]
@@ -284,13 +404,17 @@ fn high_speed_pitch_matches_double_reference() {
     let target = target([100.0, 0.0, 90.0], [0.0, 0.0, 0.0], false);
     let proj = proj([3.0, 2.0, 1.0], 5000.0, 0.4);
 
-    let aim_angles = Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0).maybe_calculate_aim_angles(&proj, &target).unwrap();
+    let aim_angles = Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0)
+        .maybe_calculate_aim_angles(&proj, &target)
+        .unwrap();
 
     let v_ = 5000.0_f64;
     let g = 400.0_f64 * 0.4;
     let x = (100.0_f64 - 3.0).hypot(0.0 - 2.0);
     let y = 90.0_f64 - 1.0;
-    let reference = ((v_ * v_ - (v_ * v_ * v_ * v_ - g * (g * x * x + 2.0 * y * v_ * v_)).sqrt()) / (g * x)).atan()
+    let reference = ((v_ * v_ - (v_ * v_ * v_ * v_ - g * (g * x * x + 2.0 * y * v_ * v_)).sqrt())
+        / (g * x))
+        .atan()
         * 180.0
         / std::f64::consts::PI;
 
@@ -305,12 +429,22 @@ fn high_arc_reaches_the_target_steeper_and_later() {
     let proj = proj([0.0, 0.0, 64.0], 1200.0, 1.0);
 
     let engine = Engine::new(800.0, 1.0 / 1000.0, 5.0, 5.0);
-    let low = engine.with_arc(Arc::Low).maybe_calculate_aim_angles(&proj, &target).unwrap();
-    let high = engine.with_arc(Arc::High).maybe_calculate_aim_angles(&proj, &target).unwrap();
+    let low = engine
+        .with_arc(Arc::Low)
+        .maybe_calculate_aim_angles(&proj, &target)
+        .unwrap();
+    let high = engine
+        .with_arc(Arc::High)
+        .maybe_calculate_aim_angles(&proj, &target)
+        .unwrap();
 
     // The two roots of the same quadratic: their tangents multiply to 2 y v^2 / (g x^2) + 1, which is 1 on the level
     let pi = std::f32::consts::PI;
-    expect_near((low.pitch * pi / 180.0).tan() * (high.pitch * pi / 180.0).tan(), 1.0_f32, 1e-2_f32);
+    expect_near(
+        (low.pitch * pi / 180.0).tan() * (high.pitch * pi / 180.0).tan(),
+        1.0_f32,
+        1e-2_f32,
+    );
     assert!(high.pitch > 45.0);
     assert!(low.pitch < 45.0);
     expect_near(high.yaw, low.yaw, 1e-3_f32);
@@ -322,8 +456,14 @@ fn without_gravity_the_arcs_agree() {
     let proj = proj([0.0, 0.0, 64.0], 1100.0, 0.0);
 
     let engine = Engine::new(800.0, 1.0 / 1000.0, 5.0, 5.0);
-    let low = engine.with_arc(Arc::Low).maybe_calculate_aim_angles(&proj, &target).unwrap();
-    let high = engine.with_arc(Arc::High).maybe_calculate_aim_angles(&proj, &target).unwrap();
+    let low = engine
+        .with_arc(Arc::Low)
+        .maybe_calculate_aim_angles(&proj, &target)
+        .unwrap();
+    let high = engine
+        .with_arc(Arc::High)
+        .maybe_calculate_aim_angles(&proj, &target)
+        .unwrap();
 
     expect_near(high.pitch, low.pitch, 1e-4_f32);
     expect_near(high.yaw, low.yaw, 1e-4_f32);
@@ -373,6 +513,7 @@ fn engine_is_assignable() {
 
 /// The projectile leaves from eye + basis(angles) * offset, so the returned angles have to hit from exactly there.
 /// Simulate that with the trait at the solution's own time of flight.
+#[allow(clippy::too_many_arguments)]
 fn expect_launcher_solution_hits(
     proj: &Projectile,
     launcher: &Launcher,
@@ -385,7 +526,9 @@ fn expect_launcher_solution_hits(
 ) {
     let engine = Engine::new(gravity, engine_step, max_time, engine_tolerance);
 
-    let solution = engine.maybe_calculate_aim(proj, launcher, target).expect("engine must find a solution");
+    let solution = engine
+        .maybe_calculate_aim(proj, launcher, target)
+        .expect("engine must find a solution");
 
     // The muzzle turns with the view; the round leaves along the view raised by the launcher's pitch offset
     let (pitch, yaw) = (solution.angles.pitch, solution.angles.yaw);
@@ -415,14 +558,24 @@ fn expect_launcher_solution_hits(
 }
 
 /// Source-style spawn: 16 forward, 8 to the right, 6 down from the eye.
-const K_SOURCE_MUZZLE: MuzzleOffset<f32> = MuzzleOffset { forward: 16.0, right: 8.0, up: -6.0 };
+const K_SOURCE_MUZZLE: MuzzleOffset<f32> = MuzzleOffset {
+    forward: 16.0,
+    right: 8.0,
+    up: -6.0,
+};
 
 fn eye(x: f32, y: f32, z: f32) -> Launcher {
-    Launcher { eye_origin: v(x, y, z), ..Default::default() }
+    Launcher {
+        eye_origin: v(x, y, z),
+        ..Default::default()
+    }
 }
 
 fn muzzle_launcher() -> Launcher {
-    Launcher { muzzle_offset: K_SOURCE_MUZZLE, ..eye(0.0, 0.0, 64.0) }
+    Launcher {
+        muzzle_offset: K_SOURCE_MUZZLE,
+        ..eye(0.0, 0.0, 64.0)
+    }
 }
 
 #[test]
@@ -474,10 +627,22 @@ fn side_target_with_muzzle_offset() {
 #[test]
 fn world_and_view_offsets_combine() {
     let target = target([300.0, -120.0, 20.0], [0.0, 0.0, 0.0], false);
-    let launcher =
-        Launcher { muzzle_offset: K_SOURCE_MUZZLE, world_offset: v(0.0, 0.0, -10.0), ..eye(10.0, 5.0, 64.0) };
+    let launcher = Launcher {
+        muzzle_offset: K_SOURCE_MUZZLE,
+        world_offset: v(0.0, 0.0, -10.0),
+        ..eye(10.0, 5.0, 64.0)
+    };
 
-    expect_launcher_solution_hits(&round(4000.0, 0.5), &launcher, &target, 400.0, 1.0 / 1000.0, 50.0, 5.0, 10.0);
+    expect_launcher_solution_hits(
+        &round(4000.0, 0.5),
+        &launcher,
+        &target,
+        400.0,
+        1.0 / 1000.0,
+        50.0,
+        5.0,
+        10.0,
+    );
 }
 
 #[test]
@@ -487,11 +652,20 @@ fn muzzle_offset_changes_the_answer() {
     let proj = round(5000.0, 0.4);
     let engine = Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0);
 
-    let centred = engine.maybe_calculate_aim(&proj, &eye(0.0, 0.0, 64.0), &target).unwrap();
+    let centred = engine
+        .maybe_calculate_aim(&proj, &eye(0.0, 0.0, 64.0), &target)
+        .unwrap();
     let offset = engine
         .maybe_calculate_aim(
             &proj,
-            &Launcher { muzzle_offset: MuzzleOffset { forward: 0.0, right: 8.0, up: 0.0 }, ..eye(0.0, 0.0, 64.0) },
+            &Launcher {
+                muzzle_offset: MuzzleOffset {
+                    forward: 0.0,
+                    right: 8.0,
+                    up: 0.0,
+                },
+                ..eye(0.0, 0.0, 64.0)
+            },
             &target,
         )
         .unwrap();
@@ -499,7 +673,11 @@ fn muzzle_offset_changes_the_answer() {
     // Source right is -Y at zero yaw, so the muzzle sits at y = -8 and must yaw towards +Y by atan(8 / 300)
     let expected_shift = angles::radians_to_degrees(8.0_f32.atan2(300.0));
     expect_near(centred.angles.yaw, 0.0_f32, 0.05_f32);
-    expect_near(offset.angles.yaw - centred.angles.yaw, expected_shift, 0.05_f32);
+    expect_near(
+        offset.angles.yaw - centred.angles.yaw,
+        expected_shift,
+        0.05_f32,
+    );
 }
 
 #[test]
@@ -510,7 +688,9 @@ fn wrappers_match_launcher_with_world_offset() {
     let proj = proj_offset([0.0, 0.0, 64.0], [5.0, 0.0, -3.0], 5000.0, 0.4);
     let engine = Engine::new(400.0, 1.0 / 1000.0, 50.0, 5.0);
 
-    let solution = engine.maybe_calculate_aim(&proj, &launcher_from_projectile(&proj), &target).unwrap();
+    let solution = engine
+        .maybe_calculate_aim(&proj, &launcher_from_projectile(&proj), &target)
+        .unwrap();
     let point = engine.maybe_calculate_aim_point(&proj, &target).unwrap();
     let angles = engine.maybe_calculate_aim_angles(&proj, &target).unwrap();
 
@@ -536,11 +716,16 @@ fn pitch_offset_is_forward_plus_up_velocity() {
     // atan(b / a), at a speed of hypot(a, b).
     let basis = Trait::calc_view_basis(20.0, 35.0);
     let game_velocity = basis.forward * 1200.0 + basis.up * 200.0;
-    let offset_velocity = Trait::calc_view_basis(20.0 + pipe_pitch_offset(), 35.0).forward * pipe_speed();
+    let offset_velocity =
+        Trait::calc_view_basis(20.0 + pipe_pitch_offset(), 35.0).forward * pipe_speed();
 
     expect_near(pipe_pitch_offset(), 9.4623_f32, 1e-3_f32);
     expect_near(pipe_speed(), 1216.55_f32, 1e-2_f32);
-    expect_near(game_velocity.distance_to(offset_velocity), 0.0_f32, 1e-2_f32);
+    expect_near(
+        game_velocity.distance_to(offset_velocity),
+        0.0_f32,
+        1e-2_f32,
+    );
 }
 
 #[test]
@@ -548,44 +733,88 @@ fn pipe_launcher_fired_like_the_game_hits() {
     let gravity = 800.0_f32;
     let target = target([600.0, 150.0, 0.0], [-40.0, 30.0, 0.0], false);
     let proj = round(pipe_speed(), 0.5);
-    let launcher = Launcher { launch_pitch_offset: pipe_pitch_offset(), ..muzzle_launcher() };
+    let launcher = Launcher {
+        launch_pitch_offset: pipe_pitch_offset(),
+        ..muzzle_launcher()
+    };
 
-    let aim = Engine::new(gravity, 1.0 / 1000.0, 5.0, 5.0).maybe_calculate_aim(&proj, &launcher, &target).unwrap();
+    let aim = Engine::new(gravity, 1.0 / 1000.0, 5.0, 5.0)
+        .maybe_calculate_aim(&proj, &launcher, &target)
+        .unwrap();
 
     // Fire the way the game does rather than through the offset: forward * 1200 + up * 200 in the view frame, from the
     // view-relative muzzle, with the view angles the engine returned.
     let basis = Trait::calc_view_basis(aim.angles.pitch, aim.angles.yaw);
     let time = aim.time_of_flight;
-    let mut position = launcher.launch_origin(basis) + (basis.forward * 1200.0 + basis.up * 200.0) * time;
+    let mut position =
+        launcher.launch_origin(basis) + (basis.forward * 1200.0 + basis.up * 200.0) * time;
     position.z -= 0.5 * gravity * proj.gravity_scale * time * time;
 
     assert!(position.distance_to(Trait::predict_target_position(&target, time, gravity)) <= 6.0);
 
     // Left out, the same shot lands far away: the engine would aim the crosshair where the round has to go
     let no_offset = muzzle_launcher();
-    let naive = Engine::new(gravity, 1.0 / 1000.0, 5.0, 5.0).maybe_calculate_aim(&proj, &no_offset, &target).unwrap();
+    let naive = Engine::new(gravity, 1.0 / 1000.0, 5.0, 5.0)
+        .maybe_calculate_aim(&proj, &no_offset, &target)
+        .unwrap();
     let naive_basis = Trait::calc_view_basis(naive.angles.pitch, naive.angles.yaw);
     let naive_time = naive.time_of_flight;
-    let mut naive_position =
-        no_offset.launch_origin(naive_basis) + (naive_basis.forward * 1200.0 + naive_basis.up * 200.0) * naive_time;
+    let mut naive_position = no_offset.launch_origin(naive_basis)
+        + (naive_basis.forward * 1200.0 + naive_basis.up * 200.0) * naive_time;
     naive_position.z -= 0.5 * gravity * proj.gravity_scale * naive_time * naive_time;
-    assert!(naive_position.distance_to(Trait::predict_target_position(&target, naive_time, gravity)) > 50.0);
+    assert!(
+        naive_position.distance_to(Trait::predict_target_position(&target, naive_time, gravity))
+            > 50.0
+    );
 }
 
 #[test]
 fn pitch_offset_with_side_and_airborne_targets() {
     let proj = round(pipe_speed(), 0.5);
-    let launcher = Launcher { launch_pitch_offset: pipe_pitch_offset(), ..muzzle_launcher() };
+    let launcher = Launcher {
+        launch_pitch_offset: pipe_pitch_offset(),
+        ..muzzle_launcher()
+    };
 
     let side = target([-50.0, 300.0, 80.0], [10.0, -5.0, 0.0], false);
-    expect_launcher_solution_hits(&proj, &launcher, &side, 800.0, 1.0 / 1000.0, 30.0, 5.0, 10.0);
+    expect_launcher_solution_hits(
+        &proj,
+        &launcher,
+        &side,
+        800.0,
+        1.0 / 1000.0,
+        30.0,
+        5.0,
+        10.0,
+    );
 
     let airborne = target([400.0, -100.0, 300.0], [10.0, -5.0, -20.0], true);
-    expect_launcher_solution_hits(&proj, &launcher, &airborne, 800.0, 1.0 / 1000.0, 30.0, 5.0, 10.0);
+    expect_launcher_solution_hits(
+        &proj,
+        &launcher,
+        &airborne,
+        800.0,
+        1.0 / 1000.0,
+        30.0,
+        5.0,
+        10.0,
+    );
 
     // A weapon that fires below the crosshair
-    let downward = Launcher { launch_pitch_offset: -4.0, ..muzzle_launcher() };
-    expect_launcher_solution_hits(&proj, &downward, &side, 800.0, 1.0 / 1000.0, 30.0, 5.0, 10.0);
+    let downward = Launcher {
+        launch_pitch_offset: -4.0,
+        ..muzzle_launcher()
+    };
+    expect_launcher_solution_hits(
+        &proj,
+        &downward,
+        &side,
+        800.0,
+        1.0 / 1000.0,
+        30.0,
+        5.0,
+        10.0,
+    );
 }
 
 #[test]
@@ -595,16 +824,25 @@ fn pitch_offset_shifts_view_pitch_by_exactly_the_offset() {
     let proj = round(pipe_speed(), 0.5);
     let engine = Engine::new(800.0, 1.0 / 1000.0, 5.0, 5.0);
 
-    let plain = engine.maybe_calculate_aim(&proj, &eye(0.0, 0.0, 64.0), &target).unwrap();
+    let plain = engine
+        .maybe_calculate_aim(&proj, &eye(0.0, 0.0, 64.0), &target)
+        .unwrap();
     let offset = engine
         .maybe_calculate_aim(
             &proj,
-            &Launcher { launch_pitch_offset: pipe_pitch_offset(), ..eye(0.0, 0.0, 64.0) },
+            &Launcher {
+                launch_pitch_offset: pipe_pitch_offset(),
+                ..eye(0.0, 0.0, 64.0)
+            },
             &target,
         )
         .unwrap();
 
-    expect_near(offset.angles.pitch, plain.angles.pitch - pipe_pitch_offset(), 1e-4_f32);
+    expect_near(
+        offset.angles.pitch,
+        plain.angles.pitch - pipe_pitch_offset(),
+        1e-4_f32,
+    );
     expect_float_eq(offset.angles.yaw, plain.angles.yaw);
     expect_float_eq(offset.time_of_flight, plain.time_of_flight);
 
@@ -621,14 +859,19 @@ fn unreachable_view_pitch_is_rejected() {
     let proj = round(pipe_speed(), 0.5);
     let engine = Engine::new(800.0, 1.0 / 1000.0, 5.0, 5.0);
 
-    let plain = engine.maybe_calculate_aim(&proj, &eye(0.0, 0.0, 1000.0), &below).unwrap();
+    let plain = engine
+        .maybe_calculate_aim(&proj, &eye(0.0, 0.0, 1000.0), &below)
+        .unwrap();
     assert!(plain.angles.pitch < -85.0);
 
     assert!(
         engine
             .maybe_calculate_aim(
                 &proj,
-                &Launcher { launch_pitch_offset: pipe_pitch_offset(), ..eye(0.0, 0.0, 1000.0) },
+                &Launcher {
+                    launch_pitch_offset: pipe_pitch_offset(),
+                    ..eye(0.0, 0.0, 1000.0)
+                },
                 &below
             )
             .is_none()

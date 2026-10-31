@@ -4,7 +4,10 @@ use omath::engines::source::{Mesh, MeshCollider};
 use omath::primitives::Vertex;
 
 fn vertex(x: f32, y: f32, z: f32) -> Vertex {
-    Vertex { position: Vector3::new(x, y, z), ..Default::default() }
+    Vertex {
+        position: Vector3::new(x, y, z),
+        ..Default::default()
+    }
 }
 
 fn mesh() -> Mesh {

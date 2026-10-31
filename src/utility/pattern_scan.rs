@@ -63,8 +63,23 @@ impl PatternScanner {
             return Some(0);
         }
 
-        range.windows(pattern.len()).position(|window| {
-            window.iter().zip(pattern).all(|(actual, expected)| expected.is_none_or(|byte| byte == *actual))
+        // Search a concrete anchor with memchr's runtime-selected SIMD implementation,
+        // then verify only candidate windows. The last fixed byte also handles long
+        // runs whose first pattern byte is common (e.g. zero-filled image sections).
+        let Some((anchor, byte)) = pattern
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(i, b)| b.map(|b| (i, b)))
+        else {
+            return Some(0);
+        };
+        let candidates = range.len() - pattern.len() + 1;
+        memchr::memchr_iter(byte, &range[anchor..anchor + candidates]).find(|&start| {
+            pattern
+                .iter()
+                .enumerate()
+                .all(|(offset, expected)| expected.is_none_or(|b| range[start + offset] == b))
         })
     }
 
@@ -76,7 +91,10 @@ impl PatternScanner {
     pub fn parse_pattern(pattern_string: &str) -> Result<Vec<Option<u8>>, PatternScanError> {
         let mut pattern = Vec::new();
 
-        for byte_str in pattern_string.as_bytes().split(|&character| character == b' ') {
+        for byte_str in pattern_string
+            .as_bytes()
+            .split(|&character| character == b' ')
+        {
             if byte_str.is_empty() || byte_str.len() >= 3 {
                 continue;
             }
@@ -85,7 +103,9 @@ impl PatternScanner {
                 continue;
             }
 
-            pattern.push(Some(parse_hex_prefix(byte_str).ok_or(PatternScanError::InvalidPatternString)?));
+            pattern.push(Some(
+                parse_hex_prefix(byte_str).ok_or(PatternScanError::InvalidPatternString)?,
+            ));
         }
 
         Ok(pattern)
@@ -114,7 +134,9 @@ impl PatternScanner {
     /// Strict parser behind [`consteval_pattern!`](crate::consteval_pattern). Unlike
     /// [`Self::parse_pattern`], any whitespace separates tokens and every token must be `?`, `??` or
     /// exactly two hex digits. `N` must be [`Self::signature_size`] of `pattern`.
-    pub const fn parse_pattern_const<const N: usize>(pattern: &str) -> Result<[Option<u8>; N], PatternScanError> {
+    pub const fn parse_pattern_const<const N: usize>(
+        pattern: &str,
+    ) -> Result<[Option<u8>; N], PatternScanError> {
         let pattern = pattern.as_bytes();
         let mut result = [None; N];
         let mut out = 0;
@@ -148,7 +170,10 @@ impl PatternScanner {
             } else if token_size != 2 {
                 return Err(PatternScanError::InvalidPatternString);
             } else {
-                match (hex_value(pattern[token_start]), hex_value(pattern[token_start + 1])) {
+                match (
+                    hex_value(pattern[token_start]),
+                    hex_value(pattern[token_start + 1]),
+                ) {
                     (Some(high), Some(low)) => Some(high << 4 | low),
                     _ => return Err(PatternScanError::InvalidPatternString),
                 }
@@ -171,10 +196,11 @@ macro_rules! consteval_pattern {
     ($pattern:expr) => {{
         const PATTERN: &str = $pattern;
         const SIZE: usize = $crate::utility::PatternScanner::signature_size(PATTERN);
-        const PARSED: [Option<u8>; SIZE] = match $crate::utility::PatternScanner::parse_pattern_const::<SIZE>(PATTERN) {
-            Ok(parsed) => parsed,
-            Err(_) => panic!("invalid pattern"),
-        };
+        const PARSED: [Option<u8>; SIZE] =
+            match $crate::utility::PatternScanner::parse_pattern_const::<SIZE>(PATTERN) {
+                Ok(parsed) => parsed,
+                Err(_) => panic!("invalid pattern"),
+            };
         PARSED
     }};
 }

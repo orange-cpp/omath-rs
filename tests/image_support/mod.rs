@@ -27,7 +27,11 @@ impl TempFile {
     pub fn create(data: &[u8]) -> Self {
         static NEXT_ID: AtomicU32 = AtomicU32::new(0);
 
-        let name = format!("omath_test_{}_{}.bin", std::process::id(), NEXT_ID.fetch_add(1, Ordering::Relaxed));
+        let name = format!(
+            "omath_test_{}_{}.bin",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        );
         let path = std::env::temp_dir().join(name);
 
         std::fs::write(&path, data).expect("failed to write the temporary file");
@@ -90,7 +94,12 @@ pub fn build_minimal_pe(section_bytes: &[u8]) -> Vec<u8> {
 }
 
 /// A raw PE file where `ptr_raw_data` differs from `virtual_address`.
-pub fn make_fake_pe_file(virtual_address: u32, ptr_raw_data: u32, section_size: u32, code_bytes: &[u8]) -> Vec<u8> {
+pub fn make_fake_pe_file(
+    virtual_address: u32,
+    ptr_raw_data: u32,
+    section_size: u32,
+    code_bytes: &[u8],
+) -> Vec<u8> {
     const E_LFANEW: usize = 0x80;
     const OPT_HDR_SIZE: u16 = 0xF0;
     const FH_OFF: usize = E_LFANEW + 4;

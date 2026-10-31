@@ -35,14 +35,20 @@ pub trait StoreOrder: Copy + Default + fmt::Debug + 'static {
     type Storage<T: Copy, const R: usize, const C: usize>: Copy;
 
     fn splat<T: Copy, const R: usize, const C: usize>(value: T) -> Self::Storage<T, R, C>;
-    fn get<T: Copy, const R: usize, const C: usize>(data: &Self::Storage<T, R, C>, row: usize, column: usize) -> &T;
+    fn get<T: Copy, const R: usize, const C: usize>(
+        data: &Self::Storage<T, R, C>,
+        row: usize,
+        column: usize,
+    ) -> &T;
     fn get_mut<T: Copy, const R: usize, const C: usize>(
         data: &mut Self::Storage<T, R, C>,
         row: usize,
         column: usize,
     ) -> &mut T;
     fn flat<T: Copy, const R: usize, const C: usize>(data: &Self::Storage<T, R, C>) -> &[T];
-    fn flat_mut<T: Copy, const R: usize, const C: usize>(data: &mut Self::Storage<T, R, C>) -> &mut [T];
+    fn flat_mut<T: Copy, const R: usize, const C: usize>(
+        data: &mut Self::Storage<T, R, C>,
+    ) -> &mut [T];
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -61,11 +67,19 @@ impl StoreOrder for RowMajor {
         [[value; C]; R]
     }
     #[inline]
-    fn get<T: Copy, const R: usize, const C: usize>(data: &[[T; C]; R], row: usize, column: usize) -> &T {
+    fn get<T: Copy, const R: usize, const C: usize>(
+        data: &[[T; C]; R],
+        row: usize,
+        column: usize,
+    ) -> &T {
         &data[row][column]
     }
     #[inline]
-    fn get_mut<T: Copy, const R: usize, const C: usize>(data: &mut [[T; C]; R], row: usize, column: usize) -> &mut T {
+    fn get_mut<T: Copy, const R: usize, const C: usize>(
+        data: &mut [[T; C]; R],
+        row: usize,
+        column: usize,
+    ) -> &mut T {
         &mut data[row][column]
     }
     #[inline]
@@ -88,11 +102,19 @@ impl StoreOrder for ColumnMajor {
         [[value; R]; C]
     }
     #[inline]
-    fn get<T: Copy, const R: usize, const C: usize>(data: &[[T; R]; C], row: usize, column: usize) -> &T {
+    fn get<T: Copy, const R: usize, const C: usize>(
+        data: &[[T; R]; C],
+        row: usize,
+        column: usize,
+    ) -> &T {
         &data[column][row]
     }
     #[inline]
-    fn get_mut<T: Copy, const R: usize, const C: usize>(data: &mut [[T; R]; C], row: usize, column: usize) -> &mut T {
+    fn get_mut<T: Copy, const R: usize, const C: usize>(
+        data: &mut [[T; R]; C],
+        row: usize,
+        column: usize,
+    ) -> &mut T {
         &mut data[column][row]
     }
     #[inline]
@@ -126,7 +148,9 @@ impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> Default for Mat<R
     }
 }
 
-impl<const R: usize, const C: usize, T: Copy + PartialEq, S: StoreOrder> PartialEq for Mat<R, C, T, S> {
+impl<const R: usize, const C: usize, T: Copy + PartialEq, S: StoreOrder> PartialEq
+    for Mat<R, C, T, S>
+{
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.as_slice() == other.as_slice()
@@ -136,7 +160,9 @@ impl<const R: usize, const C: usize, T: Copy + PartialEq, S: StoreOrder> Partial
 impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Mat<R, C, T, S> {
     #[inline]
     pub fn splat(value: T) -> Self {
-        Self { data: S::splat(value) }
+        Self {
+            data: S::splat(value),
+        }
     }
 
     /// Builds a matrix from an element function of `(row, column)`.
@@ -178,7 +204,10 @@ impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Mat<R, C, T, S> {
 
     #[inline]
     pub const fn size() -> MatSize {
-        MatSize { rows: R, columns: C }
+        MatSize {
+            rows: R,
+            columns: C,
+        }
     }
 
     #[inline]
@@ -221,12 +250,24 @@ impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Mat<R, C, T, S> {
     /// Removes one row and one column. `R2` and `C2` must be `R - 1` and `C - 1`, which stable Rust cannot spell in the
     /// return type, so the mismatch is a compile-time error here instead.
     #[must_use]
-    pub fn strip<const R2: usize, const C2: usize>(&self, row: usize, column: usize) -> Mat<R2, C2, T, S> {
+    pub fn strip<const R2: usize, const C2: usize>(
+        &self,
+        row: usize,
+        column: usize,
+    ) -> Mat<R2, C2, T, S> {
         const {
-            assert!(R2 + 1 == R && C2 + 1 == C, "strip must remove exactly one row and one column");
+            assert!(
+                R2 + 1 == R && C2 + 1 == C,
+                "strip must remove exactly one row and one column"
+            );
             assert!(R2 > 0 && C2 > 0, "cannot strip a matrix down to nothing");
         }
-        Mat::from_fn(|r, c| self.at(if r < row { r } else { r + 1 }, if c < column { c } else { c + 1 }))
+        Mat::from_fn(|r, c| {
+            self.at(
+                if r < row { r } else { r + 1 },
+                if c < column { c } else { c + 1 },
+            )
+        })
     }
 }
 
@@ -237,7 +278,9 @@ impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> Mat<R, C, T, S> {
     }
 
     pub fn sum(&self) -> T {
-        self.as_slice().iter().fold(T::ZERO, |sum, &value| sum + value)
+        self.as_slice()
+            .iter()
+            .fold(T::ZERO, |sum, &value| sum + value)
     }
 
     #[inline]
@@ -288,14 +331,21 @@ impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> Mat<R, C, T, S> {
 
     #[inline]
     const fn all_bits(count: usize) -> u64 {
-        if count >= 64 { u64::MAX } else { (1 << count) - 1 }
+        if count >= 64 {
+            u64::MAX
+        } else {
+            (1 << count) - 1
+        }
     }
 
     pub fn minor(&self, row: usize, column: usize) -> T
     where
         T: Signed,
     {
-        self.determinant_of(Self::all_bits(R) & !(1 << row), Self::all_bits(C) & !(1 << column))
+        self.determinant_of(
+            Self::all_bits(R) & !(1 << row),
+            Self::all_bits(C) & !(1 << column),
+        )
     }
 
     pub fn alg_complement(&self, row: usize, column: usize) -> T
@@ -303,7 +353,11 @@ impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> Mat<R, C, T, S> {
         T: Signed,
     {
         let minor = self.minor(row, column);
-        if (row + column) % 2 == 0 { minor } else { -minor }
+        if (row + column) % 2 == 0 {
+            minor
+        } else {
+            -minor
+        }
     }
 }
 
@@ -346,8 +400,9 @@ impl<const R: usize, const C: usize, T: Real, S: StoreOrder> Mat<R, C, T, S> {
         let bot_13 = a(2, 1) * a(3, 3) - a(3, 1) * a(2, 3);
         let bot_23 = a(2, 2) * a(3, 3) - a(3, 2) * a(2, 3);
 
-        let determinant =
-            top_01 * bot_23 - top_02 * bot_13 + top_03 * bot_12 + top_12 * bot_03 - top_13 * bot_02 + top_23 * bot_01;
+        let determinant = top_01 * bot_23 - top_02 * bot_13 + top_03 * bot_12 + top_12 * bot_03
+            - top_13 * bot_02
+            + top_23 * bot_01;
 
         if determinant.abs_value() < T::EPSILON {
             return None;
@@ -385,7 +440,9 @@ impl<const R: usize, const C: usize, T: Real, S: StoreOrder> Mat<R, C, T, S> {
     }
 }
 
-impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Index<(usize, usize)> for Mat<R, C, T, S> {
+impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Index<(usize, usize)>
+    for Mat<R, C, T, S>
+{
     type Output = T;
 
     #[inline]
@@ -394,7 +451,9 @@ impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> Index<(usize, usize
     }
 }
 
-impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> IndexMut<(usize, usize)> for Mat<R, C, T, S> {
+impl<const R: usize, const C: usize, T: Copy, S: StoreOrder> IndexMut<(usize, usize)>
+    for Mat<R, C, T, S>
+{
     #[inline]
     fn index_mut(&mut self, (row, column): (usize, usize)) -> &mut T {
         self.at_mut(row, column)
@@ -415,7 +474,8 @@ impl<const R: usize, const C: usize, const O: usize, T: Scalar, S: StoreOrder> M
                     for column in 0..C {
                         let current = self.at(row, column);
                         for other_column in 0..O {
-                            *result.at_mut(row, other_column) += current * other.at(column, other_column);
+                            *result.at_mut(row, other_column) +=
+                                current * other.at(column, other_column);
                         }
                     }
                 }
@@ -444,13 +504,17 @@ impl<const N: usize, T: Scalar, S: StoreOrder> MulAssign for Mat<N, N, T, S> {
 
 impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> MulAssign<T> for Mat<R, C, T, S> {
     fn mul_assign(&mut self, value: T) {
-        self.as_mut_slice().iter_mut().for_each(|element| *element *= value);
+        self.as_mut_slice()
+            .iter_mut()
+            .for_each(|element| *element *= value);
     }
 }
 
 impl<const R: usize, const C: usize, T: Scalar, S: StoreOrder> DivAssign<T> for Mat<R, C, T, S> {
     fn div_assign(&mut self, value: T) {
-        self.as_mut_slice().iter_mut().for_each(|element| *element /= value);
+        self.as_mut_slice()
+            .iter_mut()
+            .for_each(|element| *element /= value);
     }
 }
 
@@ -540,12 +604,22 @@ impl<T: Scalar, S: StoreOrder> Mat<4, 4, T, S> {
 
     pub fn translation(diff: Vector3<T>) -> Self {
         let (o, one) = (T::ZERO, T::ONE);
-        Self::from_rows([[one, o, o, diff.x], [o, one, o, diff.y], [o, o, one, diff.z], [o, o, o, one]])
+        Self::from_rows([
+            [one, o, o, diff.x],
+            [o, one, o, diff.y],
+            [o, o, one, diff.z],
+            [o, o, o, one],
+        ])
     }
 
     pub fn scale(scale: Vector3<T>) -> Self {
         let (o, one) = (T::ZERO, T::ONE);
-        Self::from_rows([[scale.x, o, o, o], [o, scale.y, o, o], [o, o, scale.z, o], [o, o, o, one]])
+        Self::from_rows([
+            [scale.x, o, o, o],
+            [o, scale.y, o, o],
+            [o, o, scale.z, o],
+            [o, o, o, one],
+        ])
     }
 
     #[inline]
@@ -553,7 +627,12 @@ impl<T: Scalar, S: StoreOrder> Mat<4, 4, T, S> {
         Vector3::new(self.at(0, 3), self.at(1, 3), self.at(2, 3))
     }
 
-    pub fn camera_view(forward: Vector3<T>, right: Vector3<T>, up: Vector3<T>, camera_origin: Vector3<T>) -> Self
+    pub fn camera_view(
+        forward: Vector3<T>,
+        right: Vector3<T>,
+        up: Vector3<T>,
+        camera_origin: Vector3<T>,
+    ) -> Self
     where
         T: Signed,
     {
@@ -574,9 +653,19 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
             let (x, y, z) = (self.at(0, column), self.at(1, column), self.at(2, column));
             (x * x + y * y + z * z).sqrt()
         };
-        let or_one = |scale: T| if scale.abs_value() < T::EPSILON { T::ONE } else { scale };
+        let or_one = |scale: T| {
+            if scale.abs_value() < T::EPSILON {
+                T::ONE
+            } else {
+                scale
+            }
+        };
 
-        Vector3::new(or_one(column_length(0)), or_one(column_length(1)), or_one(column_length(2)))
+        Vector3::new(
+            or_one(column_length(0)),
+            or_one(column_length(1)),
+            or_one(column_length(2)),
+        )
     }
 
     #[inline]
@@ -599,11 +688,19 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
         // At y = +/-90 degrees cos(y) is 0, so the x and z rotations act around the same axis and only x - z (or x + z)
         // is recoverable. Pin z to 0 and fold the whole rotation into x, using the surviving m01/m02 pair.
         if T::ONE - m20.abs_value() < Self::singularity_epsilon() {
-            let x = if m20 < T::ZERO { m01.atan2(m02) } else { (-m01).atan2(-m02) };
+            let x = if m20 < T::ZERO {
+                m01.atan2(m02)
+            } else {
+                (-m01).atan2(-m02)
+            };
             return Vector3::new(angles::radians_to_degrees(x), y, T::ZERO);
         }
 
-        Vector3::new(angles::radians_to_degrees(m21.atan2(m22)), y, angles::radians_to_degrees(m10.atan2(m00)))
+        Vector3::new(
+            angles::radians_to_degrees(m21.atan2(m22)),
+            y,
+            angles::radians_to_degrees(m10.atan2(m00)),
+        )
     }
 
     /// Inverse of [`Mat::rotation_yxz`]: `(x, y, z)` in degrees with `x` in `[-90, 90]`.
@@ -624,7 +721,11 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
             return Vector3::new(x, angles::radians_to_degrees((-m20).atan2(m00)), T::ZERO);
         }
 
-        Vector3::new(x, angles::radians_to_degrees(m02.atan2(m22)), angles::radians_to_degrees(m10.atan2(m11)))
+        Vector3::new(
+            x,
+            angles::radians_to_degrees(m02.atan2(m22)),
+            angles::radians_to_degrees(m10.atan2(m11)),
+        )
     }
 
     /// Inverse of [`Mat::rotation_zxy`]: `(x, y, z)` in degrees with `x` in `[-90, 90]`.
@@ -645,32 +746,62 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
             return Vector3::new(x, T::ZERO, angles::radians_to_degrees(m10.atan2(m00)));
         }
 
-        Vector3::new(x, angles::radians_to_degrees((-m20).atan2(m22)), angles::radians_to_degrees((-m01).atan2(m11)))
+        Vector3::new(
+            x,
+            angles::radians_to_degrees((-m20).atan2(m22)),
+            angles::radians_to_degrees((-m01).atan2(m11)),
+        )
     }
 
     pub fn rotation_axis_x(angle: impl Trig<T>) -> Self {
         let (o, one, sin, cos) = (T::ZERO, T::ONE, angle.sin(), angle.cos());
-        Self::from_rows([[one, o, o, o], [o, cos, -sin, o], [o, sin, cos, o], [o, o, o, one]])
+        Self::from_rows([
+            [one, o, o, o],
+            [o, cos, -sin, o],
+            [o, sin, cos, o],
+            [o, o, o, one],
+        ])
     }
 
     pub fn rotation_axis_y(angle: impl Trig<T>) -> Self {
         let (o, one, sin, cos) = (T::ZERO, T::ONE, angle.sin(), angle.cos());
-        Self::from_rows([[cos, o, sin, o], [o, one, o, o], [-sin, o, cos, o], [o, o, o, one]])
+        Self::from_rows([
+            [cos, o, sin, o],
+            [o, one, o, o],
+            [-sin, o, cos, o],
+            [o, o, o, one],
+        ])
     }
 
     pub fn rotation_axis_z(angle: impl Trig<T>) -> Self {
         let (o, one, sin, cos) = (T::ZERO, T::ONE, angle.sin(), angle.cos());
-        Self::from_rows([[cos, -sin, o, o], [sin, cos, o, o], [o, o, one, o], [o, o, o, one]])
+        Self::from_rows([
+            [cos, -sin, o, o],
+            [sin, cos, o, o],
+            [o, o, one, o],
+            [o, o, o, one],
+        ])
     }
 
     /// Closed form of `rotation_axis_z(z) * rotation_axis_y(y) * rotation_axis_x(x)`.
     pub fn rotation_zyx(z: impl Trig<T>, y: impl Trig<T>, x: impl Trig<T>) -> Self {
-        let (sin_z, cos_z, sin_y, cos_y, sin_x, cos_x) = (z.sin(), z.cos(), y.sin(), y.cos(), x.sin(), x.cos());
+        let (sin_z, cos_z, sin_y, cos_y, sin_x, cos_x) =
+            (z.sin(), z.cos(), y.sin(), y.cos(), x.sin(), x.cos());
         let (o, one) = (T::ZERO, T::ONE);
 
         Self::from_rows([
-            [cos_z * cos_y, cos_z * sin_y * sin_x - sin_z * cos_x, cos_z * sin_y * cos_x + sin_z * sin_x, o],
-            [sin_z * cos_y, sin_z * sin_y * sin_x + cos_z * cos_x, sin_z * sin_y * cos_x - cos_z * sin_x, o],
+            [
+                cos_z * cos_y,
+                cos_z * sin_y * sin_x - sin_z * cos_x,
+                cos_z * sin_y * cos_x + sin_z * sin_x,
+                o,
+            ],
+            [
+                sin_z * cos_y,
+                sin_z * sin_y * sin_x + cos_z * cos_x,
+                sin_z * sin_y * cos_x - cos_z * sin_x,
+                o,
+            ],
             [-sin_y, cos_y * sin_x, cos_y * cos_x, o],
             [o, o, o, one],
         ])
@@ -679,13 +810,24 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
     /// Closed form of `rotation_axis_y(y) * rotation_axis_x(x) * rotation_axis_z(z)`: yaw * pitch * roll for Y-up
     /// engines, with the roll turning around the camera's own forward (Z) axis.
     pub fn rotation_yxz(y: impl Trig<T>, x: impl Trig<T>, z: impl Trig<T>) -> Self {
-        let (sin_y, cos_y, sin_x, cos_x, sin_z, cos_z) = (y.sin(), y.cos(), x.sin(), x.cos(), z.sin(), z.cos());
+        let (sin_y, cos_y, sin_x, cos_x, sin_z, cos_z) =
+            (y.sin(), y.cos(), x.sin(), x.cos(), z.sin(), z.cos());
         let (o, one) = (T::ZERO, T::ONE);
 
         Self::from_rows([
-            [cos_y * cos_z + sin_y * sin_x * sin_z, -cos_y * sin_z + sin_y * sin_x * cos_z, sin_y * cos_x, o],
+            [
+                cos_y * cos_z + sin_y * sin_x * sin_z,
+                -cos_y * sin_z + sin_y * sin_x * cos_z,
+                sin_y * cos_x,
+                o,
+            ],
             [cos_x * sin_z, cos_x * cos_z, -sin_x, o],
-            [-sin_y * cos_z + cos_y * sin_x * sin_z, sin_y * sin_z + cos_y * sin_x * cos_z, cos_y * cos_x, o],
+            [
+                -sin_y * cos_z + cos_y * sin_x * sin_z,
+                sin_y * sin_z + cos_y * sin_x * cos_z,
+                cos_y * cos_x,
+                o,
+            ],
             [o, o, o, one],
         ])
     }
@@ -693,38 +835,66 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
     /// Closed form of `rotation_axis_z(z) * rotation_axis_x(x) * rotation_axis_y(y)`: yaw * pitch * roll for Z-up
     /// engines whose forward is Y, with the roll turning around the camera's own forward (Y) axis.
     pub fn rotation_zxy(z: impl Trig<T>, x: impl Trig<T>, y: impl Trig<T>) -> Self {
-        let (sin_z, cos_z, sin_x, cos_x, sin_y, cos_y) = (z.sin(), z.cos(), x.sin(), x.cos(), y.sin(), y.cos());
+        let (sin_z, cos_z, sin_x, cos_x, sin_y, cos_y) =
+            (z.sin(), z.cos(), x.sin(), x.cos(), y.sin(), y.cos());
         let (o, one) = (T::ZERO, T::ONE);
 
         Self::from_rows([
-            [cos_z * cos_y - sin_z * sin_x * sin_y, -sin_z * cos_x, cos_z * sin_y + sin_z * sin_x * cos_y, o],
-            [sin_z * cos_y + cos_z * sin_x * sin_y, cos_z * cos_x, sin_z * sin_y - cos_z * sin_x * cos_y, o],
+            [
+                cos_z * cos_y - sin_z * sin_x * sin_y,
+                -sin_z * cos_x,
+                cos_z * sin_y + sin_z * sin_x * cos_y,
+                o,
+            ],
+            [
+                sin_z * cos_y + cos_z * sin_x * sin_y,
+                cos_z * cos_x,
+                sin_z * sin_y - cos_z * sin_x * cos_y,
+                o,
+            ],
             [-cos_x * sin_y, sin_x, cos_x * cos_y, o],
             [o, o, o, one],
         ])
     }
 
     /// `z_sign` is `1` for left-handed and `-1` for right-handed. Both handedness variants differ only there.
-    fn perspective(x_axis: T, y_axis: T, near: T, far: T, z_sign: T, depth_range: NdcDepthRange) -> Self {
+    fn perspective(
+        x_axis: T,
+        y_axis: T,
+        near: T,
+        far: T,
+        z_sign: T,
+        depth_range: NdcDepthRange,
+    ) -> Self {
         let o = T::ZERO;
         let (z_scale, z_offset) = match depth_range {
             NdcDepthRange::ZeroToOne => (z_sign * far / (far - near), -(near * far) / (far - near)),
-            NdcDepthRange::NegativeOneToOne => {
-                (z_sign * (far + near) / (far - near), -(T::from_f64(2.0) * near * far) / (far - near))
-            }
+            NdcDepthRange::NegativeOneToOne => (
+                z_sign * (far + near) / (far - near),
+                -(T::from_f64(2.0) * near * far) / (far - near),
+            ),
         };
 
-        Self::from_rows([[x_axis, o, o, o], [o, y_axis, o, o], [o, o, z_scale, z_offset], [o, o, z_sign, o]])
+        Self::from_rows([
+            [x_axis, o, o, o],
+            [o, y_axis, o, o],
+            [o, o, z_scale, z_offset],
+            [o, o, z_sign, o],
+        ])
     }
 
     fn vertical_fov_axes(field_of_view: T, aspect_ratio: T) -> (T, T) {
         let fov_half_tan = (angles::degrees_to_radians(field_of_view) / T::from_f64(2.0)).tan();
-        (T::ONE / (aspect_ratio * fov_half_tan), T::ONE / fov_half_tan)
+        (
+            T::ONE / (aspect_ratio * fov_half_tan),
+            T::ONE / fov_half_tan,
+        )
     }
 
     /// For engines that report the FOV as horizontal (UE's `FMinimalViewInfo::FOV`, Quake-family `fov_x`, etc.).
     fn horizontal_fov_axes(horizontal_fov: T, aspect_ratio: T) -> (T, T) {
-        let inv_tan_half_hfov = T::ONE / (angles::degrees_to_radians(horizontal_fov) / T::from_f64(2.0)).tan();
+        let inv_tan_half_hfov =
+            T::ONE / (angles::degrees_to_radians(horizontal_fov) / T::from_f64(2.0)).tan();
         (inv_tan_half_hfov, inv_tan_half_hfov * aspect_ratio)
     }
 
@@ -773,12 +943,24 @@ impl<T: Real, S: StoreOrder> Mat<4, 4, T, S> {
     }
 
     /// `z_sign` is `1` for left-handed and `-1` for right-handed.
-    fn ortho(left: T, right: T, bottom: T, top: T, near: T, far: T, z_sign: T, depth_range: NdcDepthRange) -> Self {
+    #[allow(clippy::too_many_arguments)]
+    fn ortho(
+        left: T,
+        right: T,
+        bottom: T,
+        top: T,
+        near: T,
+        far: T,
+        z_sign: T,
+        depth_range: NdcDepthRange,
+    ) -> Self {
         let (o, one) = (T::ZERO, T::ONE);
         let two = T::from_f64(2.0);
         let (z_scale, z_offset) = match depth_range {
             NdcDepthRange::ZeroToOne => (z_sign / (far - near), -near / (far - near)),
-            NdcDepthRange::NegativeOneToOne => (z_sign * two / (far - near), -(far + near) / (far - near)),
+            NdcDepthRange::NegativeOneToOne => {
+                (z_sign * two / (far - near), -(far + near) / (far - near))
+            }
         };
 
         Self::from_rows([

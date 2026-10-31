@@ -1,14 +1,20 @@
 //! `omath._types` and the `omath.<engine>` tables. Every engine goes through [`register_engine`].
 
-use super::support::{LuaScalar, add_eq, copy_from_userdata, expect_args, float_fields, from_lua_userdata, subtable};
+use super::support::{
+    LuaScalar, add_eq, copy_from_userdata, expect_args, float_fields, from_lua_userdata, subtable,
+};
 use super::vector::Vec3f;
 use crate::engines::{
-    Clamped89, Clamped90, Normalized180, cry, frostbite, iw, opengl, rage, serious, source, unity, unreal,
+    Clamped89, Clamped90, Normalized180, cry, frostbite, iw, opengl, rage, serious, source, unity,
+    unreal,
 };
-use crate::projection::{Camera, CameraEngine, Error, FieldOfView, Mat4X4Of, ViewAnglesOf, ViewPort};
+use crate::projection::{
+    Camera, CameraEngine, Error, FieldOfView, Mat4X4Of, ViewAnglesOf, ViewPort,
+};
 use crate::{Angle, AngleRange, Vector3, ViewAngles};
 use mlua::{
-    AnyUserData, FromLua, Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods, Value,
+    AnyUserData, FromLua, Lua, MetaMethod, MultiValue, Result, Table, UserData, UserDataFields,
+    UserDataMethods, Value,
 };
 
 type PitchAngle90 = Angle<f32, Clamped90>;
@@ -36,8 +42,12 @@ impl<T: LuaScalar, R: AngleRange> FromLua for Angle<T, R> {
 
 impl<T: LuaScalar, R: AngleRange> UserData for Angle<T, R> {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function("from_degrees", |_, degrees: T| Ok(Self::from_degrees(degrees)));
-        methods.add_function("from_radians", |_, radians: T| Ok(Self::from_radians(radians)));
+        methods.add_function("from_degrees", |_, degrees: T| {
+            Ok(Self::from_degrees(degrees))
+        });
+        methods.add_function("from_radians", |_, radians: T| {
+            Ok(Self::from_radians(radians))
+        });
         methods.add_method("as_degrees", |_, this, ()| Ok(this.as_degrees()));
         methods.add_method("as_radians", |_, this, ()| Ok(this.as_radians()));
         methods.add_method("sin", |_, this, ()| Ok(Self::sin(*this)));
@@ -45,13 +55,21 @@ impl<T: LuaScalar, R: AngleRange> UserData for Angle<T, R> {
         methods.add_method("tan", |_, this, ()| Ok(Self::tan(*this)));
         methods.add_method("cot", |_, this, ()| Ok(Self::cot(*this)));
 
-        methods.add_meta_function(MetaMethod::Add, |_, (left, right): (Self, Self)| Ok(left + right));
-        methods.add_meta_function(MetaMethod::Sub, |_, (left, right): (Self, Self)| Ok(left - right));
+        methods.add_meta_function(MetaMethod::Add, |_, (left, right): (Self, Self)| {
+            Ok(left + right)
+        });
+        methods.add_meta_function(MetaMethod::Sub, |_, (left, right): (Self, Self)| {
+            Ok(left - right)
+        });
         methods.add_meta_method(MetaMethod::Unm, |_, this, ()| Ok(-*this));
         add_eq(methods);
         // sol2 derives these two from the C++ `operator<=>`
-        methods.add_meta_function(MetaMethod::Lt, |_, (left, right): (Self, Self)| Ok(left < right));
-        methods.add_meta_function(MetaMethod::Le, |_, (left, right): (Self, Self)| Ok(left <= right));
+        methods.add_meta_function(MetaMethod::Lt, |_, (left, right): (Self, Self)| {
+            Ok(left < right)
+        });
+        methods.add_meta_function(MetaMethod::Le, |_, (left, right): (Self, Self)| {
+            Ok(left <= right)
+        });
         methods.add_meta_method(MetaMethod::ToString, |_, this, ()| {
             Ok(format!("{}deg", this.as_degrees().cpp_format()))
         });
@@ -124,7 +142,9 @@ fn engine_vector<T: LuaScalar>(vector: Vec3f) -> Vector3<T> {
     vector.cast()
 }
 
-fn lua_result<T: LuaScalar>(result: std::result::Result<Vector3<T>, Error>) -> (Option<Vec3f>, Option<&'static str>) {
+fn lua_result<T: LuaScalar>(
+    result: std::result::Result<Vector3<T>, Error>,
+) -> (Option<Vec3f>, Option<&'static str>) {
     match result {
         Ok(position) => (Some(position.cast()), None),
         Err(error) => (None, Some(projection_error_to_string(error))),
@@ -141,38 +161,60 @@ where
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_function("new", |lua: &Lua, args: MultiValue| {
             expect_args(&args, 6)?;
-            let (position, view_angles, view_port, field_of_view, near, far) = lua.unpack_multi(args)?;
-            Ok(Self::new(engine_vector(position), view_angles, view_port, field_of_view, near, far))
+            let (position, view_angles, view_port, field_of_view, near, far) =
+                lua.unpack_multi(args)?;
+            Ok(Self::new(
+                engine_vector(position),
+                view_angles,
+                view_port,
+                field_of_view,
+                near,
+                far,
+            ))
         });
 
         methods.add_method_mut("look_at", |_, this, target: Vec3f| {
             this.look_at(engine_vector(target));
             Ok(())
         });
-        methods.add_method("get_forward", |_, this, ()| Ok(this.get_forward().cast::<f32>()));
-        methods.add_method("get_right", |_, this, ()| Ok(this.get_right().cast::<f32>()));
+        methods.add_method("get_forward", |_, this, ()| {
+            Ok(this.get_forward().cast::<f32>())
+        });
+        methods.add_method("get_right", |_, this, ()| {
+            Ok(this.get_right().cast::<f32>())
+        });
         methods.add_method("get_up", |_, this, ()| Ok(this.get_up().cast::<f32>()));
-        methods.add_method("get_origin", |_, this, ()| Ok(this.get_origin().cast::<f32>()));
+        methods.add_method("get_origin", |_, this, ()| {
+            Ok(this.get_origin().cast::<f32>())
+        });
         methods.add_method("get_view_angles", |_, this, ()| Ok(this.get_view_angles()));
         methods.add_method("get_near_plane", |_, this, ()| Ok(this.get_near_plane()));
         methods.add_method("get_far_plane", |_, this, ()| Ok(this.get_far_plane()));
-        methods.add_method("get_field_of_view", |_, this, ()| Ok(this.get_field_of_view()));
+        methods.add_method("get_field_of_view", |_, this, ()| {
+            Ok(this.get_field_of_view())
+        });
         methods.add_method_mut("set_origin", |_, this, origin: Vec3f| {
             this.set_origin(engine_vector(origin));
             Ok(())
         });
-        methods.add_method_mut("set_view_angles", |_, this, view_angles: ViewAnglesOf<E>| {
-            this.set_view_angles(view_angles);
-            Ok(())
-        });
+        methods.add_method_mut(
+            "set_view_angles",
+            |_, this, view_angles: ViewAnglesOf<E>| {
+                this.set_view_angles(view_angles);
+                Ok(())
+            },
+        );
         methods.add_method_mut("set_view_port", |_, this, view_port: ViewPort| {
             this.set_view_port(view_port);
             Ok(())
         });
-        methods.add_method_mut("set_field_of_view", |_, this, field_of_view: FieldOfView| {
-            this.set_field_of_view(field_of_view);
-            Ok(())
-        });
+        methods.add_method_mut(
+            "set_field_of_view",
+            |_, this, field_of_view: FieldOfView| {
+                this.set_field_of_view(field_of_view);
+                Ok(())
+            },
+        );
         methods.add_method_mut("set_near_plane", |_, this, near_plane: E::Scalar| {
             this.set_near_plane(near_plane);
             Ok(())
@@ -182,18 +224,29 @@ where
             Ok(())
         });
         methods.add_method("get_view_matrix", |_, this, ()| Ok(this.get_view_matrix()));
-        methods.add_method("get_projection_matrix", |_, this, ()| Ok(this.get_projection_matrix()));
-        methods.add_method("get_view_projection_matrix", |_, this, ()| Ok(this.get_view_projection_matrix()));
-        methods.add_function("extract_projection_params", |_, projection_matrix: Mat4X4Of<E>| {
-            let params = Self::extract_projection_params(&projection_matrix);
-            Ok((params.fov, params.aspect_ratio))
+        methods.add_method("get_projection_matrix", |_, this, ()| {
+            Ok(this.get_projection_matrix())
         });
-        methods.add_function("calc_view_angles_from_view_matrix", |_, view_matrix: Mat4X4Of<E>| {
-            Ok(Self::calc_view_angles_from_view_matrix(&view_matrix))
+        methods.add_method("get_view_projection_matrix", |_, this, ()| {
+            Ok(this.get_view_projection_matrix())
         });
-        methods.add_function("calc_origin_from_view_matrix", |_, view_matrix: Mat4X4Of<E>| {
-            Ok(Self::calc_origin_from_view_matrix(&view_matrix).cast::<f32>())
-        });
+        methods.add_function(
+            "extract_projection_params",
+            |_, projection_matrix: Mat4X4Of<E>| {
+                let params = Self::extract_projection_params(&projection_matrix);
+                Ok((params.fov, params.aspect_ratio))
+            },
+        );
+        methods.add_function(
+            "calc_view_angles_from_view_matrix",
+            |_, view_matrix: Mat4X4Of<E>| Ok(Self::calc_view_angles_from_view_matrix(&view_matrix)),
+        );
+        methods.add_function(
+            "calc_origin_from_view_matrix",
+            |_, view_matrix: Mat4X4Of<E>| {
+                Ok(Self::calc_origin_from_view_matrix(&view_matrix).cast::<f32>())
+            },
+        );
         methods.add_method("world_to_screen", |_, this, position: Vec3f| {
             Ok(lua_result(this.world_to_screen(engine_vector(position))))
         });
@@ -231,7 +284,11 @@ impl EngineAngles {
             ("PitchAngle89", "ViewAngles89")
         };
 
-        Ok(Self { pitch: types.get(pitch)?, yaw_roll: types.get("YawRoll")?, view_angles: types.get(view_angles)? })
+        Ok(Self {
+            pitch: types.get(pitch)?,
+            yaw_roll: types.get("YawRoll")?,
+            view_angles: types.get(view_angles)?,
+        })
     }
 
     /// Unreal's angles are `f64`, unlike every other engine's, so none of the types in `omath._types` fit its camera.

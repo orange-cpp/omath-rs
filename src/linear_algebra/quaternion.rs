@@ -61,7 +61,11 @@ impl<T: Real> Quaternion<T> {
     #[must_use]
     pub fn normalized(self) -> Self {
         let length = self.length();
-        if length != T::ZERO { self * (T::ONE / length) } else { self }
+        if length != T::ZERO {
+            self * (T::ONE / length)
+        } else {
+            self
+        }
     }
 
     /// `q* / |q|^2`. For unit quaternions this equals the conjugate.
@@ -89,7 +93,12 @@ impl<T: Real> Quaternion<T> {
     pub fn to_rotation_matrix4(self) -> Mat<4, 4, T> {
         let [r0, r1, r2] = self.rotation_rows();
         let (o, one) = (T::ZERO, T::ONE);
-        Mat::from_rows([[r0[0], r0[1], r0[2], o], [r1[0], r1[1], r1[2], o], [r2[0], r2[1], r2[2], o], [o, o, o, one]])
+        Mat::from_rows([
+            [r0[0], r0[1], r0[2], o],
+            [r1[0], r1[1], r1[2], o],
+            [r2[0], r2[1], r2[2], o],
+            [o, o, o, one],
+        ])
     }
 
     fn rotation_rows(self) -> [[T; 3]; 3] {
@@ -139,7 +148,12 @@ impl<T: Real> Mul<T> for Quaternion<T> {
 
     #[inline]
     fn mul(self, scalar: T) -> Self {
-        Self::new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
+        Self::new(
+            self.x * scalar,
+            self.y * scalar,
+            self.z * scalar,
+            self.w * scalar,
+        )
     }
 }
 
@@ -155,7 +169,12 @@ impl<T: Real> Add for Quaternion<T> {
 
     #[inline]
     fn add(self, other: Self) -> Self {
-        Self::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+        Self::new(
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z,
+            self.w + other.w,
+        )
     }
 }
 
