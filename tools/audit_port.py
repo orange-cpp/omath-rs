@@ -81,11 +81,12 @@ def main():
     compare.run(["cargo", "build", "--locked", "--features", "imgui", "--example", "port_audit_probe"])
     probe = ROOT / "target/debug/examples" / ("port_audit_probe.exe" if sys.platform == "win32" else "port_audit_probe")
     report = {"rust_revision": compare.run(["git", "rev-parse", "HEAD"]).strip(),
-              "cpp_revision": compare.run(["git", "-C", cpp, "rev-parse", "HEAD"]).strip(),
+              "cpp_revision": compare.reference_metadata(cpp)[0],
               "behavior": {}, "header_mapping": []}
     report["rustc"] = compare.run(["rustc", "-Vv"]).strip()
+    report["rust_snapshot"] = compare.rust_metadata()
     report["compiler_flags"] = [str(flag) for flag in compiler_flags]
-    report["cpp_tree_status"] = compare.run(["git", "-C", cpp, "status", "--short"]).splitlines()
+    report["cpp_tree_status"] = compare.reference_metadata(cpp)[1]
     report["cpp_source_sha256"] = {path.relative_to(cpp).as_posix():hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted((cpp / "include/omath").rglob("*.hpp"))}
     for case in ["corner_glow", "dashed_right", "dashed_left", "dashed_top", "dashed_bottom", "gradient_channel", "fov_wrap", "fov_roll"]:
@@ -128,12 +129,12 @@ def main():
     report["mapping_warning"] = "A mapped implementation file does not certify complete API or semantic parity."
     report["windows_x86"] = {"status": "not requested"}
     if args.check_x86:
-        result = subprocess.run(["cargo", "check", "--locked", "--all-features", "--target", "i686-pc-windows-msvc", "--message-format", "short"],
+        result = subprocess.run(["cargo", "check", "--locked", "--all-targets", "--all-features", "--target", "i686-pc-windows-msvc", "--message-format", "short"],
                                 cwd=ROOT, capture_output=True, text=True)
         (output / "windows-x86.log").write_text(result.stdout + result.stderr, encoding="utf-8")
         report["windows_x86"] = {"status": "passed" if result.returncode == 0 else "failed", "log": "target/port-audit/windows-x86.log"}
     report["known_gaps_detected"] = any(row["status"] != "match" and not case.startswith("fov_")
-        for case, row in report["behavior"].items()) or not report["imgui_conversion_api"]["rust"]["compiled"] or report["windows_x86"]["status"] == "failed"
+        for case, row in report["behavior"].items()) or not report["imgui_conversion_api"]["rust"]["compiled"] or report["windows_x86"]["status"] == "failed" or any(not row["all_files_present"] for row in report["header_mapping"])
     report["fully_ported"] = False if report["known_gaps_detected"] else None
     report["verdict"] = "gaps_confirmed" if report["known_gaps_detected"] else "no_gaps_in_probed_subset; not a completeness certificate"
     path = output / "report.json"

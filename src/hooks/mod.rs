@@ -403,18 +403,13 @@ impl HooksManager {
         unsafe {
             SetLastError(WIN32_ERROR(0));
         }
-        let original = unsafe {
-            SetWindowLongPtrW(
-                HWND(hwnd as _),
-                GWLP_WNDPROC,
-                wnd_proc as *const () as isize,
-            )
-        };
+        let original =
+            unsafe { SetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC, wnd_proc as *const () as _) };
         if original == 0 && unsafe { GetLastError() }.0 != 0 {
             return Err(io::Error::last_os_error());
         }
         ORIGINALS[10].store(original as usize, Ordering::Release);
-        *window = Some((hwnd, original));
+        *window = Some((hwnd, original as isize));
         Ok(())
     }
     /// # Safety
@@ -428,14 +423,14 @@ impl HooksManager {
         let mut window = self.window.lock().unwrap_or_else(|e| e.into_inner());
         if let Some((hwnd, original)) = *window {
             if unsafe { GetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC) }
-                != wnd_proc as *const () as isize
+                != wnd_proc as *const () as _
             {
                 return Err(io::Error::other(
                     "another component replaced the window procedure",
                 ));
             }
             unsafe {
-                SetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC, original);
+                SetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC, original as _);
             }
             *window = None;
             ORIGINALS[10].store(0, Ordering::Release);

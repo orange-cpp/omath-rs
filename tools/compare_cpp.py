@@ -17,6 +17,20 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 
+def rust_metadata():
+    return {"revision":run(["git","rev-parse","HEAD"]).strip(),
+            "tree_status":run(["git","status","--short"]).splitlines(),
+            "source_sha256":{path.relative_to(ROOT).as_posix():hashlib.sha256(path.read_bytes()).hexdigest()
+                for folder in ["src","examples","benches","tests"]
+                for path in sorted((ROOT/folder).rglob("*.rs"))}}
+
+def reference_metadata(cpp):
+    frozen = cpp / ".omath-reference.json"
+    if frozen.is_file():
+        metadata=json.loads(frozen.read_text(encoding="utf-8"))
+        return metadata["revision"],metadata["dirty_files"]
+    return run(["git", "-C", cpp, "rev-parse", "HEAD"]).strip(),run(["git", "-C", cpp, "status", "--short"]).splitlines()
+
 
 def run(args, **kwargs):
     return subprocess.run([str(arg) for arg in args], check=True, capture_output=True,
@@ -112,8 +126,9 @@ def main():
     probe = ROOT / "target/release/examples" / ("parity_probe.exe" if os.name == "nt" else "parity_probe")
     report = {"host": platform.platform(), "cpu": platform.processor(), "compiler": compiler,
               "compiler_flags": [str(flag) for flag in flags], "rustc": run(["rustc", "-Vv"]).strip(),
-              "cpp_revision": run(["git", "-C", cpp, "rev-parse", "HEAD"]).strip(), "cases": {}}
-    report["cpp_dirty_files"] = run(["git", "-C", cpp, "status", "--short"]).splitlines()
+              "cpp_revision": reference_metadata(cpp)[0], "cases": {}}
+    report["cpp_dirty_files"] = reference_metadata(cpp)[1]
+    report["rust_snapshot"] = rust_metadata()
     report["cpp_source_sha256"] = {str(path.relative_to(cpp)):hashlib.sha256(path.read_bytes()).hexdigest()
         for folder in ["include/omath","source/hud","source/pathfinding","source/utility"]
         for path in sorted((cpp / folder).rglob("*")) if path.suffix in {".hpp",".cpp"}}
@@ -134,6 +149,14 @@ def main():
         if normalized_nav(run([consumer, "nav", path])) != normalized_nav(text):
             raise AssertionError(f"nav {name} -> other language roundtrip differs")
     report["cases"]["nav_cross_language_roundtrips"] = 2
+    extended = output / ("extended.exe" if os.name == "nt" else "extended")
+    report["extended_compiler_flags"]=[str(flag) for flag in compile_reference(cpp, compiler, env, extended, ROOT / "tests/cpp/extended_reference.cpp")]
+    run(["cargo", "build", "--locked", "--release", "--example", "extended_probe"])
+    extended_probe = ROOT / "target/release/examples" / ("extended_probe.exe" if os.name == "nt" else "extended_probe")
+    a,b=run([extended]),run([extended_probe])
+    (output / "extended-cpp.txt").write_text(a)
+    (output / "extended-rust.txt").write_text(b)
+    report["cases"]["extended_collision_projectile"] = compare_tokens(a,b)
     timings = {}
     # Warm up both executables; process startup is outside the timed regions.
     for program in [reference, probe]:

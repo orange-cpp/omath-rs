@@ -2,6 +2,20 @@
 use omath::rev_eng::InternalReverseEngineeredObject;
 use std::ffi::c_void;
 
+#[cfg(feature = "imgui")]
+#[test]
+fn reverse_imgui_conversions_restore_all_components() {
+    use omath::{Vector2, Vector4};
+    let v = Vector2::new(-1.25f32, 4.5);
+    assert_eq!(Vector2::<f32>::from_im_vec2(&v.to_im_vec2()), v);
+    let v = Vector4::new(-1.25f32, 4.5, 12.75, 0.5);
+    assert_eq!(Vector4::<f32>::from_im_vec4(&v.to_im_vec4()), v);
+    assert_eq!(
+        Vector4::<f64>::from_im_vec4(&v.to_im_vec4()),
+        Vector4::new(-1.25, 4.5, 12.75, 0.5)
+    );
+}
+
 #[repr(C)]
 struct SubObject {
     vtable: *const usize,

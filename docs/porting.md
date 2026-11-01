@@ -17,7 +17,10 @@ The C++ checkout is not modified by this port or the comparison tool.
   xmake and pixi; the lockfile pins dependencies for reproducible checks.
 - Rust/ImGui replaces the Qt/GLFW graphical example shells on Windows; portable CLI examples remain available.
   A loadable graphics-hook DLL example supplies explicit lifecycle exports rather than work in `DllMain`.
-  Game-specific addresses and loader integration remain application inputs. See `api.md`.
+  KF1 build 1065 examples include their addresses and reflection; loader integration remains an application input.
+- `EpaWorkspace` and `epa_solve_with_workspace` retain scratch capacity between calls in place of C++ PMR.
+  Horizon edges retain deterministic sorted order. Native allocator implementations and EPA traversal
+  order are not promised to match; penetration results are compared separately.
 
 ## Intentional corrections
 
@@ -48,18 +51,20 @@ from known upstream behavior.
 
 ## Platform validation
 
-The [completeness audit](port-audit.md) found that the advertised Windows x86 `hooks` configuration does not
-compile. Current successful Windows tests are x64. Module availability and feature declarations do not establish
-support on every advertised architecture.
+The [completion audit](port-audit.md) records successful Windows x64 and x86 all-feature tests, native
+graphics checks and DLL builds. The x86 WndProc binding widths are fixed. Navigation text parses neighbor
+counts as u64 on both architectures, so oversized missing-neighbor records fail consistently.
 
 Local tests run on Windows x64, including live process/module access, synthetic native detours, ImGui
 geometry and Lua HUD errors. DX9/11/12/OpenGL discovery/install/remove were exercised against the local
 graphics runtime. The native showcase also renders all three scenes and verifies actual OpenGL swap callbacks.
-Full game overlays were not exercised. Linux x64 default
+Full game overlays were not exercised. DX9 shader/composite and ImGui drawing/reset smoke tests pass on
+both Windows architectures. Linux x64 default
 and hook-enabled libraries and the macOS ARM64 default library passed cross-compilation checks.
 Linux/macOS runtime tests are configured in
 CI and were not run locally.
 
-The user's C++ checkout contains existing uncommitted edits. The comparison report records its revision,
-dirty files and SHA-256 source/header hashes. The committed upstream revision was separately extracted
+The user's C++ checkout contains existing uncommitted edits and changed during validation. A frozen copy
+under `target/omath-reference` supplies this run's reference. Reports record its revision, dirty files and
+SHA-256 source/header hashes, and the Rust working-source hashes. The committed upstream revision was separately extracted
 and passed the same math/camera/HUD comparisons. CI pins that revision.

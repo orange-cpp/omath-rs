@@ -85,24 +85,31 @@ impl EntityOverlay {
             }
             EntityWidget::CanvasGlow(w) => draw_edge_glow(r, min, max, *w),
             EntityWidget::CorneredBox(w) => {
+                let length = (max.x - min.x).abs() * w.corner_ratio;
+                let lines = [
+                    (points[0], points[0] + Point::new(length, 0.0)),
+                    (points[0], points[0] + Point::new(0.0, length)),
+                    (points[3], points[3] - Point::new(0.0, length)),
+                    (points[3], points[3] + Point::new(length, 0.0)),
+                    (points[1], points[1] - Point::new(length, 0.0)),
+                    (points[1], points[1] + Point::new(0.0, length)),
+                    (points[2], points[2] - Point::new(0.0, length)),
+                    (points[2], points[2] - Point::new(length, 0.0)),
+                ];
+                if let Some(g) = w.glow {
+                    for (a, b) in lines {
+                        glow_line(r, a, b, g, w.thickness);
+                    }
+                }
                 if w.fill.value().w > 0.0 {
                     r.add_polyline(&points, w.fill, 1.0);
                     r.add_filled_polyline(&points, w.fill);
                 }
-                let length = (max.x - min.x).abs() * w.corner_ratio;
-                for (i, p) in points.into_iter().enumerate() {
-                    for direction in [
-                        Point::new(if i == 0 || i == 3 { length } else { -length }, 0.0),
-                        Point::new(0.0, if i < 2 { length } else { -length }),
-                    ] {
-                        if let Some(g) = w.glow {
-                            glow_line(r, p, p + direction, g, w.thickness);
-                        }
-                        if w.outline.value().w > 0.0 {
-                            r.add_line(p, p + direction, w.outline, w.thickness + 2.0);
-                        }
-                        r.add_line(p, p + direction, w.color, w.thickness);
+                for (a, b) in lines {
+                    if w.outline.value().w > 0.0 {
+                        r.add_line(a, b, w.outline, w.thickness + 2.0);
                     }
+                    r.add_line(a, b, w.color, w.thickness);
                 }
             }
             EntityWidget::DashedBox(w) => {
@@ -381,7 +388,11 @@ fn draw_bar(
     } else {
         bounds(start, start + step * (length * ratio) + perp)
     };
-    r.add_filled_rectangle(a, b, w.bg);
+    if dashes.is_some() {
+        r.add_filled_rectangle(start, start + step * length + perp, w.bg);
+    } else {
+        r.add_filled_rectangle(a, b, w.bg);
+    }
     if dashes.is_none() {
         draw_glow_rectangle(r, fill_a, fill_b, w.glow);
     }
@@ -394,7 +405,20 @@ fn draw_bar(
     if let Some((dash, gap)) = dashes {
         draw_dash_gaps(r, start, step, perp, length, w.outline, dash, gap);
     }
-    r.add_rectangle(a, b, w.outline);
+    if dashes.is_some() {
+        r.add_rectangle(
+            start
+                - if vertical {
+                    Point::new(1.0, 0.0)
+                } else {
+                    Point::default()
+                },
+            start + step * length + perp,
+            w.outline,
+        );
+    } else {
+        r.add_rectangle(a, b, w.outline);
+    }
     if vertical {
         cursor.x += if negative {
             -(w.offset + w.size)

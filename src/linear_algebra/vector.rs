@@ -494,6 +494,9 @@ impl<T: Scalar> Vector4<T> {
 
 #[cfg(feature = "imgui")]
 impl<T: Scalar> Vector2<T> {
+    pub fn from_im_vec2(value: &imgui::sys::ImVec2) -> Self {
+        Self::new(T::from_f64(value.x as f64), T::from_f64(value.y as f64))
+    }
     pub fn to_im_vec2(&self) -> imgui::sys::ImVec2 {
         imgui::sys::ImVec2 {
             x: self.x.to_f64() as f32,
@@ -503,6 +506,14 @@ impl<T: Scalar> Vector2<T> {
 }
 #[cfg(feature = "imgui")]
 impl<T: Scalar> Vector4<T> {
+    pub fn from_im_vec4(value: &imgui::sys::ImVec4) -> Self {
+        Self::new(
+            T::from_f64(value.x as f64),
+            T::from_f64(value.y as f64),
+            T::from_f64(value.z as f64),
+            T::from_f64(value.w as f64),
+        )
+    }
     pub fn to_im_vec4(&self) -> imgui::sys::ImVec4 {
         imgui::sys::ImVec4 {
             x: self.x.to_f64() as f32,

@@ -30,7 +30,9 @@ int main(int argc, char** argv) {
     }
     auto renderer = std::make_shared<Recorder>();
     const omath::Color red{1, 0, 0, 1}, blue{0, 0, 1, 1}, clear{};
-    EntityOverlay entity{CanvasBox::from_bounds({75, 10}, {125, 110}), renderer};
+    // This constructor exists in both the pinned revision and the captured
+    // working tree. It produces the same [75,10]-[125,110] rectangle.
+    EntityOverlay entity{{100,10},{100,110},4.f,renderer};
     if (mode == "corner_glow") {
         entity.contents(CorneredBox{red, {0, 1, 0, 0.5f}, clear, 0.2f, 1.f,
                                    Glow{blue, 2.f, 1.f}});

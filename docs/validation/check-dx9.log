@@ -1,0 +1,5 @@
+   Compiling omath v3.10.1 (C:\Users\orange\CLionProjetcs\omath-rs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running `target\debug\examples\kf1_glow_smoke.exe`
+DX9 mask, blur, composite and state restoration passed (2921 non-black pixels)
+DX9 ImGui texture, indexed geometry, state restoration and Reset recreation passed

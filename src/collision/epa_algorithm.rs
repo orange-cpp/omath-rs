@@ -2,7 +2,7 @@ use super::{Collider, Simplex};
 use crate::linear_algebra::Vector3;
 use crate::scalar::Real;
 use std::cmp::Ordering;
-use std::collections::{BTreeSet, BinaryHeap};
+use std::collections::BinaryHeap;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct EpaResult<T = f32> {
@@ -71,7 +71,26 @@ impl<T: Real> PartialEq for HeapItem<T> {
 impl<T: Real> Eq for HeapItem<T> {}
 
 /// Directed horizon edges. Ordered rather than hashed so that repeated solves stitch faces the same way.
-type Boundary = BTreeSet<(usize, usize)>;
+type Boundary = Vec<(usize, usize)>;
+
+/// Reusable EPA scratch storage, the Rust counterpart of supplying a C++ memory resource.
+/// Storage grows on demand and is retained between solves. Use one workspace per worker.
+pub struct EpaWorkspace<T: Real> {
+    vertexes: Vec<Vector3<T>>,
+    faces: Vec<Face<T>>,
+    heap: BinaryHeap<HeapItem<T>>,
+    boundary: Boundary,
+}
+impl<T: Real> Default for EpaWorkspace<T> {
+    fn default() -> Self {
+        Self {
+            vertexes: Vec::new(),
+            faces: Vec::new(),
+            heap: BinaryHeap::new(),
+            boundary: Vec::new(),
+        }
+    }
+}
 
 /// Expanding polytope algorithm: the penetration between `a` and `b`, from the tetrahedron GJK found around the origin.
 ///
@@ -82,25 +101,46 @@ pub fn epa_solve<C: Collider + ?Sized>(
     simplex: &Simplex<C::Scalar>,
     params: EpaParams<C::Scalar>,
 ) -> Option<EpaResult<C::Scalar>> {
-    let mut vertexes: Vec<_> = simplex.iter().copied().collect();
-    let mut faces = vec![
-        make_face(&vertexes, 0, 1, 2),
-        make_face(&vertexes, 0, 2, 3),
-        make_face(&vertexes, 0, 3, 1),
-        make_face(&vertexes, 1, 3, 2),
-    ];
+    epa_solve_with_workspace(a, b, simplex, params, &mut EpaWorkspace::default())
+}
 
-    let mut heap: BinaryHeap<_> = faces
-        .iter()
-        .enumerate()
-        .map(|(idx, face)| HeapItem { d: face.d, idx })
-        .collect();
+/// Runs EPA while retaining scratch allocations for subsequent calls.
+pub fn epa_solve_with_workspace<C: Collider + ?Sized>(
+    a: &C,
+    b: &C,
+    simplex: &Simplex<C::Scalar>,
+    params: EpaParams<C::Scalar>,
+    workspace: &mut EpaWorkspace<C::Scalar>,
+) -> Option<EpaResult<C::Scalar>> {
+    let EpaWorkspace {
+        vertexes,
+        faces,
+        heap,
+        boundary,
+    } = workspace;
+    vertexes.clear();
+    faces.clear();
+    heap.clear();
+    boundary.clear();
+    vertexes.extend(simplex.iter().copied());
+    faces.extend([
+        make_face(vertexes, 0, 1, 2),
+        make_face(vertexes, 0, 2, 3),
+        make_face(vertexes, 0, 3, 1),
+        make_face(vertexes, 1, 3, 2),
+    ]);
+
+    heap.extend(
+        faces
+            .iter()
+            .enumerate()
+            .map(|(idx, face)| HeapItem { d: face.d, idx }),
+    );
 
     let mut iterations = 0;
-    let mut boundary = Boundary::new();
 
     for it in 0..params.max_iterations {
-        discard_stale_heap_entries(&faces, &mut heap);
+        discard_stale_heap_entries(faces, heap);
 
         let Some(top) = heap.peek() else {
             break;
@@ -118,11 +158,11 @@ pub fn epa_solve<C: Collider + ?Sized>(
         let new_idx = vertexes.len();
         vertexes.push(p);
 
-        tombstone_visible_faces(&mut faces, &mut boundary, p);
+        tombstone_visible_faces(faces, boundary, p);
 
         // Stitch new faces around the horizon and push them directly, with no heap rebuild.
-        for &(edge_a, edge_b) in &boundary {
-            let face = make_face(&vertexes, edge_a, edge_b, new_idx);
+        for &(edge_a, edge_b) in boundary.iter() {
+            let face = make_face(vertexes, edge_a, edge_b, new_idx);
             heap.push(HeapItem {
                 d: face.d,
                 idx: faces.len(),
@@ -137,7 +177,7 @@ pub fn epa_solve<C: Collider + ?Sized>(
         iterations = it + 1;
     }
 
-    let best = find_best_surviving_face(&faces)?;
+    let best = find_best_surviving_face(faces)?;
     Some(make_result(best, iterations, vertexes.len(), faces.len()))
 }
 
@@ -163,8 +203,10 @@ fn visible_from<T: Real>(face: &Face<T>, p: Vector3<T>) -> bool {
 
 fn add_edge_boundary(boundary: &mut Boundary, a: usize, b: usize) {
     // The opposite edge being there means an internal edge shared by two visible faces. Otherwise it is on the horizon.
-    if !boundary.remove(&(b, a)) {
-        boundary.insert((a, b));
+    if let Ok(index) = boundary.binary_search(&(b, a)) {
+        boundary.remove(index);
+    } else if let Err(index) = boundary.binary_search(&(a, b)) {
+        boundary.insert(index, (a, b));
     }
 }
 

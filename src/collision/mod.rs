@@ -8,7 +8,7 @@ mod mesh_collider;
 mod simplex;
 
 pub use collider_interface::Collider;
-pub use epa_algorithm::{EpaParams, EpaResult, epa_solve};
+pub use epa_algorithm::{EpaParams, EpaResult, EpaWorkspace, epa_solve, epa_solve_with_workspace};
 pub use gjk_algorithm::{
     GjkHitInfo, GjkSettings, find_support_vertex, is_collide, is_collide_with_simplex_info,
 };

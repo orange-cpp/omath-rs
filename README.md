@@ -4,8 +4,8 @@ Rust port of [omath](https://github.com/orange-cpp/omath): math, engine conventi
 navigation, ballistics, HUD, process access, Unreal walkers and optional graphics hooks.
 This is an altered version of the original; see [LICENSE](LICENSE) (Zlib).
 
-The [completeness audit](docs/port-audit.md) found remaining API, HUD-parity and Windows x86 build gaps.
-The existing passing tests and C++ comparison cover a subset; this is not yet a fully equivalent port.
+The audited API, HUD and Windows x86 gaps are resolved. The [completion audit](docs/port-audit.md)
+records the remaining runtime validation limits and the deliberate Rust adaptations.
 
 ```rust
 use omath::engines::source::{Camera, ViewAngles};
@@ -29,6 +29,7 @@ cargo test --locked --all-features
 cargo clippy --locked --all-targets --all-features -- -D warnings
 cargo doc --locked --all-features --no-deps --open
 cargo bench --bench kernels
+cargo bench --bench upstream -- --smoke
 ```
 
 | Feature | Integration |
@@ -64,14 +65,17 @@ See [API and examples](docs/api.md), [compatibility notes](docs/porting.md) and
 
 ```sh
 python tools/compare_cpp.py --cpp ../omath --repeats 5
+python tools/compare_benchmarks.py --cpp ../omath
 ```
 
 The tool builds an independent C++ executable against the supplied checkout, compares math and all nine
 camera conventions, HUD commands and navigation serialization in both directions, then times matched
-vector/matrix/pattern-scan kernels. It writes source hashes, compiler flags and raw results to
+vector/matrix/pattern-scan kernels. Additional fixtures compare 6,369 collision/projectile rows.
+The benchmark runner covers all 67 cases in the seven upstream suites and compares their counters.
+The tools write source hashes, compiler flags and raw results to
 `target/cpp-comparison/report.json` without modifying the C++ checkout.
 
 Known upstream behavior is retained where documented, including the five legacy defects in the
 [compatibility notes](docs/porting.md). The Windows native Rust/ImGui showcase replaces the upstream Qt/GLFW graphical examples, and the loadable
-graphics-hook DLL example provides explicit initialization/removal. Game-specific addresses and loader
-integration remain application inputs.
+graphics-hook DLL example provides explicit initialization/removal. The [KF1 examples](docs/kf1.md)
+include the reflected dumper, external observer and x86 injected DX9 overlay/glow/aim implementation.

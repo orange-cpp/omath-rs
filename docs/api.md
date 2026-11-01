@@ -11,7 +11,10 @@
 | Signature scanning | `cargo run --example signature_scan -- image.exe "48 8B ??"` |
 | HUD layout | `cargo run --example hud` |
 | Interactive HUD, barycentric and projection showcase (Windows) | `cargo run --features hooks,imgui --example showcase` |
-| Killing Floor 1 object/name dumper | `cargo run --example kf1_dumper -- PID GOBJECTS_HEX GNAMES_HEX` |
+| Killing Floor 1 object/name dumper | `cargo run --features hooks --example kf1_dumper -- FILTER` |
+| KF1 external observer | `cargo run --features hooks,imgui --example kf1_overlay` |
+| KF1 injected DX9 DLL | `cargo build --features hooks,imgui --target i686-pc-windows-msvc --example kf1_injected` |
+| DX9 glow/ImGui/Reset smoke test | `cargo run --all-features --example kf1_glow_smoke` |
 | DX9/11/12 or OpenGL hook setup | `cargo run --features hooks --example graphics_hook -- dx11` (or `dx9`, `dx12`, `opengl`) |
 | Loadable graphics-hook DLL/shared library | `cargo build --features hooks --example hook_dll` |
 | C++ comparison/performance probe | `cargo run --release --example parity_probe` |
@@ -25,8 +28,8 @@ outside `DllMain`. API modes are 0 OpenGL, 9 DX9, 11 DX11 and 12 DX12. Callback 
 declaration order; their five raw argument words are borrowed for that call. Thread quiescence and removal
 before unloading are caller obligations. This example does not inject into another process.
 
-For game overlays, use `ImguiHudRenderer` in the graphics callback and the Unreal memory/layout APIs from
-the dumper example. Game-specific addresses, object fields and the external loader remain application inputs.
+The [KF1 guide](kf1.md) describes its build-specific addresses, shared reflected reader, native hooks,
+settings, renderer and explicit initialization/removal contract. An external loader remains an application input.
 
 ## Target selection
 

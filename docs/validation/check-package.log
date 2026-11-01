@@ -1,0 +1,6 @@
+   Packaging omath v3.10.1 (C:\Users\orange\CLionProjetcs\omath-rs)
+    Updating crates.io index
+    Packaged 321 files, 1.8MiB (406.3KiB compressed)
+   Verifying omath v3.10.1 (C:\Users\orange\CLionProjetcs\omath-rs)
+   Compiling omath v3.10.1 (C:\Users\orange\CLionProjetcs\omath-rs\target\package\omath-3.10.1)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.31s

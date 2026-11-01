@@ -1,0 +1,19 @@
+{
+  "kf1": {
+    "path": "target\\i686-pc-windows-msvc\\debug\\examples\\kf1_injected.dll",
+    "machine": "0x14c",
+    "exports": [
+      "omath_kf1_start",
+      "omath_kf1_stop"
+    ]
+  },
+  "generic": {
+    "path": "target\\i686-pc-windows-msvc\\debug\\examples\\hook_dll.dll",
+    "machine": "0x14c",
+    "exports": [
+      "omath_set_graphics_callback",
+      "omath_start_graphics_hooks",
+      "omath_stop_graphics_hooks"
+    ]
+  }
+}

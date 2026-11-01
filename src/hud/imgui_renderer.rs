@@ -50,12 +50,12 @@ impl<'a> ImguiHudRenderer<'a> {
                     gradient.bottom_left.value() * (1.0 - x) + gradient.bottom_right.value() * x;
                 top * (1.0 - y) + bottom * y
             };
-            let coverage = ((vertex.col >> 24) & 255) as f32 / 255.0;
-            vertex.col = u32::from(ImColor32::from_rgba_f32s(
-                value.x,
-                value.y,
-                value.z,
-                value.w * coverage,
+            let alpha = (((vertex.col >> 24) & 255) as f32 * value.w) as u8;
+            vertex.col = u32::from(ImColor32::from_rgba(
+                (value.x * 255.0) as u8,
+                (value.y * 255.0) as u8,
+                (value.z * 255.0) as u8,
+                alpha,
             ));
         }
     }

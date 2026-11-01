@@ -15,9 +15,9 @@ use windows::{
     core::w,
 };
 
-struct Window {
-    hwnd: HWND,
-    dc: HDC,
+pub struct Window {
+    pub hwnd: HWND,
+    pub dc: HDC,
     context: HGLRC,
 }
 impl Drop for Window {
@@ -42,7 +42,7 @@ unsafe extern "system" fn window_proc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM
     }
 }
 impl Window {
-    fn new(visible: bool) -> Result<Self, std::boxed::Box<dyn Error>> {
+    pub fn new(visible: bool) -> Result<Self, std::boxed::Box<dyn Error>> {
         unsafe {
             let class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
@@ -344,10 +344,20 @@ fn scene(ui: &imgui::Ui, state: &mut State, size: Point) {
         }
     }
 }
-unsafe fn render(data: &imgui::DrawData, width: i32, height: i32) {
+pub unsafe fn render(data: &imgui::DrawData, width: i32, height: i32) {
+    unsafe {
+        render_with_background(data, width, height, [0.035, 0.045, 0.065, 1.0]);
+    }
+}
+pub unsafe fn render_with_background(
+    data: &imgui::DrawData,
+    width: i32,
+    height: i32,
+    background: [f32; 4],
+) {
     unsafe {
         glViewport(0, 0, width, height);
-        glClearColor(0.035, 0.045, 0.065, 1.0);
+        glClearColor(background[0], background[1], background[2], background[3]);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -398,26 +408,7 @@ pub fn run() -> Result<(), std::boxed::Box<dyn Error>> {
     let window = Window::new(frames.is_none())?;
     let mut context = imgui::Context::create();
     context.set_ini_filename(None);
-    let texture = unsafe {
-        let atlas = context.fonts().build_rgba32_texture();
-        let mut texture = 0;
-        glGenTextures(1, &mut texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as i32);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as i32);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA as i32,
-            atlas.width as i32,
-            atlas.height as i32,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            atlas.data.as_ptr().cast(),
-        );
-        texture
-    };
+    let texture = create_font_texture(&mut context);
     context.fonts().tex_id = TextureId::new(texture as usize);
     let mut state = State {
         mode: std::env::args()
@@ -513,4 +504,27 @@ pub fn run() -> Result<(), std::boxed::Box<dyn Error>> {
         }
     }
     result
+}
+
+pub fn create_font_texture(context: &mut imgui::Context) -> u32 {
+    unsafe {
+        let atlas = context.fonts().build_rgba32_texture();
+        let mut texture = 0;
+        glGenTextures(1, &mut texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR as i32);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR as i32);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA as i32,
+            atlas.width as i32,
+            atlas.height as i32,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            atlas.data.as_ptr().cast(),
+        );
+        texture
+    }
 }

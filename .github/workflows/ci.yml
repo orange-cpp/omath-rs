@@ -20,6 +20,19 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
       - run: cargo package --locked --allow-dirty
+      - run: cargo bench --locked --bench upstream -- --smoke
+  windows-x86:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-pc-windows-msvc
+          components: clippy
+      - run: cargo test --locked --all-features --target i686-pc-windows-msvc
+      - run: cargo clippy --locked --all-targets --all-features --target i686-pc-windows-msvc -- -D warnings
+      - run: cargo build --locked --all-features --target i686-pc-windows-msvc --example kf1_injected --example hook_dll
+      - run: python tools/check_dll_exports.py --kf1 target/i686-pc-windows-msvc/debug/examples/kf1_injected.dll --generic target/i686-pc-windows-msvc/debug/examples/hook_dll.dll
   msrv:
     runs-on: ubuntu-latest
     steps:
@@ -40,7 +53,12 @@ jobs:
         with:
           python-version: '3.x'
       - run: python tools/compare_cpp.py --cpp target/upstream
+      - run: python tools/audit_port.py --cpp target/upstream
+      - run: python tools/compare_benchmarks.py --cpp target/upstream --iterations 100 --repeats 3
       - uses: actions/upload-artifact@v4
         with:
           name: cpp-comparison
-          path: target/cpp-comparison/
+          path: |
+            target/cpp-comparison/
+            target/port-audit/
+            target/upstream-benchmarks/

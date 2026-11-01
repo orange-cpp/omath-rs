@@ -188,7 +188,7 @@ impl NavigationMesh {
 
 fn read_vertex_line<'a>(
     tokens: &mut SplitAsciiWhitespace<'a>,
-) -> Option<(Vector3<f32>, usize, &'a str)> {
+) -> Option<(Vector3<f32>, u64, &'a str)> {
     let vertex = read_vector(tokens)?;
     let neighbors_count = tokens.next()?.parse().ok()?;
     let event = tokens.next()?;

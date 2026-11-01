@@ -1,75 +1,81 @@
-# Port completeness audit
+# Port completion audit
 
-**Verdict: not fully ported / not fully equivalent yet.** The earlier completion claim was too strong.
+The library implementation scope and the previously omitted examples and benchmark suites are ported
+against the frozen C++ reference. The five concrete API/HUD/x86 defects from the previous audit are fixed.
+The current probes find no new omissions in their tested scope. This is a functional Rust adaptation,
+with the compatibility differences and runtime limits below; it is not an exhaustive equivalence proof.
 
-Library revision examined: `b936e4d1aba372e7d2bbae8ca9d00db9ace77b66`.
-C++ revision: `d05d9c2e6729b13d77b7aad17cd8a0d139ff010e`, including the user's existing working-tree changes.
-This audit adds probes, native-call tests and documentation; it does not change library implementations.
+The reference is revision `d05d9c2e6729b13d77b7aad17cd8a0d139ff010e` plus the user's captured working changes.
+The sibling checkout changed during the work, so all comparisons use `target/omath-reference` instead.
+All 448 captured files still match the [frozen manifest](validation/cpp-reference.json). C++ sources were
+not edited. Reports include Rust source hashes because validation ran on the working tree before commit.
 
-## Confirmed gaps
+## Resolved audit findings
 
-| Area | Evidence | Consequence |
-| --- | --- | --- |
-| Windows x86 hooks | `cargo check --all-features --target i686-pc-windows-msvc` fails with four `E0308` errors in `src/hooks/mod.rs` at the `SetWindowLongPtrW`/`GetWindowLongPtrW` calls and saved original procedure | The documented x86 configuration cannot build. On this target the bindings take/return `i32`, while the wrapper uses `isize` without adapting the calls. Windows x64 passes. |
-| Reverse ImGui conversions | C++ `Vector2<float>::from_im_vec2` and `Vector4<float>::from_im_vec4` compile. The corresponding Rust calls fail with `E0599`. No equivalent `From<ImVec2/ImVec4>` implementations exist. | Two upstream public conversion APIs were omitted. The existing Rust `to_im_*` methods only cover the other direction. |
-| Corner-box glow | The C++ command stream draws all glow lines first, then fill and normal corner lines. Rust draws the fill first and interleaves each corner's glow and normal lines. | The composition order of overlapping translucent primitives differs. The first C++ command is a blue glow line; Rust starts with a green filled-box outline. |
-| Dashed side bars | Right-bar C++ outline starts at x=129; Rust starts at x=130. Left-bar C++ starts at x=65; Rust starts at x=66 for the same fixture. | Rust omits the upstream extra pixel on the outline's left edge. Rectangle corner order is also normalized. |
-| ImGui gradient quantization | The upstream static gradient circle/text paths truncate `channel * 255`; a 0.5 channel gives 127. The Rust circle probe produces 128. | Gradient vertex colors are not byte-identical. This comparison checks the C++ conversion formula against actual Rust vertex output, not whole-renderer pixel equality. |
+| Finding | Change and evidence |
+| --- | --- |
+| Windows x86 hooks did not build | WndProc bindings adapt their native i32/isize widths. All-feature x86 tests, all-target Clippy and both DLL builds pass. |
+| Missing reverse ImGui conversions | Generic `Vector2::from_im_vec2` and `Vector4::from_im_vec4`, compile probes and round-trip tests are present. |
+| Corner-box glow order | All glow lines precede fill and ordinary corners, in upstream order; the command stream matches C++. |
+| Dashed side-bar outlines | Reversed rectangle corners and the extra left pixel match upstream; all four side fixtures pass. |
+| Gradient quantization | Static RGB channels and alpha use upstream truncation; the actual Rust vertex-color probe matches the C++ formula. |
+| KF1 example was incomplete | Shared reflected reader/tracker, auto-attaching dumper, external observer, x86 injected DX9 hooks, glow shaders, menu, aim and reversible fire-mode edits are implemented. See [KF1 guide](kf1.md). |
+| Only three benchmark kernels | All seven upstream suites and all 67 expanded cases run in Rust and C++; projection/hit/face counters match. |
+| Missing x86 CI | A dedicated x86 test/lint/DLL-build job is configured. |
 
-The dashed-top fixture also differs in rectangle corner ordering, without the side-bar width difference.
-Its visual significance depends on the renderer; it is recorded as normalization rather than asserted to be
-an independently proven rendering defect. The dashed-bottom command stream matches.
+The x86 runtime tests also found an architecture-dependent oversized navigation-neighbor count. Parsing
+that text count as u64 makes missing-neighbor errors consistent across x86 and x64 without allocating from
+an untrusted count.
 
-## Intentional differences, not missing code
+## Scope and verification
 
-The C++ FOV-targeting template **does compile and is callable**. `Vector3` inherits `Vector2`; my earlier
-documentation incorrectly described the mixed dimensions as making the template unusable.
+All 133 upstream headers have corresponding Rust implementation mappings in the [raw audit](validation/port-audit.json).
+This inventory is useful for finding omissions but does not prove every overload or edge case equivalent.
+The original omitted hooks, process access, Unreal walkers, loaded-module scanning, HUD/Lua, targeting,
+encrypted variables and ImGui conversions have implementations and tests. Cargo, rustdoc and the crate
+import test supply the Rust packaging/documentation/module equivalents.
 
-The audit demonstrates two semantic changes in Rust: shortest-angle wrapping selects target 0 where C++
-selects target 1 across the yaw boundary, and ignoring roll in the distance metric likewise selects target 0
-where the C++ mixed two/three-dimensional comparison selects target 1. These are reasonable corrections,
-but they are deviations from literal parity and are now documented accurately.
+- Windows x64: 1,803 all-feature tests; x86: 1,803 all-feature tests; default x64: 1,535 tests. No failures or ignored tests.
+- C++ differential checks: 428 math/camera rows, 72 HUD commands, 6,369 additional ray/GJK/EPA/projectile rows,
+  plus navigation serialization in both directions. Reused EPA storage agrees with fresh storage in the extended fixtures.
+- The audit's HUD and conversion regressions now pass. FOV wrap/roll differences are intentional and remain reported.
+- All 67 benchmark cases execute in both languages. Two C++ bounded-arena cases throw `bad allocation` at
+  100 iterations with this MSVC library. Reports preserve those failures and compare fresh 10-iteration
+  runs for those two cases. Other cases use 100 iterations, with three samples per language.
+- Real DX9 x64/x86 tests compile the four shaders, verify output pixels, state restoration, ImGui texture
+  and indexed drawing, and font-resource recreation after Reset. Hidden OpenGL smoke tests pass in all three showcase modes.
+- Formatting, Clippy with warnings denied on x64/x86, rustdoc, package verification and Rust 1.85 library checking pass.
+- Linux x64 library checking with hooks and macOS ARM64 default-library checking pass. CI is configured for host runtime tests.
 
-Other documented adaptations include marker-type angle ranges/storage order, Rust error/ownership contracts,
-renderer descriptors instead of C++ overloads, and the batched solver replacing an AVX2-specific implementation.
-The five retained upstream defects remain listed in [porting notes](porting.md); their presence is separate
-from the omissions identified here.
+[Saved check evidence](validation/completion-checks.json) and [comparison/performance results](validation.md)
+record the scope and limitations of these results.
 
-## Scope and coverage gaps
+## Deliberate adaptations and validation limits
 
-- All 133 C++ headers have mapped Rust implementation files in the [machine-readable inventory](validation/port-audit.json).
-  This is a file-level inventory, not proof that every method/overload or edge case has been reproduced.
-- The baseline differential harness still passes 428 math/camera rows, 72 HUD commands and navigation
-  serialization in both directions. It does not compare every public method or every subsystem. The new
-  counterexamples exercise paths absent from those 500 rows.
-- The Rust showcase and generic hook DLL are adaptations. The full KF1 overlay, its tracking/menu behavior,
-  and its DX9 actor-silhouette/blur/composite shader implementation do not have corresponding Rust examples.
-- The three Rust microbenchmark kernels are not the complete upstream benchmark suite. Camera workloads,
-  view-matrix construction, projectile prediction, collision and line-tracer benchmark suites remain absent;
-  matrix/pattern scanning have representative kernels rather than all original cases.
-- Linux/macOS runtime equivalence and full in-game overlays have not been established locally. The existing
-  CI matrix does not cover Windows x86. A successful cross-compilation check is not a runtime test.
+FOV targeting uses consistent pitch/yaw and shortest-angle wrapping. The C++ template compiles; it includes
+roll inconsistently in its current/best comparisons. Its wrap/roll counterexamples remain semantic differences,
+not missing implementations. Marker types, ownership/errors, renderer descriptors, batched prediction and
+reusable EPA workspace replace their C++ language/allocator counterparts. The [five retained upstream defects](porting.md#retained-upstream-defects)
+are unchanged. Stock ImGui/native Rust shells replace Qt/GLFW/nullcore styling.
 
-## Successful checks
-
-- Windows x64: 1,796 all-feature tests and 1,529 default-feature tests pass, including two new native-call
-  tests for direct dispatch and secondary-vtable `this` adjustment. No failed or ignored tests.
-- Clippy passes for all targets/features with warnings denied; formatting passes.
-- The original C++ comparison still passes. The native OpenGL showcase/swap-callback smoke test passes.
-- Rust 1.85 all-feature library checking passes. Linux x64 with hooks and macOS ARM64 default-library
-  cross-checks pass. Windows x86 default-library checking passes; enabling hooks fails as described above.
+A live KF1 session was unavailable: native game exports, animation bone/line-trace calls, menu interaction
+and in-game timing have build/fixture/graphics evidence but no end-to-end game run. Linux/macOS runtimes
+were not executed locally. The Linux all-feature cross-check needs native cross compilers absent here;
+the hooks-enabled library cross-check succeeds. CI jobs are configured, not claimed to have run remotely.
+These are validation limits, so there is no claim of universal bit-for-bit or platform equivalence.
 
 ## Reproduce
 
 ```sh
+cargo test --locked --all-features
+cargo test --locked --all-features --target i686-pc-windows-msvc
+cargo clippy --locked --all-targets --all-features -- -D warnings
+cargo run --locked --all-features --example kf1_glow_smoke
+python tools/compare_cpp.py --cpp ../omath --repeats 5
 python tools/audit_port.py --cpp ../omath --check-x86
+python tools/compare_benchmarks.py --cpp ../omath --iterations 100 --repeats 3
 ```
 
-The audit intentionally exits with status 1 while gaps are confirmed. It writes per-language command streams,
-compiler diagnostics, header mappings and a report to `target/port-audit/`. The x86 check requires the Rust
-target installed with `rustup target add i686-pc-windows-msvc`. The C++ ImGui API compile check discovers the
-local vcpkg header or accepts `--imgui-include <directory>`.
-
-The saved [audit report](validation/port-audit.json), [x86 diagnostics](validation/port-audit-x86.log) and
-[missing API diagnostics](validation/port-audit-imgui-api.log) preserve this run. Passing every current probe
-would remove these known counterexamples; it would still not constitute exhaustive equivalence proof.
+Use `--cpp target/omath-reference` to repeat this captured run. The audit accepts `--imgui-include` for
+the C++ conversion compile probe. `fully_ported: null` in its JSON deliberately means the finite probe
+runner cannot issue an exhaustive completeness certificate; `known_gaps_detected: false` records its actual result.
