@@ -102,8 +102,8 @@ fn main() -> Result<(), std::boxed::Box<dyn std::error::Error>> {
             }
             refresh_local_player(&target, &classes, &mut player, &mut search);
             tracker.advance(&target, &classes);
-            let zeds = read_living(&target, &tracker.tracked, &tracker.layout);
-            let allies = read_living_allies(&target, &tracker, player.pawn);
+            let zeds = read_living_zeds(&target, &tracker, &player);
+            let allies = read_living_allies(&target, &tracker, &player);
             let io = context.io_mut();
             io.display_size = [width as f32, height as f32];
             io.font_global_scale = settings.font_size / 13.0;

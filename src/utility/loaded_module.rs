@@ -63,16 +63,22 @@ pub(super) fn scan_pe(
         .checked_add(read_u16(&header, 20)? as usize)?;
     for i in 0..count {
         let section = read(memory, table.checked_add(i.checked_mul(40)?)?, 40)?;
-        if until_nul(&section[..8]) != section_name.as_bytes() {
+        // A section with no data in the file is skipped, and a later one of the same name is searched too, as in C++
+        let raw_size = read_u32(&section, 16)? as usize;
+        if until_nul(&section[..8]) != section_name.as_bytes() || raw_size == 0 {
             continue;
         }
         let address = base.checked_add(read_u32(&section, 12)? as usize)?;
         // VirtualSize, rather than SizeOfRawData: loaded sections include zero-filled tails.
-        let size = read_u32(&section, 8)? as usize;
-        return address.checked_add(PatternScanner::scan_for_parsed_pattern(
-            &read(memory, address, size)?,
-            pattern,
-        )?);
+        let size = match read_u32(&section, 8)? as usize {
+            0 => raw_size,
+            size => size,
+        };
+        if let Some(offset) =
+            PatternScanner::scan_for_parsed_pattern(&read(memory, address, size)?, pattern)
+        {
+            return address.checked_add(offset);
+        }
     }
     None
 }

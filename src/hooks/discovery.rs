@@ -1,4 +1,5 @@
 use super::*;
+use std::ptr::null_mut;
 use windows::{
     Win32::{
         Foundation::{HMODULE, HWND},
@@ -11,7 +12,7 @@ use windows::{
         },
         UI::WindowsAndMessaging::*,
     },
-    core::{Interface, w},
+    core::{GUID, HRESULT, Interface, s, w},
 };
 struct Window(HWND);
 impl Window {
@@ -74,9 +75,15 @@ pub(super) unsafe fn dx9(manager: &HooksManager) -> io::Result<()> {
     if manager.is_hooked(HookKind::Dx9) {
         return Ok(());
     }
+    type Create = unsafe extern "system" fn(u32) -> *mut c_void;
+    let create = module_proc(w!("d3d9.dll"), s!("Direct3DCreate9"))
+        .ok_or_else(|| not_loaded("d3d9.dll is not loaded"))?;
     let window = Window::new()?;
-    let d3d = unsafe { Direct3DCreate9(D3D_SDK_VERSION) }
-        .ok_or_else(|| io::Error::other("Direct3DCreate9 failed"))?;
+    let d3d = unsafe { std::mem::transmute::<usize, Create>(create)(D3D_SDK_VERSION) };
+    if d3d.is_null() {
+        return Err(io::Error::other("Direct3DCreate9 failed"));
+    }
+    let d3d = unsafe { IDirect3D9::from_raw(d3d) };
     let mut params = D3DPRESENT_PARAMETERS {
         SwapEffect: D3DSWAPEFFECT_DISCARD,
         hDeviceWindow: window.0,
@@ -115,27 +122,47 @@ pub(super) unsafe fn dx11(manager: &HooksManager) -> io::Result<()> {
     if manager.is_hooked(HookKind::Dx11) {
         return Ok(());
     }
+    type Create = unsafe extern "system" fn(
+        *mut c_void,
+        D3D_DRIVER_TYPE,
+        HMODULE,
+        D3D11_CREATE_DEVICE_FLAG,
+        *const D3D_FEATURE_LEVEL,
+        u32,
+        u32,
+        *const DXGI_SWAP_CHAIN_DESC,
+        *mut *mut c_void,
+        *mut *mut c_void,
+        *mut D3D_FEATURE_LEVEL,
+        *mut *mut c_void,
+    ) -> HRESULT;
+    let create = module_proc(w!("d3d11.dll"), s!("D3D11CreateDeviceAndSwapChain"))
+        .ok_or_else(|| not_loaded("d3d11.dll is not loaded"))?;
     let window = Window::new()?;
     let desc = swap_desc(window.0, false);
-    let mut chain = None;
-    let mut device = None;
-    let mut context = None;
-    unsafe {
-        D3D11CreateDeviceAndSwapChain(
-            None,
+    let levels = [D3D_FEATURE_LEVEL_11_0];
+    let (mut chain, mut device, mut context) = (null_mut(), null_mut(), null_mut());
+    let result = unsafe {
+        std::mem::transmute::<usize, Create>(create)(
+            null_mut(),
             D3D_DRIVER_TYPE_HARDWARE,
             HMODULE::default(),
             D3D11_CREATE_DEVICE_FLAG::default(),
-            None,
+            levels.as_ptr(),
+            levels.len() as u32,
             D3D11_SDK_VERSION,
-            Some(&desc),
-            Some(&mut chain),
-            Some(&mut device),
-            None,
-            Some(&mut context),
+            &desc,
+            &mut chain,
+            &mut device,
+            null_mut(),
+            &mut context,
         )
-    }
-    .map_err(io::Error::other)?;
+    };
+    // Owned, so they are released on every path
+    let chain = (!chain.is_null()).then(|| unsafe { IDXGISwapChain::from_raw(chain) });
+    let _device = (!device.is_null()).then(|| unsafe { ID3D11Device::from_raw(device) });
+    let _context = (!context.is_null()).then(|| unsafe { ID3D11DeviceContext::from_raw(context) });
+    result.ok().map_err(io::Error::other)?;
     let chain = chain.ok_or_else(|| io::Error::other("DX11 swap chain unavailable"))?;
     unsafe { manager.hook_dx11_swap_chain(chain.as_raw()) }
 }
@@ -143,12 +170,41 @@ pub(super) unsafe fn dx12(manager: &HooksManager) -> io::Result<()> {
     if manager.is_hooked(HookKind::Dx12) {
         return Ok(());
     }
+    type CreateFactory = unsafe extern "system" fn(*const GUID, *mut *mut c_void) -> HRESULT;
+    type CreateDevice = unsafe extern "system" fn(
+        *mut c_void,
+        D3D_FEATURE_LEVEL,
+        *const GUID,
+        *mut *mut c_void,
+    ) -> HRESULT;
+    let create_device = module_proc(w!("d3d12.dll"), s!("D3D12CreateDevice"))
+        .ok_or_else(|| not_loaded("d3d12.dll is not loaded"))?;
+    let create_factory = module_proc(w!("dxgi.dll"), s!("CreateDXGIFactory"))
+        .ok_or_else(|| not_loaded("dxgi.dll is not loaded"))?;
     let window = Window::new()?;
-    let factory: IDXGIFactory = unsafe { CreateDXGIFactory() }.map_err(io::Error::other)?;
+    let mut factory = null_mut();
+    unsafe {
+        std::mem::transmute::<usize, CreateFactory>(create_factory)(
+            &IDXGIFactory::IID,
+            &mut factory,
+        )
+    }
+    .ok()
+    .map_err(io::Error::other)?;
+    let factory = unsafe { IDXGIFactory::from_raw(factory) };
     let adapter = unsafe { factory.EnumAdapters(0) }.map_err(io::Error::other)?;
-    let mut device: Option<ID3D12Device> = None;
-    unsafe { D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0, &mut device) }
-        .map_err(io::Error::other)?;
+    let mut device = null_mut();
+    unsafe {
+        std::mem::transmute::<usize, CreateDevice>(create_device)(
+            adapter.as_raw(),
+            D3D_FEATURE_LEVEL_11_0,
+            &ID3D12Device::IID,
+            &mut device,
+        )
+    }
+    .ok()
+    .map_err(io::Error::other)?;
+    let device = (!device.is_null()).then(|| unsafe { ID3D12Device::from_raw(device) });
     let device = device.ok_or_else(|| io::Error::other("DX12 device unavailable"))?;
     let desc = D3D12_COMMAND_QUEUE_DESC {
         Type: D3D12_COMMAND_LIST_TYPE_DIRECT,

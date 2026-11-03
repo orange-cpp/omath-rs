@@ -26,13 +26,12 @@ required-features = ["hooks"]
 [features]
 lua = ["dep:mlua"]
 imgui = ["dep:imgui"]
-hooks = ["dep:retour", "dep:libloading", "dep:windows"]
+hooks = ["dep:retour", "dep:windows"]
 
 [dependencies]
 memchr = "2.7"
 mlua = { version = "0.11", optional = true, features = ["lua55", "vendored"] }
 imgui = { version = "0.12", optional = true }
-libloading = { version = "0.8", optional = true }
 
 [target.'cfg(all(any(target_os = "windows", target_os = "linux"), any(target_arch = "x86", target_arch = "x86_64")))'.dependencies]
 retour = { version = "0.4.0-alpha.4", optional = true }

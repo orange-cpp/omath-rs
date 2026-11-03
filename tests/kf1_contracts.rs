@@ -129,7 +129,7 @@ fn reflection_tracker_health_and_reused_class_snapshot() {
         tracker.advance_budget(&f.target, &classes, 8192);
     }
     assert_eq!(tracker.tracked.len(), 1);
-    let live = read_living(&f.target, &tracker.tracked, &tracker.layout);
+    let live = read_living(&f.target, &tracker.tracked, &tracker.layout, 0);
     assert_eq!(live.len(), 1);
     assert_eq!(live[0].health_max, Some(150));
     assert_eq!(live[0].actor.display_name, "Clot");
@@ -140,11 +140,22 @@ fn reflection_tracker_health_and_reused_class_snapshot() {
     }
     assert_eq!(tracker.reused_classes, 1);
     assert_eq!(tracker.tracked[0].display_name, "Scrake");
+    // bDeleteMe, and an actor of another level, are left out
+    f.set(actor + 0x6c, 0x1000u32);
+    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout, 0).is_empty());
+    f.set(actor + 0x6c, 0u32);
+    f.set(actor + 0x9c, 0x1234u32);
+    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout, 0).is_empty());
+    assert_eq!(
+        read_living(&f.target, &tracker.tracked, &tracker.layout, 0x1234).len(),
+        1
+    );
+    f.set(actor + 0x9c, 0u32);
     f.set(actor + 0x500, 0i32);
-    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout).is_empty());
+    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout, 0).is_empty());
     f.set(actor + 0x500, 90i32);
     f.set(actor + 0x28, classes.actor as u32);
-    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout).is_empty());
+    assert!(read_living(&f.target, &tracker.tracked, &tracker.layout, 0).is_empty());
 }
 #[test]
 fn viewport_local_player_scan_and_camera_properties() {

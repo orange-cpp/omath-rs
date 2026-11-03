@@ -76,12 +76,15 @@ fn dx9_detours_deliver_parameters_forward_results_and_restore_code() {
     assert_eq!(events[2], (EventKind::Dx9Present, [1, 2, 3, 4, 0]));
 }
 
+// The manager subclasses one window at a time
+static WINDOW: Mutex<()> = Mutex::new(());
 #[test]
 fn window_proc_intercepts_and_restores_on_owner_thread() {
     use windows::{
         Win32::{Foundation::*, UI::WindowsAndMessaging::*},
         core::w,
     };
+    let _window = WINDOW.lock().unwrap_or_else(|e| e.into_inner());
     let hwnd = unsafe {
         CreateWindowExW(
             WINDOW_EX_STYLE::default(),
@@ -122,4 +125,63 @@ fn window_proc_intercepts_and_restores_on_owner_thread() {
     unsafe {
         DestroyWindow(hwnd).unwrap();
     }
+}
+#[test]
+fn window_proc_keeps_an_ansi_window_ansi() {
+    use windows::{
+        Win32::{Foundation::*, UI::WindowsAndMessaging::*},
+        core::s,
+    };
+    let _window = WINDOW.lock().unwrap_or_else(|e| e.into_inner());
+    let hwnd = unsafe {
+        CreateWindowExA(
+            WINDOW_EX_STYLE::default(),
+            s!("STATIC"),
+            s!("omath ansi test"),
+            WS_OVERLAPPEDWINDOW,
+            0,
+            0,
+            100,
+            100,
+            None,
+            None,
+            None,
+            None,
+        )
+    }
+    .unwrap();
+    assert!(!unsafe { IsWindowUnicode(hwnd) }.as_bool());
+    let message = WM_APP + 18;
+    let manager = HooksManager::get();
+    manager.set_on_wnd_proc(Some(Arc::new(move |_, msg, _, _| {
+        (msg == message).then_some(321)
+    })));
+    unsafe {
+        manager.hook_wnd_proc(hwnd.0 as usize).unwrap();
+    }
+    // Subclassing through the wide API would have turned the window into a Unicode one
+    assert!(!unsafe { IsWindowUnicode(hwnd) }.as_bool());
+    assert_eq!(
+        unsafe { SendMessageA(hwnd, message, WPARAM(0), LPARAM(0)) }.0,
+        321
+    );
+    unsafe {
+        manager.unhook_wnd_proc().unwrap();
+    }
+    manager.set_on_wnd_proc(None);
+    assert!(!unsafe { IsWindowUnicode(hwnd) }.as_bool());
+    unsafe {
+        DestroyWindow(hwnd).unwrap();
+    }
+}
+#[test]
+fn graphics_api_the_process_has_not_loaded_is_not_hooked() {
+    use windows::{Win32::System::LibraryLoader::GetModuleHandleW, core::w};
+    if unsafe { GetModuleHandleW(w!("d3d12.dll")) }.is_ok() {
+        return;
+    }
+    let error = unsafe { HooksManager::get().hook_dx12() }.unwrap_err();
+    assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
+    assert!(!HooksManager::get().is_hooked(HookKind::Dx12));
+    assert!(unsafe { GetModuleHandleW(w!("d3d12.dll")) }.is_err());
 }

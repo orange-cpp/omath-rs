@@ -27,7 +27,7 @@ The C++ checkout is not modified by this port or the comparison tool.
 Existing corrections cover the camera-cached radar sign, invalid solver-step hangs, A* unknown-neighbor
 crashes, undefined perpendicular-vector construction and malformed-binary reads. New memory operations
 are fallible and validate pointer widths and walker layout divisors/shifts. Wide Unreal names decode
-surrogate pairs. Encrypted storage is untyped while obfuscated, and guards cannot outlive the owner.
+surrogate pairs.
 
 FOV targeting uses consistent pitch/yaw dimensions and shortest-angle wrapping. The C++ template does compile:
 `Vector3` inherits `Vector2`, allowing the implicit base conversion. It measures the current candidate in two
@@ -41,7 +41,7 @@ These remain compatible with existing consumers:
 | Behavior | Retained result |
 | --- | --- |
 | RAGE unit factors | The upstream reversed centimeter conversion factors |
-| Triangle intersections | Infinite rays rather than truncation at `Ray::end` |
+| Triangle intersections | Hits past `Ray::end` are misses even when `infinite_length` is set |
 | `create_plane` | Degenerate first triangle indices `(1, 1, 2)` |
 | Default depth ranges | The upstream mismatch between some formula defaults and camera conventions; explicit ranges remain available |
 | `WalkBot::reset` | Clears visited-node state and preserves the target |

@@ -31,8 +31,8 @@ an untrusted count.
 
 All 133 upstream headers have corresponding Rust implementation mappings in the [raw audit](validation/port-audit.json).
 This inventory is useful for finding omissions but does not prove every overload or edge case equivalent.
-The original omitted hooks, process access, Unreal walkers, loaded-module scanning, HUD/Lua, targeting,
-encrypted variables and ImGui conversions have implementations and tests. Cargo, rustdoc and the crate
+The original omitted hooks, process access, Unreal walkers, loaded-module scanning, HUD/Lua, targeting
+and ImGui conversions have implementations and tests. `EncryptedVariable` is deliberately not ported. Cargo, rustdoc and the crate
 import test supply the Rust packaging/documentation/module equivalents.
 
 - Windows x64: 1,803 all-feature tests; x86: 1,803 all-feature tests; default x64: 1,535 tests. No failures or ignored tests.

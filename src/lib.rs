@@ -3,7 +3,6 @@
 
 pub mod algorithm;
 pub mod collision;
-pub mod containers;
 pub mod engines;
 pub mod hashing;
 #[cfg(all(

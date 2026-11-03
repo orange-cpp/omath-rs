@@ -84,8 +84,16 @@ fn main() -> Result<(), std::boxed::Box<dyn std::error::Error>> {
             tri.as_ptr().cast(),
             std::mem::size_of::<Vertex>() as u32
         ))?);
-        assert!(glow.composite(&device, [0.31, 0.86, 0.47], 5.0)?);
-        assert!(!glow.composite(&device, [1.0; 3], 1.0)?);
+        assert!(glow.blur(&device, 5.0)?);
+        assert!(!glow.blur(&device, 1.0)?);
+        assert!(glow.draw_cutout(&device, || device.DrawPrimitiveUP(
+            D3DPT_TRIANGLELIST,
+            1,
+            tri.as_ptr().cast(),
+            std::mem::size_of::<Vertex>() as u32
+        ))?);
+        assert!(glow.lay(&device, [0.31, 0.86, 0.47])?);
+        assert!(!glow.lay(&device, [1.0; 3])?);
         let mut after = 0;
         device.GetRenderState(D3DRS_CULLMODE, &mut after)?;
         assert_eq!(before, after);

@@ -1,4 +1,6 @@
-use super::support::{from_lua_userdata, subtable};
+use super::support::{
+    add_raising_function, add_raising_method, from_lua_userdata, read_only_table, subtable,
+};
 use crate::{
     Color,
     hud::{widget::*, *},
@@ -123,19 +125,20 @@ impl HudRenderer for RendererState {
 #[derive(Clone)]
 struct LuaRenderer(Rc<RefCell<RendererState>>);
 impl UserData for LuaRenderer {
-    fn add_methods<M: UserDataMethods<Self>>(m: &mut M) {
-        m.add_function("new", |_, callbacks: Table| {
+    fn add_fields<F: UserDataFields<Self>>(m: &mut F) {
+        add_raising_function(m, "new", |_, callbacks: Table| {
             Ok(Self(Rc::new(RefCell::new(RendererState {
                 callbacks,
                 error: None,
                 textures: Vec::new(),
             }))))
         });
-        macro_rules! direct {($name:ident,($($arg:ident:$ty:ty),*))=>{m.add_method(stringify!($name),|_,this,($($arg,)*):($($ty,)*)|{let mut r=this.0.try_borrow_mut().map_err(mlua::Error::external)?;r.$name($($arg),*);r.finish()});};}
+        macro_rules! direct {($name:ident,($($arg:ident:$ty:ty),*))=>{add_raising_method(m,stringify!($name),|_,this,($($arg,)*):($($ty,)*)|{let mut r=this.0.try_borrow_mut().map_err(mlua::Error::external)?;r.$name($($arg),*);r.finish()});};}
         direct!(add_line,(a:Point,b:Point,c:Color,t:f32));
         direct!(add_rectangle,(a:Point,b:Point,c:Color));
         direct!(add_filled_rectangle,(a:Point,b:Point,c:Color));
-        m.add_method(
+        add_raising_method(
+            m,
             "add_text",
             |_, this, (a, c, text): (Point, Color, String)| {
                 let mut r = this.0.try_borrow_mut().map_err(mlua::Error::external)?;
@@ -143,7 +146,8 @@ impl UserData for LuaRenderer {
                 r.finish()
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_polyline",
             |_, this, (points, color, t): (Table, Color, f32)| {
                 let points = points
@@ -154,7 +158,8 @@ impl UserData for LuaRenderer {
                 r.finish()
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_filled_polyline",
             |_, this, (points, color): (Table, Color)| {
                 let points = points
@@ -165,7 +170,8 @@ impl UserData for LuaRenderer {
                 r.finish()
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_circle",
             |_, this, (a, r, c, t, s): (Point, f32, Color, f32, Option<i32>)| {
                 let mut renderer = this.0.try_borrow_mut().map_err(mlua::Error::external)?;
@@ -173,7 +179,8 @@ impl UserData for LuaRenderer {
                 renderer.finish()
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_filled_circle",
             |_, this, (a, r, c, s): (Point, f32, Color, Option<i32>)| {
                 let mut renderer = this.0.try_borrow_mut().map_err(mlua::Error::external)?;
@@ -181,8 +188,9 @@ impl UserData for LuaRenderer {
                 renderer.finish()
             },
         );
-        m.add_method("add_arc",|_,this,(a,r,min,max,c,t,s):(Point,f32,f32,f32,Color,f32,Option<i32>)|{let mut renderer=this.0.try_borrow_mut().map_err(mlua::Error::external)?;renderer.add_arc(a,r,min,max,c,t,s.unwrap_or(0));renderer.finish()});
-        m.add_method(
+        add_raising_method(m,"add_arc",|_,this,(a,r,min,max,c,t,s):(Point,f32,f32,f32,Color,f32,Option<i32>)|{let mut renderer=this.0.try_borrow_mut().map_err(mlua::Error::external)?;renderer.add_arc(a,r,min,max,c,t,s.unwrap_or(0));renderer.finish()});
+        add_raising_method(
+            m,
             "add_image",
             |_, this, (texture, a, b, c): (Value, Point, Point, Option<Color>)| {
                 let mut renderer = this.0.try_borrow_mut().map_err(mlua::Error::external)?;
@@ -193,7 +201,7 @@ impl UserData for LuaRenderer {
                 renderer.finish()
             },
         );
-        m.add_method("calc_text_size", |_, this, text: String| {
+        add_raising_method(m, "calc_text_size", |_, this, text: String| {
             let mut r = this.0.try_borrow_mut().map_err(mlua::Error::external)?;
             let size = r.calc_text_size(&text);
             r.finish()?;
@@ -223,8 +231,9 @@ impl LuaOverlay {
     }
 }
 impl UserData for LuaOverlay {
-    fn add_methods<M: UserDataMethods<Self>>(m: &mut M) {
-        m.add_function(
+    fn add_fields<F: UserDataFields<Self>>(m: &mut F) {
+        add_raising_function(
+            m,
             "new",
             |_, (top, bottom, renderer): (Point, Point, AnyUserData)| {
                 let renderer = renderer.borrow::<LuaRenderer>()?.clone();
@@ -234,7 +243,8 @@ impl UserData for LuaOverlay {
                 })
             },
         );
-        m.add_function(
+        add_raising_function(
+            m,
             "from_canvas",
             |_, (canvas, renderer): (CanvasBox, AnyUserData)| {
                 let renderer = renderer.borrow::<LuaRenderer>()?.clone();
@@ -244,8 +254,9 @@ impl UserData for LuaOverlay {
                 })
             },
         );
-        m.add_method("add_2d_box",|_,this,(color,fill,outline,t):(Color,Option<Color>,Option<Color>,Option<f32>)|this.draw(EntityWidget::Box(Box{color,fill:fill.unwrap_or_default().into(),outline:outline.unwrap_or_default(),thickness:t.unwrap_or(1.0),glow:None})));
-        m.add_method(
+        add_raising_method(m,"add_2d_box",|_,this,(color,fill,outline,t):(Color,Option<Color>,Option<Color>,Option<f32>)|this.draw(EntityWidget::Box(Box{color,fill:fill.unwrap_or_default().into(),outline:outline.unwrap_or_default(),thickness:t.unwrap_or(1.0),glow:None})));
+        add_raising_method(
+            m,
             "add_cornered_2d_box",
             |_,
              this,
@@ -266,7 +277,8 @@ impl UserData for LuaOverlay {
                 }))
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_dashed_box",
             |_, this, (color, dash, gap, t): (Color, Option<f32>, Option<f32>, Option<f32>)| {
                 this.draw(EntityWidget::DashedBox(DashedBox {
@@ -283,8 +295,9 @@ impl UserData for LuaOverlay {
             ("top", Side::Top),
             ("bottom", Side::Bottom),
         ] {
-            m.add_method(
-                format!("add_{prefix}_bar"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_bar"),
                 move |_,
                       this,
                       (color, outline, bg, size, ratio, offset): (
@@ -309,8 +322,9 @@ impl UserData for LuaOverlay {
                     )
                 },
             );
-            m.add_method(
-                format!("add_{prefix}_dashed_bar"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_dashed_bar"),
                 move |_,
                       this,
                       (color, outline, bg, size, ratio, dash, gap, offset): (
@@ -346,11 +360,12 @@ impl UserData for LuaOverlay {
                     continue;
                 }
                 let name = if centered {
-                    format!("add_centered_{prefix}_label")
+                    &format!("add_centered_{prefix}_label")
                 } else {
-                    format!("add_{prefix}_label")
+                    &format!("add_{prefix}_label")
                 };
-                m.add_method(
+                add_raising_method(
+                    m,
                     name,
                     move |_, this, (color, offset, outlined, text): (Color, f32, bool, String)| {
                         let label = Label {
@@ -375,16 +390,19 @@ impl UserData for LuaOverlay {
                     },
                 );
             }
-            m.add_method(
-                format!("add_{prefix}_space_vertical"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_space_vertical"),
                 move |_, this, size: f32| this.side(side, SideWidget::SpaceVertical(size)),
             );
-            m.add_method(
-                format!("add_{prefix}_space_horizontal"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_space_horizontal"),
                 move |_, this, size: f32| this.side(side, SideWidget::SpaceHorizontal(size)),
             );
-            m.add_method(
-                format!("add_{prefix}_progress_ring"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_progress_ring"),
                 move |_,
                       this,
                       (color, bg, radius, ratio, t, offset, segments): (
@@ -410,8 +428,9 @@ impl UserData for LuaOverlay {
                     )
                 },
             );
-            m.add_method(
-                format!("add_{prefix}_icon"),
+            add_raising_method(
+                m,
+                &format!("add_{prefix}_icon"),
                 move |_,
                       this,
                       (texture, width, height, tint, offset): (
@@ -451,7 +470,8 @@ impl UserData for LuaOverlay {
                 },
             );
         }
-        m.add_method(
+        add_raising_method(
+            m,
             "add_snap_line",
             |_, this, (start, color, width): (Point, Color, f32)| {
                 this.draw(EntityWidget::SnapLine(SnapLine {
@@ -461,7 +481,8 @@ impl UserData for LuaOverlay {
                 }))
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_skeleton",
             |_, this, (color, t): (Color, Option<f32>)| {
                 this.draw(EntityWidget::Skeleton(Skeleton {
@@ -471,7 +492,8 @@ impl UserData for LuaOverlay {
                 }))
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_scan_marker",
             |_, this, (color, outline, t): (Color, Option<Color>, Option<f32>)| {
                 this.draw(EntityWidget::ScanMarker(ScanMarker {
@@ -481,7 +503,8 @@ impl UserData for LuaOverlay {
                 }))
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_aim_dot",
             |_, this, (position, color, radius): (Point, Color, Option<f32>)| {
                 this.draw(EntityWidget::AimDot(AimDot {
@@ -491,7 +514,8 @@ impl UserData for LuaOverlay {
                 }))
             },
         );
-        m.add_method(
+        add_raising_method(
+            m,
             "add_projectile_aim",
             |_,
              this,
@@ -526,5 +550,5 @@ pub(super) fn register(lua: &Lua, omath: &Table) -> Result<()> {
     let figures = lua.create_table()?;
     figures.set("CIRCLE", 0)?;
     figures.set("SQUARE", 1)?;
-    hud.set("ProjectileAimFigure", figures)
+    hud.set("ProjectileAimFigure", read_only_table(lua, figures)?)
 }

@@ -79,22 +79,17 @@ dash helpers are public. Invalid dash lengths draw nothing rather than looping i
 With `imgui`, construct `ImguiHudRenderer::new(ui)` during a frame; texture handles use `TextureId::id()`.
 Lua exposes `omath.hud.CanvasBox`, `Renderer`, `EntityOverlay` and `ProjectileAimFigure`, upstream imperative
 methods and chaining. `Renderer.new(callbacks)` invokes optional functions with the C++ arguments; absent
-text measurement returns zero. Errors propagate to Lua; reentrant mutable access is rejected. Texture
+text measurement returns zero. Errors are raised as plain strings, as sol2 does; reentrant mutable access is rejected. Texture
 objects preserve their Lua identity during rendering.
-
-## Encrypted variables
-
-`EncryptedVariable::new(value, key)` uses the upstream byte XOR schedule. `drop_anchor()` returns a mutable
-guard which decrypts and re-encrypts on drop, including unwinding. Encrypted storage is untyped bytes.
-This is reversible obfuscation, not cryptography. `encrypted_variable!(value, key_size)` supplies a
-deterministic source-location key.
 
 ## Graphics hooks
 
 `HooksManager::get()` is process-global. Windows `hook_dx9`, `hook_dx11` and `hook_dx12` discover entry points
 with temporary hidden devices. Existing device/swap-chain/queue pointers may be supplied instead.
 OpenGL intercepts WGL/GDI swaps on Windows, suppressing nested duplicates, or Linux `glXSwapBuffers`.
-Window-procedure interception supports an optional intercepted result.
+Nothing is loaded: an API whose module the process has not loaded fails with `ErrorKind::NotFound`.
+Window-procedure interception supports an optional intercepted result and keeps the window's ANSI or
+Unicode character set.
 
 Use typed `set_on_*` callbacks or `set_callback(EventKind, ...)`. Callbacks run before originals, outside
 callback locks; panics are contained at the native boundary. `retour` supplies instruction relocation and

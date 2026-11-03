@@ -20,11 +20,11 @@ use windows::{
     core::{Interface, PCSTR, w},
 };
 static HOOKS: Mutex<Vec<RawDetour>> = Mutex::new(Vec::new());
-static ORIGINAL: [AtomicUsize; 4] = [const { AtomicUsize::new(0) }; 4];
+static ORIGINAL: [AtomicUsize; 6] = [const { AtomicUsize::new(0) }; 6];
 static STOP: AtomicBool = AtomicBool::new(false);
 static MENU: AtomicBool = AtomicBool::new(false);
 static INPUT: Mutex<Vec<(u32, usize)>> = Mutex::new(Vec::new());
-thread_local! {static RUNTIME:RefCell<Option<Runtime>>=const{RefCell::new(None)};static GROUP:Cell<usize>=const{Cell::new(0)};static LEVEL:Cell<u32>=const{Cell::new(0)};}
+thread_local! {static RUNTIME:RefCell<Option<Runtime>>=const{RefCell::new(None)};static GROUP:Cell<usize>=const{Cell::new(0)};static LEVEL:Cell<u32>=const{Cell::new(0)};static CUTOUT:Cell<bool>=const{Cell::new(false)};static WATCH:Cell<bool>=const{Cell::new(false)};}
 struct Runtime {
     target: Target,
     classes: ReflectionClasses,
@@ -45,6 +45,11 @@ struct Runtime {
     glow_color: [f32; 3],
     weapon_color: [f32; 3],
     thickness: f32,
+    // WATCH: the level is done and the HUD overlay is not drawn yet. hud_overlay: the last frame had one, so glows wait
+    // for it. glows_waiting: blurred, not laid yet. silhouette: a silhouette was drawn during this level.
+    hud_overlay: bool,
+    glows_waiting: bool,
+    silhouette: bool,
     context: imgui::Context,
     renderer: Renderer,
     device: IDirect3DDevice9,
@@ -97,6 +102,9 @@ impl Runtime {
             glow_color: [0.31, 0.86, 0.47],
             weapon_color: [1.0; 3],
             thickness: 5.0,
+            hud_overlay: false,
+            glows_waiting: false,
+            silhouette: false,
             context,
             renderer: Renderer::default(),
             device: device.clone(),
@@ -153,8 +161,8 @@ impl Runtime {
             &mut self.search,
         );
         self.tracker.advance(&self.target, &self.classes);
-        self.zeds = read_living(&self.target, &self.tracker.tracked, &self.tracker.layout);
-        self.allies = read_living_allies(&self.target, &self.tracker, self.player.pawn);
+        self.zeds = read_living_zeds(&self.target, &self.tracker, &self.player);
+        self.allies = read_living_allies(&self.target, &self.tracker, &self.player);
         self.weapons = read_ally_weapons(&self.target, &self.tracker, &self.allies);
         if self
             .renderer
@@ -323,7 +331,7 @@ impl Runtime {
             0
         }
     }
-    fn composite(&mut self) {
+    fn lay(&mut self, device: &IDirect3DDevice9) {
         if STOP.load(Ordering::Relaxed) {
             return;
         }
@@ -333,7 +341,53 @@ impl Runtime {
                 .iter_mut()
                 .zip([self.glow_color, [ally.x, ally.y, ally.z], self.weapon_color])
         {
-            let _ = glow.composite(&self.device, color, self.thickness);
+            let _ = glow.lay(device, color);
+        }
+    }
+    // An overlay that did not turn up last frame is one this level or the player's state does without
+    fn begin_level(&mut self) {
+        if WATCH.with(|v| v.replace(false)) {
+            self.hud_overlay = false;
+        }
+        if std::mem::take(&mut self.glows_waiting) {
+            for glow in &mut self.glow {
+                glow.discard();
+            }
+        }
+    }
+    // Without the HUD overlay nothing multiplies the frame, so the glows go on right here
+    fn end_level(&mut self) {
+        WATCH.with(|v| v.set(true));
+        if !std::mem::take(&mut self.silhouette) || STOP.load(Ordering::Relaxed) {
+            return;
+        }
+        for glow in &mut self.glow {
+            let _ = glow.blur(&self.device, self.thickness);
+        }
+        if self.hud_overlay {
+            self.glows_waiting = true;
+        } else {
+            self.lay(&self.device.clone());
+        }
+    }
+    // HUDKillingFloor::DrawModOverlay's SepiaShader tile: OB_Modulate is the only DESTCOLOR/SRCCOLOR blend
+    fn watch_overlay(&mut self, device: &IDirect3DDevice9) {
+        let (mut blending, mut source, mut destination) = (0, 0, 0);
+        unsafe {
+            let _ = device.GetRenderState(D3DRS_ALPHABLENDENABLE, &mut blending);
+            let _ = device.GetRenderState(D3DRS_SRCBLEND, &mut source);
+            let _ = device.GetRenderState(D3DRS_DESTBLEND, &mut destination);
+        }
+        if blending == 0
+            || source != D3DBLEND_DESTCOLOR.0 as u32
+            || destination != D3DBLEND_SRCCOLOR.0 as u32
+        {
+            return;
+        }
+        WATCH.with(|v| v.set(false));
+        self.hud_overlay = true;
+        if std::mem::take(&mut self.glows_waiting) {
+            self.lay(device);
         }
     }
 }
@@ -505,6 +559,9 @@ unsafe extern "thiscall" fn draw(
 }
 type Level = unsafe extern "thiscall" fn(usize, usize);
 unsafe extern "thiscall" fn level(this: usize, interface: usize) {
+    if LEVEL.with(Cell::get) == 0 {
+        with_runtime(Runtime::begin_level);
+    }
     LEVEL.with(|v| v.set(v.get() + 1));
     unsafe {
         std::mem::transmute::<usize, Level>(ORIGINAL[1].load(Ordering::Acquire))(this, interface);
@@ -512,7 +569,7 @@ unsafe extern "thiscall" fn level(this: usize, interface: usize) {
     LEVEL.with(|v| {
         v.set(v.get() - 1);
         if v.get() == 0 {
-            with_runtime(Runtime::composite);
+            with_runtime(Runtime::end_level);
         }
     });
 }
@@ -526,16 +583,31 @@ unsafe extern "thiscall" fn mesh(
     interface: usize,
 ) {
     let mut group = 0;
+    let mut cutout = false;
+    // Outside the level with glows waiting this is the first person weapon, cut out of the glow
     if LEVEL.with(Cell::get) > 0 {
         with_runtime(|r| group = r.group(r.target.read_ptr(actor, 0)));
+    } else {
+        with_runtime(|r| cutout = r.glows_waiting);
     }
     let previous = GROUP.with(|v| v.replace(group));
+    let previous_cutout = CUTOUT.with(|v| v.replace(cutout));
     unsafe {
         std::mem::transmute::<usize, Mesh>(ORIGINAL[2].load(Ordering::Acquire))(
             this, actor, node, lights, projectors, interface,
         );
     }
     GROUP.with(|v| v.set(previous));
+    CUTOUT.with(|v| v.set(previous_cutout));
+}
+fn watch_overlay(raw: *mut c_void) {
+    if WATCH.with(Cell::get) {
+        with_runtime(|r| {
+            if let Some(device) = unsafe { IDirect3DDevice9::from_raw_borrowed(&raw) } {
+                r.watch_overlay(device);
+            }
+        });
+    }
 }
 type Indexed = unsafe extern "system" fn(
     *mut c_void,
@@ -559,16 +631,88 @@ unsafe extern "system" fn indexed(
         unsafe { std::mem::transmute::<usize, Indexed>(ORIGINAL[3].load(Ordering::Acquire)) };
     let result = unsafe { original(raw, kind, base, min, count, start, primitives) };
     let group = GROUP.with(Cell::get);
-    if result.is_ok() && group > 0 {
+    if result.is_ok() && (group > 0 || CUTOUT.with(Cell::get)) {
         with_runtime(|r| {
             if let Some(device) = unsafe { IDirect3DDevice9::from_raw_borrowed(&raw) } {
-                let _ = r.glow[group - 1].draw_silhouette(device, || unsafe {
+                let again = move || unsafe {
                     original(raw, kind, base, min, count, start, primitives).ok()
-                });
+                };
+                if group > 0 {
+                    r.silhouette = true;
+                    let _ = r.glow[group - 1].draw_silhouette(device, again);
+                } else {
+                    for glow in &mut r.glow {
+                        let _ = glow.draw_cutout(device, again);
+                    }
+                }
             }
         });
     }
+    watch_overlay(raw);
     result
+}
+type Primitive =
+    unsafe extern "system" fn(*mut c_void, D3DPRIMITIVETYPE, u32, u32) -> windows::core::HRESULT;
+unsafe extern "system" fn primitive(
+    raw: *mut c_void,
+    kind: D3DPRIMITIVETYPE,
+    start: u32,
+    primitives: u32,
+) -> windows::core::HRESULT {
+    let result = unsafe {
+        std::mem::transmute::<usize, Primitive>(ORIGINAL[4].load(Ordering::Acquire))(
+            raw, kind, start, primitives,
+        )
+    };
+    watch_overlay(raw);
+    result
+}
+// D3D9Drv's TripPostFX. A display change makes UD3D9RenderDevice::SetRes fail its Reset, drop the device and create
+// a new one, writing new post effects over the old ones without releasing them: ~140 MB of address space per change.
+// The missing CleanUp runs where SetRes is about to create the device, the render device being in esi.
+const POST_EFFECTS_CLEAN_UP_RVA: usize = 0x2120;
+const POST_EFFECTS_CLEAN_UP_CODE: [u8; 10] =
+    [0x51, 0x53, 0x55, 0x56, 0x57, 0x83, 0xec, 0x1c, 0x8b, 0xf1];
+const SET_RES_CREATE_DEVICE_RVA: usize = 0x15eee;
+const SET_RES_CREATE_DEVICE_CODE: [u8; 2] = [0x8b, 0x0d];
+const RENDER_DEVICE_POST_EFFECTS_OFFSET: usize = 0xc0;
+static POST_EFFECTS_CLEAN_UP: AtomicUsize = AtomicUsize::new(0);
+#[unsafe(naked)]
+unsafe extern "C" fn create_device() {
+    std::arch::naked_asm!(
+        "pushad",
+        "pushfd",
+        "lea ecx, [esi + {offset}]",
+        "call dword ptr [{clean_up}]",
+        "popfd",
+        "popad",
+        "jmp dword ptr [{original} + {slot}]",
+        offset = const RENDER_DEVICE_POST_EFFECTS_OFFSET,
+        clean_up = sym POST_EFFECTS_CLEAN_UP,
+        original = sym ORIGINAL,
+        slot = const 5 * std::mem::size_of::<AtomicUsize>(),
+    );
+}
+unsafe fn hook_create_device() -> Result<(), std::boxed::Box<dyn std::error::Error>> {
+    let driver = unsafe { GetModuleHandleW(w!("D3D9Drv.dll"))? }.0 as usize;
+    let code = |rva: usize, len: usize| unsafe {
+        std::slice::from_raw_parts((driver + rva) as *const u8, len)
+    };
+    if code(POST_EFFECTS_CLEAN_UP_RVA, POST_EFFECTS_CLEAN_UP_CODE.len())
+        != POST_EFFECTS_CLEAN_UP_CODE
+        || code(SET_RES_CREATE_DEVICE_RVA, SET_RES_CREATE_DEVICE_CODE.len())
+            != SET_RES_CREATE_DEVICE_CODE
+    {
+        return Err("D3D9Drv.dll is not the known build, the post effects keep leaking".into());
+    }
+    POST_EFFECTS_CLEAN_UP.store(driver + POST_EFFECTS_CLEAN_UP_RVA, Ordering::Release);
+    unsafe {
+        install(
+            5,
+            driver + SET_RES_CREATE_DEVICE_RVA,
+            create_device as *const () as usize,
+        )
+    }
 }
 unsafe fn install(
     index: usize,
@@ -655,6 +799,7 @@ pub unsafe extern "system" fn omath_kf1_start() -> i32 {
                     install(index, address as *const () as usize, detour)?;
                 }
             }
+            let _ = unsafe { hook_create_device() };
             HooksManager::get().set_on_dx9_present(Some(Arc::new(|raw, _, _, _, _| {
                 RUNTIME.with(|cell| {
                     let Ok(mut runtime) = cell.try_borrow_mut() else {
@@ -663,10 +808,14 @@ pub unsafe extern "system" fn omath_kf1_start() -> i32 {
                     if runtime.is_none() && !STOP.load(Ordering::Relaxed) {
                         if let Some(device) = unsafe { IDirect3DDevice9::from_raw_borrowed(&raw) } {
                             if let Ok(value) = Runtime::new(device) {
-                                let address = unsafe { *(*(raw as *const *const usize)).add(82) };
+                                let table = unsafe { *(raw as *const *const usize) };
+                                let address = unsafe { *table.add(82) };
                                 if unsafe { install(3, address, indexed as *const () as usize) }
                                     .is_ok()
                                 {
+                                    let _ = unsafe {
+                                        install(4, *table.add(81), primitive as *const () as usize)
+                                    };
                                     *runtime = Some(value);
                                 }
                             }

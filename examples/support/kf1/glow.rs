@@ -1,4 +1,6 @@
 //! DX9 silhouette, separable blur and premultiplied composite passes from the KF1 example.
+//! `blur` and `lay` are separate steps: the HUD's SepiaShader overlay (OB_Modulate, 2 * source * frame) would change
+//! a glow laid under it, so the injected DLL lays it right after that draw. Cutouts go into B between the two.
 use std::{io, mem::size_of};
 use windows::{
     Win32::Graphics::{
@@ -80,6 +82,7 @@ pub struct ActorGlow {
     state: Option<IDirect3DStateBlock9>,
     targets: [Target; 3],
     mask_drawn: bool,
+    blurred: bool,
 }
 struct Restore {
     device: IDirect3DDevice9,
@@ -106,7 +109,11 @@ impl ActorGlow {
         self.blur = None;
         self.mask = None;
         self.vertex = None;
+        self.discard();
+    }
+    pub fn discard(&mut self) {
         self.mask_drawn = false;
+        self.blurred = false;
     }
     pub fn prepare(&mut self, device: &IDirect3DDevice9, width: u32, height: u32) -> bool {
         if !self.error.is_empty() {
@@ -263,16 +270,70 @@ impl ActorGlow {
             },
         ]
     }
-    pub fn composite(
+    pub fn blur(
+        &mut self,
+        device: &IDirect3DDevice9,
+        thickness: f32,
+    ) -> windows::core::Result<bool> {
+        if !self.mask_drawn || self.blurred {
+            return Ok(false);
+        }
+        let result = self.run_blur(device, thickness);
+        self.blurred = result.is_ok();
+        if !self.blurred {
+            self.mask_drawn = false;
+        }
+        result.map(|()| true)
+    }
+    pub fn draw_cutout(
+        &mut self,
+        device: &IDirect3DDevice9,
+        draw_again: impl FnOnce() -> windows::core::Result<()>,
+    ) -> windows::core::Result<bool> {
+        if !self.blurred {
+            return Ok(false);
+        }
+        self.draw_silhouette(device, draw_again)
+    }
+    pub fn lay(
         &mut self,
         device: &IDirect3DDevice9,
         color: [f32; 3],
-        thickness: f32,
     ) -> windows::core::Result<bool> {
-        if !self.mask_drawn {
+        if !self.blurred {
             return Ok(false);
         }
-        self.mask_drawn = false;
+        self.discard();
+        let restore = self.capture(device)?;
+        let quad = self.clip_quad();
+        unsafe {
+            self.set_composite_states(device)?;
+            device.SetRenderTarget(0, &restore.target)?;
+            for (state, value) in [
+                (D3DRS_ALPHABLENDENABLE, 1),
+                (D3DRS_BLENDOP, D3DBLENDOP_ADD.0 as u32),
+                (D3DRS_SRCBLEND, D3DBLEND_ONE.0 as u32),
+                (D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA.0 as u32),
+                (D3DRS_SEPARATEALPHABLENDENABLE, 0),
+            ] {
+                device.SetRenderState(state, value)?;
+            }
+            device.SetTexture(0, self.targets[0].texture.as_ref().unwrap())?;
+            device.SetTexture(1, self.targets[1].texture.as_ref().unwrap())?;
+            device.SetPixelShader(self.classic.as_ref())?;
+            let constant = [color[0], color[1], color[2], 1.0];
+            device.SetPixelShaderConstantF(0, constant.as_ptr(), 1)?;
+            device.DrawPrimitiveUP(
+                D3DPT_TRIANGLESTRIP,
+                2,
+                quad.as_ptr().cast(),
+                size_of::<ClipVertex>() as u32,
+            )?;
+        }
+        drop(restore);
+        Ok(true)
+    }
+    fn run_blur(&self, device: &IDirect3DDevice9, thickness: f32) -> windows::core::Result<()> {
         let restore = self.capture(device)?;
         let quad = self.clip_quad();
         unsafe {
@@ -294,31 +355,9 @@ impl ActorGlow {
                     size_of::<ClipVertex>() as u32,
                 )?;
             }
-            device.SetTexture(0, None)?;
-            device.SetRenderTarget(0, &restore.target)?;
-            for (state, value) in [
-                (D3DRS_ALPHABLENDENABLE, 1),
-                (D3DRS_BLENDOP, D3DBLENDOP_ADD.0 as u32),
-                (D3DRS_SRCBLEND, D3DBLEND_ONE.0 as u32),
-                (D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA.0 as u32),
-                (D3DRS_SEPARATEALPHABLENDENABLE, 0),
-            ] {
-                device.SetRenderState(state, value)?;
-            }
-            device.SetTexture(0, self.targets[0].texture.as_ref().unwrap())?;
-            device.SetTexture(1, self.targets[1].texture.as_ref().unwrap())?;
-            device.SetPixelShader(self.classic.as_ref())?;
-            let constant = [color[0] * 0.5, color[1] * 0.5, color[2] * 0.5, 1.0];
-            device.SetPixelShaderConstantF(0, constant.as_ptr(), 1)?;
-            device.DrawPrimitiveUP(
-                D3DPT_TRIANGLESTRIP,
-                2,
-                quad.as_ptr().cast(),
-                size_of::<ClipVertex>() as u32,
-            )?;
         }
         drop(restore);
-        Ok(true)
+        Ok(())
     }
     unsafe fn set_composite_states(&self, device: &IDirect3DDevice9) -> windows::core::Result<()> {
         unsafe {

@@ -363,11 +363,19 @@ pub fn read_living<M: MemoryRead>(
     target: &Target<M>,
     tracked: &[TrackedActor],
     layout: &ActorLayout,
+    level: usize,
 ) -> Vec<LiveActor> {
     let mut result = Vec::new();
     for actor in tracked {
         target.clear_read_error();
         if target.read_ptr(actor.address, OBJECT_CLASS_OFFSET) != actor.object_class {
+            continue;
+        }
+        // A destroyed actor, or one of the previous level, stays in the object table until the next GC
+        let flags = target.read::<u32>(shift_address(actor.address, ACTOR_FLAGS_OFFSET));
+        if flags & ACTOR_DELETED_FLAG != 0
+            || target.read_ptr(actor.address, ACTOR_LEVEL_OFFSET) != level
+        {
             continue;
         }
         let health = layout
@@ -389,14 +397,23 @@ pub fn read_living<M: MemoryRead>(
     }
     result
 }
+pub fn read_living_zeds<M: MemoryRead>(
+    target: &Target<M>,
+    tracker: &ActorTracker,
+    player: &LocalPlayer,
+) -> Vec<LiveActor> {
+    let level = target.read_ptr(player.controller, ACTOR_LEVEL_OFFSET);
+    read_living(target, &tracker.tracked, &tracker.layout, level)
+}
 pub fn read_living_allies<M: MemoryRead>(
     target: &Target<M>,
     tracker: &ActorTracker,
-    local_pawn: usize,
+    player: &LocalPlayer,
 ) -> Vec<LiveActor> {
-    read_living(target, &tracker.allies, &tracker.layout)
+    let level = target.read_ptr(player.controller, ACTOR_LEVEL_OFFSET);
+    read_living(target, &tracker.allies, &tracker.layout, level)
         .into_iter()
-        .filter(|ally| ally.actor.address != local_pawn)
+        .filter(|ally| ally.actor.address != player.pawn)
         .collect()
 }
 pub fn read_ally_weapons<M: MemoryRead>(

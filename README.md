@@ -34,7 +34,7 @@ cargo bench --bench upstream -- --smoke
 
 | Feature | Integration |
 | --- | --- |
-| default | All math/engine/collision/navigation/ballistics modules, targeting, HUD, process access, live-module scanning, Unreal walkers and encrypted variables |
+| default | All math/engine/collision/navigation/ballistics modules, targeting, HUD, process access, live-module scanning and Unreal walkers |
 | `lua` | Vendored Lua 5.5 bindings, including HUD callbacks and current-process module scans |
 | `imgui` | `ImguiHudRenderer`, vector and color conversions |
 | `hooks` | DX9/11/12 and window procedures on Windows; OpenGL swaps on Windows/Linux; x86/x64 |
@@ -54,7 +54,6 @@ compiler for their dependencies. No C++ omath sources are compiled into the Rust
 | `algorithm` | Radar and filtered distance/FOV target selection |
 | `utility`, `hashing` | Colors, wildcard patterns, PE/ELF/Mach-O file/live-module scans, hashes and Base64 |
 | `rev_eng`, `engines::unreal` | Fallible process/object access, ABI-explicit calls, UE 2.5–5 name/object walkers |
-| `containers` | Encrypted variables with scoped decryption |
 | `hud` | Renderer interface, command buffer, entity/screen widgets, gradients and glow |
 | `hooks`, `lua` | Optional integrations above |
 

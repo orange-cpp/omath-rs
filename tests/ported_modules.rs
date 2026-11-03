@@ -1,7 +1,6 @@
 use omath::{
     Vector3,
     algorithm::*,
-    containers::EncryptedVariable,
     engines::{source, unreal::*},
     rev_eng::*,
     utility::{LoadedModule, PePatternScanner},
@@ -49,28 +48,6 @@ fn wildcard_scanner_matches_exhaustive_reference_on_generated_inputs() {
             }
         }
     }
-}
-#[test]
-fn encrypted_guard_writes_back_and_encrypts_during_unwind() {
-    let mut value = EncryptedVariable::new(1234_u32, [1, 2, 3, 4]);
-    let original = value.bytes().to_vec();
-    assert!(value.is_encrypted());
-    assert_ne!(value.value(), 1234);
-    assert_eq!(*value.drop_anchor(), 1234);
-    assert_eq!(value.bytes(), original);
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let mut anchor = value.drop_anchor();
-        *anchor = 5678;
-        panic!("unwind");
-    }));
-    assert!(value.is_encrypted());
-    assert_eq!(*value.drop_anchor(), 5678);
-    value.decrypt();
-    value.decrypt();
-    assert_eq!(value.value(), 5678);
-    value.encrypt();
-    value.encrypt();
-    assert_eq!(*value.drop_anchor(), 5678);
 }
 #[test]
 fn process_memory_roundtrip_and_invalid_reads() {
@@ -214,6 +191,45 @@ fn loaded_pe_scans_virtual_sections_including_zero_fill() {
     assert!(
         PePatternScanner::scan_for_pattern_in_mapped_image(&view, view.base, "DE AD", "absent")
             .is_none()
+    );
+}
+#[test]
+fn loaded_pe_skips_empty_sections_and_searches_later_ones_of_the_same_name() {
+    let mut bytes = vec![0; 0x500];
+    put(&mut bytes, 0, b"MZ");
+    put(&mut bytes, 0x3c, 0x80_u32.to_le_bytes());
+    put(&mut bytes, 0x80, b"PE\0\0");
+    put(&mut bytes, 0x86, 3_u16.to_le_bytes());
+    put(&mut bytes, 0x94, 0xf0_u16.to_le_bytes());
+    // (virtual size, address, raw size): no file data, no match, then a match sized by its raw data
+    for (i, (virtual_size, address, raw_size)) in [
+        (0x40_u32, 0x200_u32, 0_u32),
+        (0x40, 0x300, 0x10),
+        (0, 0x400, 0x20),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let section = 0x188 + i * 40;
+        put(&mut bytes, section, b".text\0\0\0");
+        put(&mut bytes, section + 8, virtual_size.to_le_bytes());
+        put(&mut bytes, section + 12, address.to_le_bytes());
+        put(&mut bytes, section + 16, raw_size.to_le_bytes());
+    }
+    put(&mut bytes, 0x210, [0xde, 0xad, 0xbe, 0xef]);
+    put(&mut bytes, 0x410, [0xde, 0xad, 0xbe, 0xef]);
+    let view = MemoryView {
+        base: 0x10000,
+        bytes: &bytes,
+    };
+    assert_eq!(
+        PePatternScanner::scan_for_pattern_in_mapped_image(
+            &view,
+            view.base,
+            "DE AD BE EF",
+            ".text"
+        ),
+        Some(0x10410)
     );
 }
 #[test]

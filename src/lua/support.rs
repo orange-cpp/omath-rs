@@ -2,8 +2,8 @@
 
 use crate::Real;
 use mlua::{
-    Error, FromLua, FromLuaMulti, Function, IntoLua, IntoLuaMulti, Lua, MetaMethod, MultiValue,
-    Result, Table, UserData, UserDataMethods, Value,
+    AnyUserData, Error, FromLua, FromLuaMulti, Function, IntoLua, IntoLuaMulti, Lua, MetaMethod,
+    MultiValue, Result, Table, UserData, UserDataFields, UserDataMethods, Value,
 };
 
 const FAILURE_KEY: &str = "omath.failure";
@@ -79,6 +79,76 @@ where
 
 pub(super) fn raising_function(lua: &Lua, key: &str) -> Result<Function> {
     lua.named_registry_value(key)
+}
+
+/// Adds `name` to `T`, a function that raises every error of `function`, argument conversion included, as its plain
+/// message. Lua cannot reach a userdata's own method lookup, so it is a field whose value is that function, made
+/// once per state. `function` receives the arguments after the userdata itself when called as a method.
+fn add_raising<T, Fl, A, R, F>(fields: &mut Fl, name: &str, function: F)
+where
+    T: UserData + 'static,
+    Fl: UserDataFields<T>,
+    A: FromLuaMulti,
+    R: IntoLuaMulti,
+    F: Fn(&Lua, A) -> Result<R> + Clone + 'static,
+{
+    let key = format!("omath.raising.{}.{name}", std::any::type_name::<T>());
+    fields.add_field_function_get(name, move |lua, _| {
+        if let Some(wrapped) = lua.named_registry_value::<Option<Function>>(&key)? {
+            return Ok(wrapped);
+        }
+        let function = function.clone();
+        let raw = lua.create_function(move |lua, args: MultiValue| {
+            match A::from_lua_multi(args, lua).and_then(|args| function(lua, args)) {
+                Ok(value) => value.into_lua_multi(lua),
+                Err(error) => (
+                    lua.named_registry_value::<Table>(FAILURE_KEY)?,
+                    message(&error),
+                )
+                    .into_lua_multi(lua),
+            }
+        })?;
+        let wrapped: Function = lua
+            .named_registry_value::<Function>(RAISING_KEY)?
+            .call(raw)?;
+        lua.set_named_registry_value(&key, &wrapped)?;
+        Ok(wrapped)
+    });
+}
+
+/// [`add_raising`] for a static function such as a constructor.
+pub(super) fn add_raising_function<T, Fl, A, R, F>(fields: &mut Fl, name: &str, function: F)
+where
+    T: UserData + 'static,
+    Fl: UserDataFields<T>,
+    A: FromLuaMulti,
+    R: IntoLuaMulti,
+    F: Fn(&Lua, A) -> Result<R> + Clone + 'static,
+{
+    add_raising(fields, name, function);
+}
+
+/// [`add_raising`] for a method, `this` borrowed for the call as `add_method` does.
+pub(super) fn add_raising_method<T, Fl, A, R, F>(fields: &mut Fl, name: &str, method: F)
+where
+    T: UserData + 'static,
+    Fl: UserDataFields<T>,
+    A: FromLuaMulti,
+    R: IntoLuaMulti,
+    F: Fn(&Lua, &T, A) -> Result<R> + Clone + 'static,
+{
+    add_raising(fields, name, move |lua, (this, args): (AnyUserData, A)| {
+        method(lua, &*this.borrow::<T>()?, args)
+    });
+}
+
+/// The text sol2 would raise: the message of the error a callback failed with, without mlua's traceback.
+fn message(error: &Error) -> String {
+    match error {
+        Error::CallbackError { cause, .. } => message(cause),
+        Error::RuntimeError(text) => text.clone(),
+        error => error.to_string(),
+    }
 }
 
 /// A read-only view of `values`, as sol2's `new_enum` makes.

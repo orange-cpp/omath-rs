@@ -34,7 +34,9 @@ def header_mapping(relative):
         return ["src/linear_algebra/vector.rs"], "shared vector implementation"
     if parts[0] == "3d_primitives":
         return [f"src/primitives/{'box_primitive' if name == 'box' else name}.rs"], "Rust primitive"
-    if parts[0] in {"hooks", "rev_eng", "containers", "lua"}:
+    if parts[0] == "containers":
+        return [], "intentionally not ported: EncryptedVariable was removed from the Rust crate"
+    if parts[0] in {"hooks", "rev_eng", "lua"}:
         return [f"src/{parts[0]}/mod.rs"], "Rust module and adjacent implementation files"
     if parts[0] == "hud":
         target = {"canvas_box": "mod", "gradient": "mod", "hud_renderer_interface": "mod",

@@ -64,7 +64,6 @@ pub type WndCallback = Arc<dyn Fn(usize, u32, usize, isize) -> Option<isize> + S
 #[derive(Default)]
 struct HookState {
     groups: BTreeMap<HookKind, Vec<(usize, RawDetour)>>,
-    libraries: Vec<libloading::Library>,
 }
 pub struct HooksManager {
     state: Mutex<HookState>,
@@ -339,46 +338,42 @@ impl HooksManager {
         }
         #[cfg(windows)]
         {
-            let gl =
-                unsafe { libloading::Library::new("opengl32.dll") }.map_err(io::Error::other)?;
-            let gdi = unsafe { libloading::Library::new("gdi32.dll") }.map_err(io::Error::other)?;
-            let wgl = *unsafe { gl.get::<*const c_void>(b"wglSwapBuffers\0") }
-                .map_err(io::Error::other)? as usize;
-            let swap = *unsafe { gdi.get::<*const c_void>(b"SwapBuffers\0") }
-                .map_err(io::Error::other)? as usize;
-            unsafe {
-                self.install(
-                    HookKind::OpenGl,
-                    &[
-                        (8, wgl, opengl_wgl as *const () as usize),
-                        (9, swap, opengl_gdi as *const () as usize),
-                    ],
-                )
-            }?;
-            self.state
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .libraries
-                .extend([gl, gdi]);
-            Ok(())
+            use windows::core::{s, w};
+            // Either swap function is enough, a game may call only one of them
+            let targets: Vec<_> = [
+                (
+                    8,
+                    module_proc(w!("opengl32.dll"), s!("wglSwapBuffers")),
+                    opengl_wgl as *const (),
+                ),
+                (
+                    9,
+                    module_proc(w!("gdi32.dll"), s!("SwapBuffers")),
+                    opengl_gdi as *const (),
+                ),
+            ]
+            .into_iter()
+            .filter_map(|(slot, target, detour)| Some((slot, target?, detour as usize)))
+            .collect();
+            if targets.is_empty() {
+                return Err(not_loaded(
+                    "neither wglSwapBuffers nor SwapBuffers is loaded",
+                ));
+            }
+            unsafe { self.install(HookKind::OpenGl, &targets) }
         }
         #[cfg(target_os = "linux")]
         {
-            let gl = unsafe { libloading::Library::new("libGL.so.1") }.map_err(io::Error::other)?;
-            let target = *unsafe { gl.get::<*const c_void>(b"glXSwapBuffers\0") }
-                .map_err(io::Error::other)? as usize;
+            let target = unsafe { libc::dlsym(libc::RTLD_DEFAULT, c"glXSwapBuffers".as_ptr()) };
+            if target.is_null() {
+                return Err(not_loaded("glXSwapBuffers is not loaded"));
+            }
             unsafe {
                 self.install(
                     HookKind::OpenGl,
-                    &[(8, target, opengl_glx as *const () as usize)],
+                    &[(8, target as usize, opengl_glx as *const () as usize)],
                 )
-            }?;
-            self.state
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .libraries
-                .push(gl);
-            Ok(())
+            }
         }
         #[cfg(not(any(windows, target_os = "linux")))]
         {
@@ -392,10 +387,7 @@ impl HooksManager {
     /// Must run on the window's owner thread. `hwnd` must remain alive until unhooked.
     #[cfg(windows)]
     pub unsafe fn hook_wnd_proc(&self, hwnd: usize) -> io::Result<()> {
-        use windows::Win32::{
-            Foundation::{GetLastError, HWND, SetLastError, WIN32_ERROR},
-            UI::WindowsAndMessaging::{GWLP_WNDPROC, SetWindowLongPtrW},
-        };
+        use windows::Win32::Foundation::{GetLastError, HWND, SetLastError, WIN32_ERROR};
         let mut window = self.window.lock().unwrap_or_else(|e| e.into_inner());
         if window.is_some() {
             return Err(io::Error::other("a window procedure is already hooked"));
@@ -403,34 +395,28 @@ impl HooksManager {
         unsafe {
             SetLastError(WIN32_ERROR(0));
         }
-        let original =
-            unsafe { SetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC, wnd_proc as *const () as _) };
+        let original = unsafe { set_window_proc(HWND(hwnd as _), wnd_proc as *const () as isize) };
         if original == 0 && unsafe { GetLastError() }.0 != 0 {
             return Err(io::Error::last_os_error());
         }
         ORIGINALS[10].store(original as usize, Ordering::Release);
-        *window = Some((hwnd, original as isize));
+        *window = Some((hwnd, original));
         Ok(())
     }
     /// # Safety
     /// Run on the window's owner thread, after all callbacks return and before window destruction.
     #[cfg(windows)]
     pub unsafe fn unhook_wnd_proc(&self) -> io::Result<()> {
-        use windows::Win32::{
-            Foundation::HWND,
-            UI::WindowsAndMessaging::{GWLP_WNDPROC, GetWindowLongPtrW, SetWindowLongPtrW},
-        };
+        use windows::Win32::Foundation::HWND;
         let mut window = self.window.lock().unwrap_or_else(|e| e.into_inner());
         if let Some((hwnd, original)) = *window {
-            if unsafe { GetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC) }
-                != wnd_proc as *const () as _
-            {
+            if unsafe { window_proc(HWND(hwnd as _)) } != wnd_proc as *const () as isize {
                 return Err(io::Error::other(
                     "another component replaced the window procedure",
                 ));
             }
             unsafe {
-                SetWindowLongPtrW(HWND(hwnd as _), GWLP_WNDPROC, original as _);
+                set_window_proc(HWND(hwnd as _), original);
             }
             *window = None;
             ORIGINALS[10].store(0, Ordering::Release);
@@ -441,6 +427,17 @@ impl HooksManager {
     pub fn set_on_wnd_proc(&self, callback: Option<WndCallback>) {
         *self.wnd_callback.write().unwrap_or_else(|e| e.into_inner()) = callback;
     }
+}
+/// An export of a module the process has already loaded. Nothing is loaded, so a missing module means the
+/// application does not use that graphics API.
+#[cfg(windows)]
+fn module_proc(module: windows::core::PCWSTR, name: windows::core::PCSTR) -> Option<usize> {
+    use windows::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
+    let module = unsafe { GetModuleHandleW(module) }.ok()?;
+    unsafe { GetProcAddress(module, name) }.map(|f| f as usize)
+}
+fn not_loaded(message: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::NotFound, message)
 }
 #[cfg(windows)]
 unsafe fn vtable(object: *mut c_void, index: usize) -> usize {
@@ -456,7 +453,9 @@ unsafe extern "system" fn wnd_proc(
     w: windows::Win32::Foundation::WPARAM,
     l: windows::Win32::Foundation::LPARAM,
 ) -> windows::Win32::Foundation::LRESULT {
-    use windows::Win32::UI::WindowsAndMessaging::CallWindowProcW;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CallWindowProcA, CallWindowProcW, IsWindowUnicode,
+    };
     let callback = HooksManager::get()
         .wnd_callback
         .read()
@@ -469,18 +468,46 @@ unsafe extern "system" fn wnd_proc(
             return windows::Win32::Foundation::LRESULT(result);
         }
     }
-    let original = ORIGINALS[10].load(Ordering::Acquire);
-    unsafe {
-        CallWindowProcW(
-            Some(std::mem::transmute::<
-                usize,
-                unsafe extern "system" fn(_, _, _, _) -> _,
-            >(original)),
-            hwnd,
-            msg,
-            w,
-            l,
+    let original = Some(unsafe {
+        std::mem::transmute::<usize, unsafe extern "system" fn(_, _, _, _) -> _>(
+            ORIGINALS[10].load(Ordering::Acquire),
         )
+    });
+    // The window's own character set, or an ANSI window gets its WM_CHAR translated
+    unsafe {
+        if IsWindowUnicode(hwnd).as_bool() {
+            CallWindowProcW(original, hwnd, msg, w, l)
+        } else {
+            CallWindowProcA(original, hwnd, msg, w, l)
+        }
+    }
+}
+/// Replaces the window procedure through the window's own character set, as subclassing an ANSI window through
+/// the wide API changes the messages it receives. Returns the previous procedure.
+#[cfg(windows)]
+unsafe fn set_window_proc(hwnd: windows::Win32::Foundation::HWND, value: isize) -> isize {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GWLP_WNDPROC, IsWindowUnicode, SetWindowLongPtrA, SetWindowLongPtrW,
+    };
+    unsafe {
+        if IsWindowUnicode(hwnd).as_bool() {
+            SetWindowLongPtrW(hwnd, GWLP_WNDPROC, value as _) as isize
+        } else {
+            SetWindowLongPtrA(hwnd, GWLP_WNDPROC, value as _) as isize
+        }
+    }
+}
+#[cfg(windows)]
+unsafe fn window_proc(hwnd: windows::Win32::Foundation::HWND) -> isize {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GWLP_WNDPROC, GetWindowLongPtrA, GetWindowLongPtrW, IsWindowUnicode,
+    };
+    unsafe {
+        if IsWindowUnicode(hwnd).as_bool() {
+            GetWindowLongPtrW(hwnd, GWLP_WNDPROC) as isize
+        } else {
+            GetWindowLongPtrA(hwnd, GWLP_WNDPROC) as isize
+        }
     }
 }
 #[cfg(windows)]
